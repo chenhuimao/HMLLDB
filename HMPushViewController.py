@@ -2,9 +2,6 @@
 
 An lldb Python script to push view controller.
 
-Add to ~/.lldbinit:
-    command script import ~/path/to/HMPushViewController.py
-
 """
 
 import lldb
