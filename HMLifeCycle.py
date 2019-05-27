@@ -44,7 +44,7 @@ def plifecycle(debugger, command, result, internal_dict):
             break
 
     if not ignore:
-        selectorDescription = evaluateExpressionValue("(NSString *)[[NSString alloc] initWithUTF8String:(char *)$arg2]").GetObjectDescription()
+        selectorDescription = evaluateExpressionValue("(char *)$arg2").GetSummary()
         print (selfDescription + '  ' + selectorDescription + '\n')
 
 

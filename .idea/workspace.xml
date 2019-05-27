@@ -2,8 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="11985629-ce00-46dd-927f-0318afcb5878" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/HMLifeCycle.py" beforeDir="false" afterPath="$PROJECT_DIR$/HMLifeCycle.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -16,7 +15,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/HMLLDB.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="228">
+            <state relative-caret-position="247">
               <caret line="13" column="48" selection-start-line="13" selection-start-column="48" selection-end-line="13" selection-end-column="48" />
               <folding>
                 <element signature="e#144#155#0" expanded="true" />
@@ -28,8 +27,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/HMPushViewController.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1444">
-              <caret line="76" selection-start-line="76" selection-end-line="76" />
+            <state relative-caret-position="417">
+              <caret line="38" column="76" lean-forward="true" selection-start-line="38" selection-start-column="8" selection-end-line="38" selection-end-column="76" />
             </state>
           </provider>
         </entry>
@@ -37,8 +36,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/HMLifeCycle.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="335">
-              <caret line="28" column="7" lean-forward="true" selection-start-line="28" selection-start-column="7" selection-end-line="28" selection-end-column="7" />
+            <state relative-caret-position="514">
+              <caret line="45" column="18" lean-forward="true" selection-start-line="45" selection-start-column="18" selection-end-line="45" selection-end-column="18" />
             </state>
           </provider>
         </entry>
@@ -46,8 +45,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file:///Applications/Xcode.app/Contents/SharedFrameworks/LLDB.framework/Versions/A/Resources/Python/lldb/__init__.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="236398">
-              <caret line="12442" column="13" selection-start-line="12442" selection-start-column="6" selection-end-line="12442" selection-end-column="13" />
+            <state relative-caret-position="320">
+              <caret line="12662" column="8" selection-start-line="12662" selection-start-column="8" selection-end-line="12662" selection-end-column="8" />
             </state>
           </provider>
         </entry>
@@ -66,6 +65,7 @@
       <find>SBDebugger_HandleCommand</find>
       <find>evaluateExpressionValue</find>
       <find>@import</find>
+      <find>char</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -94,7 +94,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -106,6 +105,7 @@
           <select />
         </subPane>
       </pane>
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -303,7 +303,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/HMLLDB.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="228">
+        <state relative-caret-position="247">
           <caret line="13" column="48" selection-start-line="13" selection-start-column="48" selection-end-line="13" selection-end-column="48" />
           <folding>
             <element signature="e#144#155#0" expanded="true" />
@@ -313,22 +313,22 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/HMPushViewController.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1444">
-          <caret line="76" selection-start-line="76" selection-end-line="76" />
+        <state relative-caret-position="417">
+          <caret line="38" column="76" lean-forward="true" selection-start-line="38" selection-start-column="8" selection-end-line="38" selection-end-column="76" />
         </state>
       </provider>
     </entry>
     <entry file="file:///Applications/Xcode.app/Contents/SharedFrameworks/LLDB.framework/Versions/A/Resources/Python/lldb/__init__.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="236398">
-          <caret line="12442" column="13" selection-start-line="12442" selection-start-column="6" selection-end-line="12442" selection-end-column="13" />
+        <state relative-caret-position="320">
+          <caret line="12662" column="8" selection-start-line="12662" selection-start-column="8" selection-end-line="12662" selection-end-column="8" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/HMLifeCycle.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="335">
-          <caret line="28" column="7" lean-forward="true" selection-start-line="28" selection-start-column="7" selection-end-line="28" selection-end-column="7" />
+        <state relative-caret-position="514">
+          <caret line="45" column="18" lean-forward="true" selection-start-line="45" selection-start-column="18" selection-end-line="45" selection-end-column="18" />
         </state>
       </provider>
     </entry>
