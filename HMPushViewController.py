@@ -31,7 +31,7 @@ def push(debugger, command, result, internal_dict):
 
     print ("Waiting...")
 
-    state = "push failing"
+    state = False
     makeVCExpression = "(UIViewController *)[[NSClassFromString(@\"{UIViewController}\") alloc] init]".format(UIViewController=command)
     VCObject = evaluateExpressionValue(makeVCExpression).GetValue()     # address
     navigationVC = getNavigationVC()
@@ -42,7 +42,7 @@ def push(debugger, command, result, internal_dict):
     if verifyObjIsKindOfClass(VCObject, "UIViewController"):
         pushExpression = "(void)[{arg1} pushViewController:(id){arg2} animated:YES]".format(arg1=navigationVC, arg2=VCObject)
         debugger.HandleCommand('expression -l objc -O -- ' + pushExpression)
-        state = "push succeed"
+        state = True
     else:
         global gModulesName
         if len(gModulesName) == 0:
@@ -53,10 +53,12 @@ def push(debugger, command, result, internal_dict):
             if verifyObjIsKindOfClass(VCObject, "UIViewController"):
                 pushExpression = "(void)[{arg1} pushViewController:(id){arg2} animated:YES]".format(arg1=navigationVC, arg2=VCObject)
                 debugger.HandleCommand('expression -l objc -O -- ' + pushExpression)
-                state = "push succeed"
+                state = True
                 break
 
-    print (state)
+    print ("push succeed" if state else "push failed")
+    if state:
+        processContinue()
 
 
 def verifyObjIsKindOfClass(obj, className):
@@ -99,6 +101,13 @@ def getModulesName():
 
     # print (modulesName)
     return modulesName
+
+
+def processContinue():
+    asyncState = lldb.debugger.GetAsync()
+    lldb.debugger.SetAsync(True)
+    lldb.debugger.HandleCommand('process continue')
+    lldb.debugger.SetAsync(asyncState)
 
 
 # evaluates expression in Objective-C++ context, so it will work even for
