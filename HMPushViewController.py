@@ -11,6 +11,9 @@ def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand('command script add -f HMPushViewController.push push -h "Find navigationController in keyWindow then push a viewController."')
 
 
+gModulesName = []   # List of module names that may be user-written
+
+
 def push(debugger, command, result, internal_dict):
     """
     Syntax:
@@ -26,6 +29,8 @@ def push(debugger, command, result, internal_dict):
     # print (result)  # <class 'lldb.SBCommandReturnObject'>
     # print (internal_dict) # <type 'dict'>
 
+    print ("Waiting...")
+
     state = "push failing"
     makeVCExpression = "(UIViewController *)[[NSClassFromString(@\"{UIViewController}\") alloc] init]".format(UIViewController=command)
     VCObject = evaluateExpressionValue(makeVCExpression).GetValue()     # address
@@ -39,8 +44,10 @@ def push(debugger, command, result, internal_dict):
         debugger.HandleCommand('expression -l objc -O -- ' + pushExpression)
         state = "push succeed"
     else:
-        modlues = ["hivebox", "HiveConsumer"]
-        for modlue in modlues:  # for Swift file
+        global gModulesName
+        if len(gModulesName) == 0:
+            gModulesName = getModulesName()
+        for modlue in gModulesName:  # for Swift file
             makeVCExpression = "(UIViewController *)[[NSClassFromString(@\"{prefix}.{UIViewController}\") alloc] init]".format(prefix=modlue, UIViewController=command)
             VCObject = evaluateExpressionValue(makeVCExpression).GetValue()  # address
             if verifyObjIsKindOfClass(VCObject, "UIViewController"):
@@ -72,6 +79,26 @@ def getNavigationVC():
             return None
     else:
         return None
+
+
+# Get list of module names that may be user-written
+def getModulesName():
+    print ("Getting module names when using this command for the first time")
+    numOfModules = lldb.debugger.GetSelectedTarget().GetNumModules()
+    modulesName = []
+    for i in range(numOfModules):
+        module = lldb.debugger.GetSelectedTarget().GetModuleAtIndex(i)
+        fileSpec = module.GetFileSpec()
+        directory = fileSpec.GetDirectory()
+        filename = fileSpec.GetFilename()
+        if directory is None or filename is None:
+            continue
+
+        if '.app' in directory and '.' not in filename:  # Filter out modules that may be user-written
+            modulesName.append(filename)
+
+    # print (modulesName)
+    return modulesName
 
 
 # evaluates expression in Objective-C++ context, so it will work even for
