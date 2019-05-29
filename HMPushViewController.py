@@ -14,7 +14,7 @@ def __lldb_init_module(debugger, internal_dict):
 gModulesName = []   # List of module names that may be user-written
 
 
-def push(debugger, command, result, internal_dict):
+def push(debugger, command, exe_ctx, result, internal_dict):
     """
     Syntax:
         push <className>
@@ -25,9 +25,10 @@ def push(debugger, command, result, internal_dict):
     This command is implemented in HMPushViewController.py
     """
 
-    # print (command) # <type 'str'>
-    # print (result)  # <class 'lldb.SBCommandReturnObject'>
-    # print (internal_dict) # <type 'dict'>
+    # print (type(command))  # <type 'str'>
+    # print (type(exe_ctx))  # <class 'lldb.SBExecutionContext'>
+    # print (type(result))  # <class 'lldb.SBCommandReturnObject'>
+    # print (type(internal_dict))  # <type 'dict'>
 
     print ("Waiting...")
 

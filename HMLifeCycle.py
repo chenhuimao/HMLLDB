@@ -11,7 +11,7 @@ def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand('command script add -f HMLifeCycle.plifecycle plifecycle -h "Print life cycle of UIViewController."')
 
 
-def plifecycle(debugger, command, result, internal_dict):
+def plifecycle(debugger, command, exe_ctx, result, internal_dict):
     """
     Syntax:
         plifecycle
