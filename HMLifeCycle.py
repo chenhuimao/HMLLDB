@@ -33,6 +33,8 @@ def plifecycle(debugger, command, exe_ctx, result, internal_dict):
                      "_UIAlertControllerTextFieldViewController",
                      "UICompatibilityInputViewController",
                      "UIKeyboardCandidateGridCollectionViewController",
+                     "UISystemKeyboardDockController",
+                     "_UIRemoteInputViewController",
                      "UIApplicationRotationFollowingController"]
 
     selfDescription = evaluateExpressionValue("(id)$arg1").GetObjectDescription()
