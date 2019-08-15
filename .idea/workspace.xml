@@ -3,6 +3,7 @@
   <component name="ChangeListManager">
     <list default="true" id="11985629-ce00-46dd-927f-0318afcb5878" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/HMLLDBClassInfo.py" beforeDir="false" afterPath="$PROJECT_DIR$/HMLLDBClassInfo.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -15,7 +16,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/HMPushViewController.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="532">
+            <state relative-caret-position="1691">
               <caret line="89" column="12" selection-start-line="89" selection-start-column="12" selection-end-line="89" selection-end-column="12" />
             </state>
           </provider>
@@ -33,8 +34,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/HMLLDBClassInfo.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="708">
-              <caret line="107" column="24" lean-forward="true" selection-start-line="107" selection-start-column="24" selection-end-line="107" selection-end-column="24" />
+            <state relative-caret-position="780">
+              <caret line="223" lean-forward="true" selection-start-line="223" selection-end-line="223" />
             </state>
           </provider>
         </entry>
@@ -42,8 +43,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file:///Applications/Xcode.app/Contents/SharedFrameworks/LLDB.framework/Versions/A/Resources/Python/lldb/__init__.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="352">
-              <caret line="3838" column="4" lean-forward="true" selection-start-line="3838" selection-start-column="4" selection-end-line="3838" selection-end-column="4" />
+            <state relative-caret-position="945">
+              <caret line="2267" column="41" lean-forward="true" selection-start-line="2267" selection-start-column="41" selection-end-line="2267" selection-end-column="41" />
             </state>
           </provider>
         </entry>
@@ -59,9 +60,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>SBDebugger_HandleCommand</find>
-      <find>evaluateExpressionValue</find>
-      <find>@import</find>
       <find>char</find>
       <find>GetModuleAtIndex</find>
       <find>-&gt; SBModule</find>
@@ -80,7 +78,22 @@
       <find>class sb</find>
       <find>struct</find>
       <find>class sbdebugger</find>
+      <find>SBListener</find>
+      <find>class SBListener</find>
+      <find>class SBPlatform</find>
+      <find>interpreter</find>
+      <find>class SBCommandInterpreter</find>
+      <find>class SBSourceManager</find>
+      <find>class SBStructuredData</find>
+      <find>StructuredDataType</find>
+      <find>class SBUnixSignals</find>
+      <find>class SBS</find>
+      <find>class SBTypeCategory</find>
+      <find>class SBBroadcaster</find>
     </findStrings>
+    <replaceStrings>
+      <replace>ci</replace>
+    </replaceStrings>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -110,7 +123,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -122,6 +134,7 @@
           <select />
         </subPane>
       </pane>
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -281,7 +294,7 @@
     <frame x="2" y="23" width="1977" height="1129" extended-state="0" />
     <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.25" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.15439673" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
@@ -356,6 +369,13 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/HMPushViewController.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1691">
+          <caret line="89" column="12" selection-start-line="89" selection-start-column="12" selection-end-line="89" selection-end-column="12" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/HMLifeCycle.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="133">
@@ -363,24 +383,17 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/HMPushViewController.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="532">
-          <caret line="89" column="12" selection-start-line="89" selection-start-column="12" selection-end-line="89" selection-end-column="12" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file:///Applications/Xcode.app/Contents/SharedFrameworks/LLDB.framework/Versions/A/Resources/Python/lldb/__init__.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="352">
-          <caret line="3838" column="4" lean-forward="true" selection-start-line="3838" selection-start-column="4" selection-end-line="3838" selection-end-column="4" />
+        <state relative-caret-position="945">
+          <caret line="2267" column="41" lean-forward="true" selection-start-line="2267" selection-start-column="41" selection-end-line="2267" selection-end-column="41" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/HMLLDBClassInfo.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="708">
-          <caret line="107" column="24" lean-forward="true" selection-start-line="107" selection-start-column="24" selection-end-line="107" selection-end-column="24" />
+        <state relative-caret-position="780">
+          <caret line="223" lean-forward="true" selection-start-line="223" selection-end-line="223" />
         </state>
       </provider>
     </entry>

@@ -39,6 +39,21 @@ def plldbClassInfo(debugger, command, exe_ctx, result, internal_dict):
     if compareName("SBTarget"):
         pSBTarget()
 
+    if compareName("SBPlatform"):
+        pSBPlatform()
+    if compareName("SBCommandInterpreter"):
+        pSBCommandInterpreter()
+    if compareName("SBListener"):
+        pSBListener()
+    if compareName("SBSourceManager"):
+        pSBSourceManager()
+    if compareName("SBStructuredData"):
+        pSBStructuredData()
+    if compareName("SBUnixSignals"):
+        pSBUnixSignals()
+    if compareName("SBBroadcaster"):
+        pSBBroadcaster()
+
 
 def compareName(className):
     global gLastCommand
@@ -52,9 +67,17 @@ def formatPrint(desc, value):
     print ("[{arg1}]: {arg2}\n\ttype: {arg3}".format(arg1=desc, arg2=value, arg3=type(value)))
 
 
+def titlePrint(title):
+    print ("\n\n====={arg1}================================".format(arg1=title))
+
+
+def listTitlePrint(title):
+    print ("\n##### {arg1} #####".format(arg1=title))
+
+
 def pSBDebugger():
     debugger = lldb.debugger
-    print ("=====SBDebugger================================")
+    titlePrint("SBDebugger")
     formatPrint("SBDebugger", debugger)
     formatPrint("IsValid", debugger.IsValid())
     formatPrint("GetAsync", debugger.GetAsync())
@@ -83,7 +106,8 @@ def pSBDebugger():
     formatPrint("GetNumCategories", debugger.GetNumCategories())
     formatPrint("GetDefaultCategory", debugger.GetDefaultCategory())
 
-    print ("\n##### all targets[SBTarget] #####")
+
+    listTitlePrint("all targets[SBTarget]")
     numTargets = debugger.GetNumTargets()
     for i in range(numTargets):
         target = debugger.GetTargetAtIndex(i)
@@ -91,7 +115,7 @@ def pSBDebugger():
             print (type(target))
         print (target)
 
-    print ("\n##### all platforms #####")
+    listTitlePrint("all platforms[SBPlatform]")
     numPlatforms = debugger.GetNumPlatforms()
     for i in range(numPlatforms):
         platform = debugger.GetPlatformAtIndex(i)
@@ -99,7 +123,7 @@ def pSBDebugger():
             print (type(platform))
         print (platform)
 
-    print ("\n##### all categories #####")
+    listTitlePrint("all categories[SBTypeCategory]")
     numCategories = debugger.GetNumCategories()
     for i in range(numCategories):
         category = debugger.GetCategoryAtIndex(i)
@@ -110,29 +134,98 @@ def pSBDebugger():
 
 def pSBTarget():
     target = lldb.debugger.GetSelectedTarget()
-    print ("=====SBTarget================================")
 
 
-def pSBCommandInterpreter():
-    interpreter = lldb.debugger.GetCommandInterpreter()
+def pSBProcess():
+    process = lldb.debugger.GetCommandInterpreter().GetProcess()
 
 
 def pSBListener():
     listener = lldb.debugger.GetListener()
+    titlePrint("SBListener")
+    formatPrint("SBListener", listener)
+    formatPrint("IsValid", listener.IsValid())
 
 
 def pSBPlatform():
     platform = lldb.debugger.GetSelectedPlatform()
+    titlePrint("SBPlatform")
+    formatPrint("SBPlatform", platform)
+    formatPrint("IsValid", platform.IsValid())
+    formatPrint("GetWorkingDirectory", platform.GetWorkingDirectory())
+    formatPrint("GetName", platform.GetName())
+    formatPrint("IsConnected", platform.IsConnected())
+    formatPrint("GetTriple", platform.GetTriple())
+    formatPrint("GetHostname", platform.GetHostname())
+    formatPrint("GetOSBuild", platform.GetOSBuild())
+    formatPrint("GetOSDescription", platform.GetOSDescription())
+    formatPrint("GetOSMajorVersion", platform.GetOSMajorVersion())
+    formatPrint("GetOSMinorVersion", platform.GetOSMinorVersion())
+    formatPrint("GetOSUpdateVersion", platform.GetOSUpdateVersion())
+    formatPrint("GetUnixSignals", platform.GetUnixSignals())
+
+
+def pSBCommandInterpreter():
+    ci = lldb.debugger.GetCommandInterpreter()
+    titlePrint("SBCommandInterpreter")
+    formatPrint("SBCommandInterpreter", ci)
+    formatPrint("IsValid", ci.IsValid())
+    formatPrint("GetPromptOnQuit", ci.GetPromptOnQuit())
+    formatPrint("HasCustomQuitExitCode", ci.HasCustomQuitExitCode())
+    formatPrint("GetQuitStatus", ci.GetQuitStatus())
+    formatPrint("GetBroadcaster", ci.GetBroadcaster())
+    formatPrint("GetBroadcasterClass", ci.GetBroadcasterClass())
+    formatPrint("HasCommands", ci.HasCommands())
+    formatPrint("HasAliases", ci.HasAliases())
+    formatPrint("HasAliasOptions", ci.HasAliasOptions())
+    formatPrint("GetProcess", ci.GetProcess())
+    formatPrint("GetDebugger", ci.GetDebugger())
+    formatPrint("IsActive", ci.IsActive())
+    formatPrint("WasInterrupted", ci.WasInterrupted())
 
 
 def pSBSourceManager():
     manager = lldb.debugger.GetSourceManager()
+    titlePrint("SBSourceManager")
+    formatPrint("SBSourceManager", manager)
 
 
 def pSBStructuredData():
-    structuredData = lldb.debugger.GetBuildConfiguration()
+    sd = lldb.debugger.GetBuildConfiguration()
+    titlePrint("SBStructuredData")
+    formatPrint("SBStructuredData", sd)
+    formatPrint("IsValid", sd.IsValid())
+    formatPrint("GetType", sd.GetType())
+    formatPrint("GetSize", sd.GetSize())
+    formatPrint("GetIntegerValue", sd.GetIntegerValue())
+    formatPrint("GetFloatValue", sd.GetFloatValue())
+    formatPrint("GetBooleanValue", sd.GetBooleanValue())
 
 
 def pSBTypeCategory():
     category = lldb.debugger.GetDefaultCategory()
 
+
+def pSBUnixSignals():
+    signals = lldb.debugger.GetSelectedPlatform().GetUnixSignals()
+    titlePrint("SBUnixSignals")
+    formatPrint("SBUnixSignals", signals)
+    formatPrint("IsValid", signals.IsValid())
+    formatPrint("GetNumSignals", signals.GetNumSignals())
+
+
+    listTitlePrint("all signals")
+    numSignals = signals.GetNumSignals()
+    for i in range(numSignals):
+        s = signals.GetSignalAtIndex(i)
+        if i == 0:
+            print (type(s))
+        print (s)
+
+
+def pSBBroadcaster():
+    broadcaster = lldb.debugger.GetCommandInterpreter().GetBroadcaster()
+    titlePrint("SBBroadcaster")
+    formatPrint("SBBroadcaster", broadcaster)
+    formatPrint("IsValid", broadcaster.IsValid())
+    formatPrint("GetName", broadcaster.GetName())
