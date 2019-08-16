@@ -43,11 +43,17 @@ def plldbClassInfo(debugger, command, exe_ctx, result, internal_dict):
         pSBPlatform()
     if compareName("SBCommandInterpreter"):
         pSBCommandInterpreter()
-    if compareName("SBTypeCategory"):
-        pSBTypeCategory()
+    if compareName("SBBreakpoint"):
+        pSBBreakpoint()
+    if compareName("SBFileSpec"):
+        pSBFileSpec()
+    if compareName("SBType"):
+        pSBType()
 
     if compareName("SBListener"):
         pSBListener()
+    if compareName("SBTypeCategory"):
+        pSBTypeCategory()
     if compareName("SBSourceManager"):
         pSBSourceManager()
     if compareName("SBStructuredData"):
@@ -56,6 +62,8 @@ def plldbClassInfo(debugger, command, exe_ctx, result, internal_dict):
         pSBUnixSignals()
     if compareName("SBBroadcaster"):
         pSBBroadcaster()
+    if compareName("SBLaunchInfo"):
+        pSBLaunchInfo()
 
 
 def compareName(className):
@@ -171,18 +179,92 @@ def pSBSymbolContext():
 
 
 def pSBType():
+    t = lldb.debugger.GetSelectedTarget().FindFirstType("UIAlertAction")
+
+    printClassName("SBType")
+    printFormat("SBType", t)
+    printFormat("IsValid", t.IsValid())
+    printFormat("GetByteSize", t.GetByteSize())
+    printFormat("IsPointerType", t.IsPointerType())
+    printFormat("IsReferenceType", t.IsReferenceType())
+    printFormat("IsFunctionType", t.IsFunctionType())
+    printFormat("IsPolymorphicClass", t.IsPolymorphicClass())
+    printFormat("IsArrayType", t.IsArrayType())
+    printFormat("IsVectorType", t.IsVectorType())
+    printFormat("IsTypedefType", t.IsTypedefType())
+    printFormat("IsAnonymousType", t.IsAnonymousType())
+    printFormat("GetPointerType", t.GetPointerType())  # SBType
+    printFormat("GetPointeeType", t.GetPointeeType())  # SBType
+    printFormat("GetReferenceType", t.GetReferenceType())  # SBType
+    printFormat("GetTypedefedType", t.GetTypedefedType())  # SBType
+    printFormat("GetDereferencedType", t.GetDereferencedType())  # SBType
+    printFormat("GetUnqualifiedType", t.GetUnqualifiedType())  # SBType
+    printFormat("GetCanonicalType", t.GetCanonicalType())  # SBType
+    printFormat("GetArrayElementType", t.GetArrayElementType())  # SBType
+    printFormat("GetVectorElementType", t.GetVectorElementType())  # SBType
+    printFormat("GetBasicType", t.GetBasicType())  # BasicType int
+    printFormat("GetNumberOfFields", t.GetNumberOfFields())
+    printFormat("GetNumberOfDirectBaseClasses", t.GetNumberOfDirectBaseClasses())
+    printFormat("GetNumberOfVirtualBaseClasses", t.GetNumberOfVirtualBaseClasses())
+    printFormat("GetEnumMembers", t.GetEnumMembers())  # SBTypeEnumMemberList
+    printFormat("GetName", t.GetName())
+    printFormat("GetDisplayTypeName", t.GetDisplayTypeName())
+    printFormat("GetTypeClass", t.GetTypeClass())  # TypeClass int
+    printFormat("GetNumberOfTemplateArguments", t.GetNumberOfTemplateArguments())
+    printFormat("GetFunctionReturnType", t.GetFunctionReturnType())  # SBType
+    printFormat("GetFunctionArgumentTypes", t.GetFunctionArgumentTypes())  # SBTypeList
+    printFormat("GetNumberOfMemberFunctions", t.GetNumberOfMemberFunctions())
+    printFormat("IsTypeComplete", t.IsTypeComplete())
+    printFormat("GetTypeFlags", t.GetTypeFlags())
+
+    printTraversal(t, "GetNumberOfFields", "GetFieldAtIndex")  # [SBTypeMember]
+    printTraversal(t, "GetNumberOfDirectBaseClasses", "GetDirectBaseClassAtIndex")  # [SBTypeMember]
+    printTraversal(t, "GetNumberOfVirtualBaseClasses", "GetVirtualBaseClassAtIndex")  # [SBTypeMember]
+    printTraversal(t, "GetNumberOfTemplateArguments", "GetTemplateArgumentType")  # [SBType]
+    printTraversal(t, "GetNumberOfMemberFunctions", "GetMemberFunctionAtIndex")  # [SBTypeMemberFunction]
+
+
+def pSBTypeMemberFunction():
     # TODO
-    type = lldb.debugger.GetSelectedTarget().FindFirstType("UIAlertAction")
+    func = lldb.debugger.GetSelectedTarget().FindFirstType("UIAlertAction").GetMemberFunctionAtIndex(0)
+
+
+def pSBFileSpec():
+    fileSpec = lldb.debugger.GetSelectedTarget().GetExecutable()
+    # fileSpec = lldb.debugger.GetSelectedTarget().GetLaunchInfo().GetExecutableFile()
+
+    printClassName("SBFileSpec")
+    printFormat("SBFileSpec", fileSpec)
+    printFormat("IsValid", fileSpec.IsValid())
+    printFormat("Exists", fileSpec.Exists())
+    printFormat("ResolveExecutableLocation", fileSpec.ResolveExecutableLocation())
+    printFormat("GetFilename", fileSpec.GetFilename())
+    printFormat("GetDirectory", fileSpec.GetDirectory())
+    printFormat("fullpath", fileSpec.fullpath)
 
 
 def pSBBreakpoint():
-    # TODO
     bp = lldb.debugger.GetSelectedTarget().GetBreakpointAtIndex(0)
 
+    printClassName("SBBreakpoint")
+    printFormat("SBBreakpoint", bp)
+    printFormat("GetID", bp.GetID())
+    printFormat("IsValid", bp.IsValid())
+    printFormat("IsEnabled", bp.IsEnabled())
+    printFormat("IsOneShot", bp.IsOneShot())
+    printFormat("IsInternal", bp.IsInternal())
+    printFormat("GetHitCount", bp.GetHitCount())
+    printFormat("GetIgnoreCount", bp.GetIgnoreCount())
+    printFormat("GetCondition", bp.GetCondition())
+    printFormat("GetAutoContinue", bp.GetAutoContinue())
+    printFormat("GetThreadID", bp.GetThreadID())
+    printFormat("GetThreadIndex", bp.GetThreadIndex())
+    printFormat("GetThreadName", bp.GetThreadName())
+    printFormat("GetQueueName", bp.GetQueueName())
+    printFormat("GetNumLocations", bp.GetNumLocations())
+    printFormat("IsHardware", bp.IsHardware())
 
-def pSBWatchpoint():
-    # TODO
-    wp = lldb.debugger.GetSelectedTarget().GetWatchpointAtIndex(0)
+    printTraversal(bp, "GetNumLocations", "GetLocationAtIndex")  # [SBBreakpointLocation]
 
 
 def pSBPlatform():
@@ -292,6 +374,7 @@ def pSBBroadcaster():
 
 def pSBListener():
     listener = lldb.debugger.GetListener()
+    # listener = lldb.debugger.GetSelectedTarget().GetLaunchInfo().GetListener()
 
     printClassName("SBListener")
     printFormat("SBListener", listener)
@@ -299,6 +382,28 @@ def pSBListener():
 
 
 def pSBLaunchInfo():
-    # TODO
     info = lldb.debugger.GetSelectedTarget().GetLaunchInfo()
+
+    printClassName("SBLaunchInfo")
+    printFormat("SBLaunchInfo", info)
+    printFormat("GetProcessID", info.GetProcessID())
+    printFormat("GetUserID", info.GetUserID())
+    printFormat("GetGroupID", info.GetGroupID())
+    printFormat("UserIDIsValid", info.UserIDIsValid())
+    printFormat("GroupIDIsValid", info.GroupIDIsValid())
+    printFormat("GetExecutableFile", info.GetExecutableFile())  # SBFileSpec
+    printFormat("GetListener", info.GetListener())  # SBListener
+    printFormat("GetNumArguments", info.GetNumArguments())
+    printFormat("GetNumEnvironmentEntries", info.GetNumEnvironmentEntries())
+    printFormat("GetWorkingDirectory", info.GetWorkingDirectory())
+    printFormat("GetLaunchFlags", info.GetLaunchFlags())
+    printFormat("GetProcessPluginName", info.GetProcessPluginName())
+    printFormat("GetShell", info.GetShell())
+    printFormat("GetShellExpandArguments", info.GetShellExpandArguments())
+    printFormat("GetResumeCount", info.GetResumeCount())
+    printFormat("GetLaunchEventData", info.GetLaunchEventData())
+    printFormat("GetDetachOnError", info.GetDetachOnError())
+
+    printTraversal(info, "GetNumArguments", "GetArgumentAtIndex")  # [str]
+    printTraversal(info, "GetNumEnvironmentEntries", "GetEnvironmentEntryAtIndex")  # [str]
 
