@@ -91,30 +91,30 @@ def pSBDebugger():
     printFormat("SBDebugger", debugger)
     printFormat("IsValid", debugger.IsValid())
     printFormat("GetAsync", debugger.GetAsync())
-    printFormat("GetInputFileHandle", debugger.GetInputFileHandle())
-    printFormat("GetOutputFileHandle", debugger.GetOutputFileHandle())
-    printFormat("GetErrorFileHandle", debugger.GetErrorFileHandle())
-    printFormat("GetCommandInterpreter", debugger.GetCommandInterpreter())
-    printFormat("GetListener", debugger.GetListener())
-    printFormat("GetDummyTarget", debugger.GetDummyTarget())
+    printFormat("GetInputFileHandle", debugger.GetInputFileHandle())  # FILE
+    printFormat("GetOutputFileHandle", debugger.GetOutputFileHandle())  # FILE
+    printFormat("GetErrorFileHandle", debugger.GetErrorFileHandle())  # FILE
+    printFormat("GetCommandInterpreter", debugger.GetCommandInterpreter())  # SBCommandInterpreter
+    printFormat("GetListener", debugger.GetListener())  # SBListener
+    printFormat("GetDummyTarget", debugger.GetDummyTarget())  # SBTarget
     printFormat("GetNumTargets", debugger.GetNumTargets())
-    printFormat("GetSelectedTarget", debugger.GetSelectedTarget())
-    printFormat("GetSelectedPlatform", debugger.GetSelectedPlatform())
+    printFormat("GetSelectedTarget", debugger.GetSelectedTarget())  # SBTarget
+    printFormat("GetSelectedPlatform", debugger.GetSelectedPlatform())  # GetSelectedPlatform
     printFormat("GetNumPlatforms", debugger.GetNumPlatforms())
     printFormat("GetNumAvailablePlatforms", debugger.GetNumAvailablePlatforms())
-    printFormat("GetSourceManager", debugger.GetSourceManager())
+    printFormat("GetSourceManager", debugger.GetSourceManager())  # SBSourceManager
     printFormat("GetUseExternalEditor", debugger.GetUseExternalEditor())
     printFormat("GetUseColor", debugger.GetUseColor())
     printFormat("GetVersionString", debugger.GetVersionString())
-    printFormat("GetBuildConfiguration", debugger.GetBuildConfiguration())
+    printFormat("GetBuildConfiguration", debugger.GetBuildConfiguration())  # SBStructuredData
     printFormat("GetInstanceName", debugger.GetInstanceName())
     printFormat("GetTerminalWidth", debugger.GetTerminalWidth())
     printFormat("GetID", debugger.GetID())
     printFormat("GetPrompt", debugger.GetPrompt())
-    printFormat("GetScriptLanguage", debugger.GetScriptLanguage())
+    printFormat("GetScriptLanguage", debugger.GetScriptLanguage())  # ScriptLanguage int
     printFormat("GetCloseInputOnEOF", debugger.GetCloseInputOnEOF())
     printFormat("GetNumCategories", debugger.GetNumCategories())
-    printFormat("GetDefaultCategory", debugger.GetDefaultCategory())
+    printFormat("GetDefaultCategory", debugger.GetDefaultCategory())  # SBTypeCategory
 
     printTraversal(debugger, "GetNumTargets", "GetTargetAtIndex")  # [SBTarget]
     printTraversal(debugger, "GetNumPlatforms", "GetPlatformAtIndex")  # [SBPlatform]
@@ -185,14 +185,6 @@ def pSBWatchpoint():
     wp = lldb.debugger.GetSelectedTarget().GetWatchpointAtIndex(0)
 
 
-def pSBListener():
-    listener = lldb.debugger.GetListener()
-
-    printClassName("SBListener")
-    printFormat("SBListener", listener)
-    printFormat("IsValid", listener.IsValid())
-
-
 def pSBPlatform():
     platform = lldb.debugger.GetSelectedPlatform()
     # platform = lldb.debugger.GetSelectedTarget().GetPlatform()
@@ -210,7 +202,7 @@ def pSBPlatform():
     printFormat("GetOSMajorVersion", platform.GetOSMajorVersion())
     printFormat("GetOSMinorVersion", platform.GetOSMinorVersion())
     printFormat("GetOSUpdateVersion", platform.GetOSUpdateVersion())
-    printFormat("GetUnixSignals", platform.GetUnixSignals())
+    printFormat("GetUnixSignals", platform.GetUnixSignals())  # SBUnixSignals
 
 
 def pSBCommandInterpreter():
@@ -222,13 +214,15 @@ def pSBCommandInterpreter():
     printFormat("GetPromptOnQuit", ci.GetPromptOnQuit())
     printFormat("HasCustomQuitExitCode", ci.HasCustomQuitExitCode())
     printFormat("GetQuitStatus", ci.GetQuitStatus())
-    printFormat("GetBroadcaster", ci.GetBroadcaster())
+    printFormat("CommandExists", ci.CommandExists("breakpoint"))
+    printFormat("AliasExists", ci.AliasExists('bt'))
+    printFormat("GetBroadcaster", ci.GetBroadcaster())  # SBBroadcaster
     printFormat("GetBroadcasterClass", ci.GetBroadcasterClass())
     printFormat("HasCommands", ci.HasCommands())
     printFormat("HasAliases", ci.HasAliases())
     printFormat("HasAliasOptions", ci.HasAliasOptions())
-    printFormat("GetProcess", ci.GetProcess())
-    printFormat("GetDebugger", ci.GetDebugger())
+    printFormat("GetProcess", ci.GetProcess())  # SBProcess
+    printFormat("GetDebugger", ci.GetDebugger())  # SBDebugger
     printFormat("IsActive", ci.IsActive())
     printFormat("WasInterrupted", ci.WasInterrupted())
 
@@ -248,7 +242,7 @@ def pSBStructuredData():
     printClassName("SBStructuredData")
     printFormat("SBStructuredData", sd)
     printFormat("IsValid", sd.IsValid())
-    printFormat("GetType", sd.GetType())
+    printFormat("GetType", sd.GetType())  # StructuredDataType int
     printFormat("GetSize", sd.GetSize())
     printFormat("GetIntegerValue", sd.GetIntegerValue())
     printFormat("GetFloatValue", sd.GetFloatValue())
@@ -294,6 +288,14 @@ def pSBBroadcaster():
     printFormat("SBBroadcaster", broadcaster)
     printFormat("IsValid", broadcaster.IsValid())
     printFormat("GetName", broadcaster.GetName())
+
+
+def pSBListener():
+    listener = lldb.debugger.GetListener()
+
+    printClassName("SBListener")
+    printFormat("SBListener", listener)
+    printFormat("IsValid", listener.IsValid())
 
 
 def pSBLaunchInfo():
