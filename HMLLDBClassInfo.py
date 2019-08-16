@@ -86,6 +86,7 @@ def printTraversal(obj, getsize, getelem):
 
 def pSBDebugger():
     debugger = lldb.debugger
+
     printClassName("SBDebugger")
     printFormat("SBDebugger", debugger)
     printFormat("IsValid", debugger.IsValid())
@@ -122,16 +123,71 @@ def pSBDebugger():
 
 def pSBTarget():
     target = lldb.debugger.GetSelectedTarget()
+
     printClassName("SBTarget")
     printFormat("SBTarget", target)
+    printFormat("IsValid", target.IsValid())
+    printFormat("GetBroadcasterClassName", target.GetBroadcasterClassName())
+    printFormat("GetProcess", target.GetProcess())  # SBProcess
+    printFormat("GetPlatform", target.GetPlatform())  # SBPlatform
+    printFormat("GetExecutable", target.GetExecutable())  # SBFileSpec
+    printFormat("GetNumModules", target.GetNumModules())
+    printFormat("GetDebugger", target.GetDebugger())  # SBDebugger
+    printFormat("GetByteOrder", target.GetByteOrder())  # ByteOrder int
+    printFormat("GetAddressByteSize", target.GetAddressByteSize())
+    printFormat("GetTriple", target.GetTriple())
+    printFormat("GetDataByteSize", target.GetDataByteSize())
+    printFormat("GetCodeByteSize", target.GetCodeByteSize())
+    printFormat("FindFunctions.first", target.FindFunctions("viewDidLoad")[0])  # SBSymbolContext
+    printFormat("FindFirstType", target.FindFirstType("UIAlertAction"))  # SBType
+    printFormat("FindTypes", target.FindTypes("UIAlertAction"))  # SBTypeList
+    printFormat("GetSourceManager", target.GetSourceManager())  # SBSourceManager
+    printFormat("FindFirstGlobalVariable", target.FindFirstGlobalVariable("shared"))  # SBValue
+    printFormat("FindGlobalVariables", target.FindGlobalVariables("shared", 2))  # SBValueList
+    printFormat("FindGlobalFunctions.first", target.FindGlobalFunctions("viewDidLoad", 1, 0)[0])  # SBSymbolContext
+    printFormat("GetNumBreakpoints", target.GetNumBreakpoints())
+    printFormat("GetNumWatchpoints", target.GetNumWatchpoints())
+    printFormat("GetBroadcaster", target.GetBroadcaster())  # SBBroadcaster
+    printFormat("FindSymbols", target.FindSymbols("UIAlertAction"))  # SBSymbolContextList
+    printFormat("GetStackRedZoneSize", target.GetStackRedZoneSize())
+    printFormat("GetLaunchInfo", target.GetLaunchInfo())  # SBLaunchInfo
+    printFormat("GetCollectingStats", target.GetCollectingStats())
+    printFormat("GetStatistics", target.GetStatistics())  # SBStructuredData
+
+    printTraversal(target, "GetNumModules", "GetModuleAtIndex")  # [SBModule]
+    printTraversal(target, "GetNumBreakpoints", "GetBreakpointAtIndex")  # [SBBreakpoint]
+    printTraversal(target, "GetNumWatchpoints", "GetWatchpointAtIndex")  # [SBWatchpoint]
 
 
 def pSBProcess():
+    # TODO
     process = lldb.debugger.GetCommandInterpreter().GetProcess()
+    process = lldb.debugger.GetSelectedTarget().GetProcess()
+
+
+def pSBSymbolContext():
+    # TODO
+    ctx = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")[0]
+
+
+def pSBType():
+    # TODO
+    type = lldb.debugger.GetSelectedTarget().FindFirstType("UIAlertAction")
+
+
+def pSBBreakpoint():
+    # TODO
+    bp = lldb.debugger.GetSelectedTarget().GetBreakpointAtIndex(0)
+
+
+def pSBWatchpoint():
+    # TODO
+    wp = lldb.debugger.GetSelectedTarget().GetWatchpointAtIndex(0)
 
 
 def pSBListener():
     listener = lldb.debugger.GetListener()
+
     printClassName("SBListener")
     printFormat("SBListener", listener)
     printFormat("IsValid", listener.IsValid())
@@ -139,6 +195,8 @@ def pSBListener():
 
 def pSBPlatform():
     platform = lldb.debugger.GetSelectedPlatform()
+    # platform = lldb.debugger.GetSelectedTarget().GetPlatform()
+
     printClassName("SBPlatform")
     printFormat("SBPlatform", platform)
     printFormat("IsValid", platform.IsValid())
@@ -157,6 +215,7 @@ def pSBPlatform():
 
 def pSBCommandInterpreter():
     ci = lldb.debugger.GetCommandInterpreter()
+
     printClassName("SBCommandInterpreter")
     printFormat("SBCommandInterpreter", ci)
     printFormat("IsValid", ci.IsValid())
@@ -176,12 +235,16 @@ def pSBCommandInterpreter():
 
 def pSBSourceManager():
     manager = lldb.debugger.GetSourceManager()
+    # manager = lldb.debugger.GetSelectedTarget().GetSourceManager()
+
     printClassName("SBSourceManager")
     printFormat("SBSourceManager", manager)
 
 
 def pSBStructuredData():
     sd = lldb.debugger.GetBuildConfiguration()
+    # sd = lldb.debugger.GetSelectedTarget().GetStatistics()
+
     printClassName("SBStructuredData")
     printFormat("SBStructuredData", sd)
     printFormat("IsValid", sd.IsValid())
@@ -194,6 +257,7 @@ def pSBStructuredData():
 
 def pSBTypeCategory():
     category = lldb.debugger.GetDefaultCategory()
+
     printClassName("SBTypeCategory")
     printFormat("SBTypeCategory", category)
     printFormat("IsValid", category.IsValid())
@@ -224,7 +288,15 @@ def pSBUnixSignals():
 
 def pSBBroadcaster():
     broadcaster = lldb.debugger.GetCommandInterpreter().GetBroadcaster()
+    # broadcaster = lldb.debugger.GetSelectedTarget().GetBroadcaster()
+
     printClassName("SBBroadcaster")
     printFormat("SBBroadcaster", broadcaster)
     printFormat("IsValid", broadcaster.IsValid())
     printFormat("GetName", broadcaster.GetName())
+
+
+def pSBLaunchInfo():
+    # TODO
+    info = lldb.debugger.GetSelectedTarget().GetLaunchInfo()
+
