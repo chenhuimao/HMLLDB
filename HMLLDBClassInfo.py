@@ -38,10 +38,12 @@ def plldbClassInfo(debugger, command, exe_ctx, result, internal_dict):
         pSBDebugger()
     if compareName("SBTarget"):
         pSBTarget()
-    if compareName("pSBProcess"):
+    if compareName("SBProcess"):
         pSBProcess()
-    if compareName("pSBProcessInfo"):
+    if compareName("SBProcessInfo"):
         pSBProcessInfo()
+    if compareName("SBThread"):
+        pSBThread()
 
     if compareName("SBPlatform"):
         pSBPlatform()
@@ -53,7 +55,7 @@ def plldbClassInfo(debugger, command, exe_ctx, result, internal_dict):
         pSBFileSpec()
     if compareName("SBSymbolContext"):
         pSBSymbolContext()
-    if compareName("pSBSymbol"):
+    if compareName("SBSymbol"):
         pSBSymbol()
 
     if compareName("SBType"):
@@ -234,13 +236,42 @@ def pSBProcessInfo():
 
 
 def pSBThread():
-    # TODO
     thread = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread()
+
+    printClassName("SBThread")
+    printFormat("SBThread", thread)
+    printFormat("GetBroadcasterClassName", thread.GetBroadcasterClassName())
+    printFormat("IsValid", thread.IsValid())
+    printFormat("GetStopReason", thread.GetStopReason())  # StopReason int
+    printFormat("GetStopReasonDataCount", thread.GetStopReasonDataCount())
+    printFormat("GetStopReturnValue", thread.GetStopReturnValue())  # SBValue
+    printFormat("GetStopErrorValue", thread.GetStopErrorValue())  # SBValue
+    printFormat("GetThreadID", thread.GetThreadID())
+    printFormat("GetIndexID", thread.GetIndexID())
+    printFormat("GetName", thread.GetName())
+    printFormat("GetQueueName", thread.GetQueueName())
+    printFormat("GetQueueID", thread.GetQueueID())
+    printFormat("GetQueue", thread.GetQueue())  # SBQueue
+    printFormat("IsSuspended", thread.IsSuspended())
+    printFormat("IsStopped", thread.IsStopped())
+    printFormat("GetNumFrames", thread.GetNumFrames())
+    printFormat("GetSelectedFrame", thread.GetSelectedFrame())  # SBFrame
+    printFormat("GetProcess", thread.GetProcess())  # SBProcess
+    printFormat("SafeToCallFunctions", thread.SafeToCallFunctions())
+
+    printTraversal(thread, "GetStopReasonDataCount", "GetStopReasonDataAtIndex")  # [int]
+    printTraversal(thread, "GetNumFrames", "GetFrameAtIndex")  # [SBFrame]
+
+
+def pSBFrame():
+    # TODO
+    frame = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame()
 
 
 def pSBQueue():
     # TODO
-    queue = lldb.debugger.GetSelectedTarget().GetProcess().GetQueueAtIndex(0)
+    queue = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetQueue()
+    # queue = lldb.debugger.GetSelectedTarget().GetProcess().GetQueueAtIndex(0)
 
 
 def pSBSymbolContext():
