@@ -38,6 +38,10 @@ def plldbClassInfo(debugger, command, exe_ctx, result, internal_dict):
         pSBDebugger()
     if compareName("SBTarget"):
         pSBTarget()
+    if compareName("pSBProcess"):
+        pSBProcess()
+    if compareName("pSBProcessInfo"):
+        pSBProcessInfo()
 
     if compareName("SBPlatform"):
         pSBPlatform()
@@ -47,8 +51,15 @@ def plldbClassInfo(debugger, command, exe_ctx, result, internal_dict):
         pSBBreakpoint()
     if compareName("SBFileSpec"):
         pSBFileSpec()
+    if compareName("SBSymbolContext"):
+        pSBSymbolContext()
+    if compareName("pSBSymbol"):
+        pSBSymbol()
+
     if compareName("SBType"):
         pSBType()
+    if compareName("SBTypeMemberFunction"):
+        pSBTypeMemberFunction()
 
     if compareName("SBListener"):
         pSBListener()
@@ -68,7 +79,7 @@ def plldbClassInfo(debugger, command, exe_ctx, result, internal_dict):
 
 def compareName(className):
     global gLastCommand
-    if gLastCommand in className.lower() or gLastCommand == "all":
+    if gLastCommand.lower() in className.lower() or gLastCommand.lower() == "all":
         return True
     else:
         return False
@@ -168,14 +179,136 @@ def pSBTarget():
 
 
 def pSBProcess():
-    # TODO
-    process = lldb.debugger.GetCommandInterpreter().GetProcess()
     process = lldb.debugger.GetSelectedTarget().GetProcess()
+    # process = lldb.debugger.GetCommandInterpreter().GetProcess()
+
+    printClassName("SBProcess")
+    printFormat("SBProcess", process)
+    printFormat("GetBroadcasterClassName", process.GetBroadcasterClassName())
+    printFormat("GetPluginName", process.GetPluginName())
+    printFormat("GetShortPluginName", process.GetShortPluginName())
+    printFormat("IsValid", process.IsValid())
+    printFormat("GetTarget", process.GetTarget())  # SBTarget
+    printFormat("GetByteOrder", process.GetByteOrder())  # ByteOrder int
+    printFormat("GetNumThreads", process.GetNumThreads())
+    printFormat("GetSelectedThread", process.GetSelectedThread())  # SBThread
+    printFormat("GetNumQueues", process.GetNumQueues())
+    printFormat("GetState", process.GetState())  # StateType int
+    printFormat("GetExitStatus", process.GetExitStatus())
+    printFormat("GetExitDescription", process.GetExitDescription())
+    printFormat("GetProcessID", process.GetProcessID())
+    printFormat("GetUniqueID", process.GetUniqueID())
+    printFormat("GetAddressByteSize", process.GetAddressByteSize())
+    printFormat("GetUnixSignals", process.GetUnixSignals())  # SBUnixSignals
+    printFormat("GetBroadcaster", process.GetBroadcaster())  # SBBroadcaster
+    printFormat("GetNumExtendedBacktraceTypes", process.GetNumExtendedBacktraceTypes())
+    printFormat("GetMemoryRegions", process.GetMemoryRegions())  # SBMemoryRegionInfoList
+    printFormat("GetProcessInfo", process.GetProcessInfo())  # SBProcessInfo
+    printFormat("__get_is_alive__", process.__get_is_alive__())
+    printFormat("__get_is_running__", process.__get_is_running__())
+    printFormat("__get_is_stopped__", process.__get_is_stopped__())
+
+    printTraversal(process, "GetNumThreads", "GetThreadAtIndex")  # [SBThread]
+    printTraversal(process, "GetNumQueues", "GetQueueAtIndex")  # [SBQueue]
+    printTraversal(process, "GetNumExtendedBacktraceTypes", "GetExtendedBacktraceTypeAtIndex")  # [str]
+
+
+def pSBProcessInfo():
+    info = lldb.debugger.GetSelectedTarget().GetProcess().GetProcessInfo()
+
+    printClassName("SBProcessInfo")
+    printFormat("SBProcessInfo", info)
+    printFormat("IsValid", info.IsValid())
+    printFormat("GetName", info.GetName())
+    printFormat("GetExecutableFile", info.GetExecutableFile())  # SBFileSpec
+    printFormat("GetProcessID", info.GetProcessID())
+    printFormat("GetUserID", info.GetUserID())
+    printFormat("GetGroupID", info.GetGroupID())
+    printFormat("UserIDIsValid", info.UserIDIsValid())
+    printFormat("GroupIDIsValid", info.GroupIDIsValid())
+    printFormat("GetEffectiveUserID", info.GetEffectiveUserID())
+    printFormat("GetEffectiveGroupID", info.GetEffectiveGroupID())
+    printFormat("EffectiveUserIDIsValid", info.EffectiveUserIDIsValid())
+    printFormat("EffectiveGroupIDIsValid", info.EffectiveGroupIDIsValid())
+    printFormat("GetParentProcessID", info.GetParentProcessID())
+
+
+def pSBThread():
+    # TODO
+    thread = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread()
+
+
+def pSBQueue():
+    # TODO
+    queue = lldb.debugger.GetSelectedTarget().GetProcess().GetQueueAtIndex(0)
 
 
 def pSBSymbolContext():
-    # TODO
     ctx = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")[0]
+
+    printClassName("SBSymbolContext")
+    printFormat("SBSymbolContext", ctx)
+    printFormat("IsValid", ctx.IsValid())
+    printFormat("GetModule", ctx.GetModule())  # SBModule
+    printFormat("GetCompileUnit", ctx.GetCompileUnit())  # SBCompileUnit
+    printFormat("GetFunction", ctx.GetFunction())  # SBFunction
+    printFormat("GetBlock", ctx.GetBlock())  # SBBlock
+    printFormat("GetLineEntry", ctx.GetLineEntry())  # SBLineEntry
+    printFormat("GetSymbol", ctx.GetSymbol())  # SBSymbol
+
+
+def pSBSymbol():
+    symbol = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")[0].GetSymbol()
+
+    printClassName("SBSymbol")
+    printFormat("SBSymbol", symbol)
+    printFormat("IsValid", symbol.IsValid())
+    printFormat("GetName", symbol.GetName())
+    printFormat("GetDisplayName", symbol.GetDisplayName())
+    printFormat("GetMangledName", symbol.GetMangledName())
+    printFormat("GetStartAddress", symbol.GetStartAddress())  # SBAddress
+    printFormat("GetEndAddress", symbol.GetEndAddress())  # SBAddress
+    printFormat("GetPrologueByteSize", symbol.GetPrologueByteSize())
+    printFormat("GetType", symbol.GetType())  # SymbolType int
+    printFormat("IsExternal", symbol.IsExternal())
+    printFormat("IsSynthetic", symbol.IsSynthetic())
+    printFormat("GetInstructions", symbol.GetInstructions(lldb.debugger.GetSelectedTarget()))  # SBInstructionList
+
+
+def pSBModule():
+    # TODO
+    module = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")[0].GetModule()
+
+
+def pSBCompileUnit():
+    # TODO
+    cu = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")[0].GetCompileUnit()
+
+
+def pSBFunction():
+    # TODO
+    func = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")[0].GetFunction()
+
+
+def pSBBlock():
+    # TODO
+    b = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")[0].GetBlock()
+
+
+def pSBLineEntry():
+    # TODO
+    le = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")[0].GetLineEntry()
+
+
+def pSBAddress():
+    # TODO
+    address = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")[0].GetSymbol().GetStartAddress()
+    # address = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")[0].GetSymbol().GetEndAddress()
+
+
+def pSBInstructionList():
+    # TODO
+    instructionList = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")[0].GetSymbol().GetInstructions(lldb.debugger.GetSelectedTarget())
 
 
 def pSBType():
@@ -225,13 +358,26 @@ def pSBType():
 
 
 def pSBTypeMemberFunction():
-    # TODO
     func = lldb.debugger.GetSelectedTarget().FindFirstType("UIAlertAction").GetMemberFunctionAtIndex(0)
+
+    printClassName("SBTypeMemberFunction")
+    printFormat("SBTypeMemberFunction", func)
+    printFormat("IsValid", func.IsValid())
+    printFormat("GetName", func.GetName())
+    printFormat("GetDemangledName", func.GetDemangledName())
+    printFormat("GetMangledName", func.GetMangledName())
+    printFormat("GetType", func.GetType())  # SBType
+    printFormat("GetReturnType", func.GetReturnType())  # SBType
+    printFormat("GetNumberOfArguments", func.GetNumberOfArguments())
+    printFormat("GetKind", func.GetKind())  # MemberFunctionKind int
+
+    printTraversal(func, "GetNumberOfArguments", "GetArgumentTypeAtIndex")  # [SBType]
 
 
 def pSBFileSpec():
     fileSpec = lldb.debugger.GetSelectedTarget().GetExecutable()
     # fileSpec = lldb.debugger.GetSelectedTarget().GetLaunchInfo().GetExecutableFile()
+    # fileSpec = lldb.debugger.GetSelectedTarget().GetProcess().GetProcessInfo().GetExecutableFile()
 
     printClassName("SBFileSpec")
     printFormat("SBFileSpec", fileSpec)
@@ -354,6 +500,8 @@ def pSBTypeCategory():
 
 def pSBUnixSignals():
     signals = lldb.debugger.GetSelectedPlatform().GetUnixSignals()
+    # signals = lldb.debugger.GetSelectedTarget().GetProcess().GetUnixSignals()
+
     printClassName("SBUnixSignals")
     printFormat("SBUnixSignals", signals)
     printFormat("IsValid", signals.IsValid())
@@ -365,6 +513,7 @@ def pSBUnixSignals():
 def pSBBroadcaster():
     broadcaster = lldb.debugger.GetCommandInterpreter().GetBroadcaster()
     # broadcaster = lldb.debugger.GetSelectedTarget().GetBroadcaster()
+    # broadcaster = lldb.debugger.GetSelectedTarget().GetProcess().GetBroadcaster()
 
     printClassName("SBBroadcaster")
     printFormat("SBBroadcaster", broadcaster)
@@ -406,4 +555,9 @@ def pSBLaunchInfo():
 
     printTraversal(info, "GetNumArguments", "GetArgumentAtIndex")  # [str]
     printTraversal(info, "GetNumEnvironmentEntries", "GetEnvironmentEntryAtIndex")  # [str]
+
+
+def pSBMemoryRegionInfoList():
+    # TODO
+    mril = lldb.debugger.GetSelectedTarget().GetProcess().GetMemoryRegions()
 
