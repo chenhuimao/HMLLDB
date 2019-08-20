@@ -44,6 +44,8 @@ def plldbClassInfo(debugger, command, exe_ctx, result, internal_dict):
         pSBProcessInfo()
     if compareName("SBThread"):
         pSBThread()
+    if compareName("SBFrame"):
+        pSBFrame()
 
     if compareName("SBPlatform"):
         pSBPlatform()
@@ -264,8 +266,48 @@ def pSBThread():
 
 
 def pSBFrame():
-    # TODO
     frame = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame()
+
+    printClassName("SBFrame")
+    printFormat("SBFrame", frame)
+    printFormat("IsValid", frame.IsValid())
+    printFormat("GetFrameID", frame.GetFrameID())
+    printFormat("GetCFA", frame.GetCFA())
+    printFormat("GetPC", frame.GetPC())
+    printFormat("GetSP", frame.GetSP())
+    printFormat("GetFP", frame.GetFP())
+    printFormat("GetPCAddress", frame.GetPCAddress())  # SBAddress
+    printFormat("GetSymbolContext", frame.GetSymbolContext(lldb.eSymbolContextEverything))  # SBSymbolContext
+    printFormat("GetModule", frame.GetModule())  # SBModule
+    printFormat("GetCompileUnit", frame.GetCompileUnit())  # SBCompileUnit
+    printFormat("GetFunction", frame.GetFunction())  # SBFunction
+    printFormat("GetSymbol", frame.GetSymbol())  # SBSymbol
+    printFormat("GetBlock", frame.GetBlock())  # SBBlock
+    printFormat("GetDisplayFunctionName", frame.GetDisplayFunctionName())
+    printFormat("GetFunctionName", frame.GetFunctionName())
+    printFormat("GuessLanguage", frame.GuessLanguage())  # LanguageType int
+    printFormat("IsSwiftThunk", frame.IsSwiftThunk())
+    printFormat("IsInlined", frame.IsInlined())
+    printFormat("IsArtificial", frame.IsArtificial())
+    printFormat("GetFrameBlock", frame.GetFrameBlock())  # SBBlock
+    printFormat("GetLineEntry", frame.GetLineEntry())  # SBLineEntry
+    printFormat("GetThread", frame.GetThread())  # SBThread
+    printFormat("Disassemble", frame.Disassemble())
+
+    printFormat("GetVariables", frame.GetVariables(True, True, True, False))  # SBValueList
+    # printFormat("get_arguments", frame.get_arguments())  # SBValueList
+    # printFormat("get_locals", frame.get_locals())  # SBValueList
+    # printFormat("get_statics", frame.get_statics())  # SBValueList
+
+    printFormat("GetRegisters", frame.GetRegisters())  # SBValueList
+    printFormat("FindVariable", frame.FindVariable("self"))  # SBValue
+    printFormat("GetValueForVariablePath", frame.GetValueForVariablePath("self.customVariable"))  # SBValue
+    printFormat("get_parent_frame", frame.get_parent_frame())  # SBFrame
+
+
+def pSBValue():
+    # TODO
+    value = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().FindVariable("self")
 
 
 def pSBQueue():
@@ -275,7 +317,8 @@ def pSBQueue():
 
 
 def pSBSymbolContext():
-    ctx = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")[0]
+    ctx = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetSymbolContext(lldb.eSymbolContextEverything)
+    # ctx = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")[0]
 
     printClassName("SBSymbolContext")
     printFormat("SBSymbolContext", ctx)
@@ -289,7 +332,8 @@ def pSBSymbolContext():
 
 
 def pSBSymbol():
-    symbol = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")[0].GetSymbol()
+    symbol = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetSymbol()
+    # symbol = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")[0].GetSymbol()
 
     printClassName("SBSymbol")
     printFormat("SBSymbol", symbol)
@@ -309,32 +353,39 @@ def pSBSymbol():
 def pSBModule():
     # TODO
     module = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")[0].GetModule()
+    module = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetModule()
 
 
 def pSBCompileUnit():
     # TODO
     cu = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")[0].GetCompileUnit()
+    cu = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetCompileUnit()
 
 
 def pSBFunction():
     # TODO
     func = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")[0].GetFunction()
+    func = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetFunction()
 
 
 def pSBBlock():
     # TODO
     b = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")[0].GetBlock()
+    b = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetBlock()
+    b = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetFrameBlock()
 
 
 def pSBLineEntry():
     # TODO
     le = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")[0].GetLineEntry()
+    le = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetLineEntry()
 
 
 def pSBAddress():
     # TODO
     address = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")[0].GetSymbol().GetStartAddress()
     # address = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")[0].GetSymbol().GetEndAddress()
+    # address = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetPCAddress()
 
 
 def pSBInstructionList():
