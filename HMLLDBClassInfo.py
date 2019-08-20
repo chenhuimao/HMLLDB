@@ -46,6 +46,8 @@ def plldbClassInfo(debugger, command, exe_ctx, result, internal_dict):
         pSBThread()
     if compareName("SBFrame"):
         pSBFrame()
+    if compareName("SBValue"):
+        pSBValue()
 
     if compareName("SBPlatform"):
         pSBPlatform()
@@ -306,8 +308,72 @@ def pSBFrame():
 
 
 def pSBValue():
-    # TODO
     value = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().FindVariable("self")
+
+    printClassName("SBValue")
+    printFormat("SBValue", value)
+    printFormat("IsValid", value.IsValid())
+    printFormat("GetError", value.GetError())  # SBError
+    printFormat("GetID", value.GetID())
+    printFormat("GetName", value.GetName())
+    printFormat("GetTypeName", value.GetTypeName())
+    printFormat("GetDisplayTypeName", value.GetDisplayTypeName())
+    printFormat("GetByteSize", value.GetByteSize())
+    printFormat("IsInScope", value.IsInScope())
+    printFormat("GetFormat", value.GetFormat())  # Format int
+    printFormat("GetValue", value.GetValue())
+    printFormat("GetValueAsSigned", value.GetValueAsSigned())
+    printFormat("GetValueAsUnsigned", value.GetValueAsUnsigned())
+    printFormat("GetValueAsAddress", value.GetValueAsAddress())
+    printFormat("GetValueType", value.GetValueType())  # ValueType int
+    printFormat("GetValueDidChange", value.GetValueDidChange())
+    printFormat("GetSummary", value.GetSummary())
+    printFormat("GetObjectDescription", value.GetObjectDescription())
+    printFormat("GetTypeValidatorResult", value.GetTypeValidatorResult())
+    printFormat("GetStaticValue", value.GetStaticValue())  # SBValue
+    printFormat("GetNonSyntheticValue", value.GetNonSyntheticValue())  # SBValue
+    printFormat("GetPreferDynamicValue", value.GetPreferDynamicValue())  # DynamicValueType int
+    printFormat("GetPreferSyntheticValue", value.GetPreferSyntheticValue())
+    printFormat("IsDynamic", value.IsDynamic())
+    printFormat("IsSynthetic", value.IsSynthetic())
+    printFormat("IsSyntheticChildrenGenerated", value.IsSyntheticChildrenGenerated())
+    printFormat("GetLocation", value.GetLocation())
+    printFormat("GetTypeFormat", value.GetTypeFormat())  # SBTypeFormat
+    printFormat("GetTypeSummary", value.GetTypeSummary())  # SBTypeSummary
+    printFormat("GetTypeFilter", value.GetTypeFilter())  # SBTypeFilter
+    printFormat("GetTypeSynthetic", value.GetTypeSynthetic())  # SBTypeSynthetic
+    printFormat("GetType", value.GetType())  # SBType
+    printFormat("GetDeclaration", value.GetDeclaration())  # SBDeclaration
+    printFormat("MightHaveChildren", value.MightHaveChildren())
+    printFormat("IsRuntimeSupportValue", value.IsRuntimeSupportValue())
+    printFormat("GetNumChildren", value.GetNumChildren())
+    printFormat("GetOpaqueType", value.GetOpaqueType())
+    printFormat("Dereference", value.Dereference())  # SBValue
+    printFormat("AddressOf", value.AddressOf())  # SBValue
+    printFormat("TypeIsPointerType", value.TypeIsPointerType())
+    printFormat("GetTarget", value.GetTarget())  # SBTarget
+    printFormat("GetProcess", value.GetProcess())  # SBProcess
+    printFormat("GetThread", value.GetThread())  # SBThread
+    printFormat("GetFrame", value.GetFrame())  # SBFrame
+    printFormat("GetPointeeData", value.GetPointeeData())
+    printFormat("GetData", value.GetData())  # SBData
+    printFormat("GetLoadAddress", value.GetLoadAddress())
+    printFormat("GetAddress", value.GetAddress())  # SBAddress
+    printFormat("Persist", value.Persist())  # SBValue
+    printFormat("__get_dynamic__", value.__get_dynamic__())  # SBValue
+    printFormat("get_expr_path", value.get_expr_path())
+
+    printTraversal(value, "GetNumChildren", "GetChildAtIndex")  # [SBValue]
+
+
+def pSBError():
+    # TODO
+    error = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().FindVariable("self").GetError()
+
+
+def pSBData():
+    # TODO
+    data = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().FindVariable("self").GetData()
 
 
 def pSBQueue():
@@ -384,8 +450,9 @@ def pSBLineEntry():
 def pSBAddress():
     # TODO
     address = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")[0].GetSymbol().GetStartAddress()
-    # address = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")[0].GetSymbol().GetEndAddress()
-    # address = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetPCAddress()
+    address = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")[0].GetSymbol().GetEndAddress()
+    address = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetPCAddress()
+    address = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().FindVariable("self").GetAddress()
 
 
 def pSBInstructionList():
@@ -395,6 +462,8 @@ def pSBInstructionList():
 
 def pSBType():
     t = lldb.debugger.GetSelectedTarget().FindFirstType("UIAlertAction")
+    # TODO
+    # t = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().FindVariable("self").GetType()
 
     printClassName("SBType")
     printFormat("SBType", t)
@@ -642,4 +711,9 @@ def pSBLaunchInfo():
 def pSBMemoryRegionInfoList():
     # TODO
     mril = lldb.debugger.GetSelectedTarget().GetProcess().GetMemoryRegions()
+
+
+def pSBDeclaration():
+    # TODO
+    declaration = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().FindVariable("self").GetDeclaration()
 
