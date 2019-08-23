@@ -93,6 +93,8 @@ def plldbClassInfo(debugger, command, exe_ctx, result, internal_dict):
         pSBCommandInterpreter()
     if compareName("SBQueue"):
         pSBQueue()
+    if compareName("SBSection"):
+        pSBSection()
 
 
 def compareName(className):
@@ -570,10 +572,6 @@ def pSBBreakpoint():
 # def pSBInstructionList():
 #     # TODO
 #     instructionList = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")[0].GetSymbol().GetInstructions(lldb.debugger.GetSelectedTarget())
-#
-# def pSBSection():
-#     # TODO
-#     lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetModule().GetSectionAtIndex(0)
 
 
 def pSBType():
@@ -808,12 +806,24 @@ def pSBQueue():
     printTraversal(queue, "GetNumPendingItems", "GetPendingItemAtIndex")  # [SBQueueItem]
 
 
-# def pSBMemoryRegionInfoList():
-#     # TODO
-#     mril = lldb.debugger.GetSelectedTarget().GetProcess().GetMemoryRegions()
-#
-#
-# def pSBDeclaration():
-#     # TODO
-#     declaration = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().FindVariable("self").GetDeclaration()
+def pSBSection():
+    section = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetModule().FindSection("__TEXT")
+
+    printClassName("SBSection")
+    printFormat("SBSection", section)
+    printFormat("IsValid", section.IsValid())
+    printFormat("GetName", section.GetName())
+    printFormat("GetParent", section.GetParent())  # SBSection
+    printFormat("GetNumSubSections", section.GetNumSubSections())
+    printFormat("GetFileAddress", section.GetFileAddress())
+    printFormat("GetByteSize", section.GetByteSize())
+    printFormat("GetFileOffset", section.GetFileOffset())
+    printFormat("GetFileByteSize", section.GetFileByteSize())
+    # printFormat("GetSectionData", section.GetSectionData())  # SBData
+    printFormat("GetSectionType", section.GetSectionType())  # SectionType int
+    printFormat("GetPermissions", section.GetPermissions())
+    printFormat("GetTargetByteSize", section.GetTargetByteSize())
+    printFormat("get_addr", section.get_addr())  # SBAddress
+
+    printTraversal(section, "GetNumSubSections", "GetSubSectionAtIndex")  # [SBSection]
 
