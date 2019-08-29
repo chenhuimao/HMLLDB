@@ -57,6 +57,12 @@ def plldbClassInfo(debugger, command, exe_ctx, result, internal_dict):
         pSBSymbolContext()
     if compareName("SBSymbol"):
         pSBSymbol()
+    if compareName("SBInstruction"):
+        pSBInstruction()
+    if compareName("SBFunction"):
+        pSBFunction()
+    if compareName("SBBlock"):
+        pSBBlock()
     if compareName("SBFileSpec"):
         pSBFileSpec()
     if compareName("SBCompileUnit"):
@@ -463,6 +469,70 @@ def pSBSymbol():
     printFormat("GetInstructions", symbol.GetInstructions(lldb.debugger.GetSelectedTarget()))  # SBInstructionList
 
 
+def pSBInstruction():
+    target = lldb.debugger.GetSelectedTarget()
+    instructionList = target.GetProcess().GetSelectedThread().GetSelectedFrame().GetSymbol().GetInstructions(lldb.debugger.GetSelectedTarget())
+    # instructionList = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")[0].GetSymbol().GetInstructions(lldb.debugger.GetSelectedTarget())
+    instruction = instructionList.GetInstructionAtIndex(0)
+
+    printClassName("SBInstruction")
+    printFormat("SBInstruction", instruction)
+    printFormat("IsValid", instruction.IsValid())
+    printFormat("GetAddress", instruction.GetAddress())  # SBAddress
+    printFormat("GetMnemonic", instruction.GetMnemonic(target))
+    printFormat("GetOperands", instruction.GetOperands(target))
+    printFormat("GetComment", instruction.GetComment(target))
+    printFormat("GetData", instruction.GetData(target))  # SBData
+    printFormat("GetByteSize", instruction.GetByteSize())
+    printFormat("DoesBranch", instruction.DoesBranch())
+    printFormat("HasDelaySlot", instruction.HasDelaySlot())
+    printFormat("CanSetBreakpoint", instruction.CanSetBreakpoint())
+
+
+def pSBFunction():
+    func = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetFunction()
+    # func = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")[0].GetFunction()
+
+    printClassName("SBFunction")
+    printFormat("SBFunction", func)
+    printFormat("IsValid", func.IsValid())
+    printFormat("GetName", func.GetName())
+    printFormat("GetDisplayName", func.GetDisplayName())
+    printFormat("GetMangledName", func.GetMangledName())
+    printFormat("GetInstructions", func.GetInstructions(lldb.debugger.GetSelectedTarget()))  # SBInstructionList
+    printFormat("GetStartAddress", func.GetStartAddress())  # SBAddress
+    printFormat("GetEndAddress", func.GetEndAddress())  # SBAddress
+    printFormat("GetPrologueByteSize", func.GetPrologueByteSize())
+    printFormat("GetArgumentName", func.GetArgumentName(0))
+    printFormat("GetType", func.GetType())  # SBType
+    printFormat("GetBlock", func.GetBlock())  # SBBlock
+    printFormat("GetLanguage", func.GetLanguage())  # LanguageType int
+    printFormat("GetIsOptimized", func.GetIsOptimized())
+    printFormat("GetCanThrow", func.GetCanThrow())
+
+
+def pSBBlock():
+    block = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetBlock()
+    # block = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetFrameBlock()
+    # block = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetFunction().GetBlock()
+    # block = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")[0].GetBlock()
+
+    printClassName("SBBlock")
+    printFormat("SBBlock", block)
+    printFormat("IsInlined", block.IsInlined())
+    printFormat("IsValid", block.IsValid())
+    printFormat("GetInlinedName", block.GetInlinedName())
+    printFormat("GetInlinedCallSiteFile", block.GetInlinedCallSiteFile())  # SBFileSpec
+    printFormat("GetInlinedCallSiteLine", block.GetInlinedCallSiteLine())
+    printFormat("GetInlinedCallSiteColumn", block.GetInlinedCallSiteColumn())
+    printFormat("GetParent", block.GetParent())  # SBBlock
+    printFormat("GetContainingInlinedBlock", block.GetContainingInlinedBlock())  # SBBlock
+    printFormat("GetSibling", block.GetSibling())  # SBBlock
+    printFormat("GetFirstChild", block.GetFirstChild())  # SBBlock
+    printFormat("GetNumRanges", block.GetNumRanges())
+    printFormat("GetRangeStartAddress", block.GetRangeStartAddress(0))  # SBAddress
+
+
 def pSBFileSpec():
     fileSpec = lldb.debugger.GetSelectedTarget().GetExecutable()
     # fileSpec = lldb.debugger.GetSelectedTarget().GetLaunchInfo().GetExecutableFile()
@@ -518,6 +588,7 @@ def pSBAddress():
     # address = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().FindVariable("self").GetAddress()
     # address = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetModule().GetObjectFileHeaderAddress()
     # address = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetLineEntry().GetStartAddress()
+    # address = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetFunction().GetStartAddress()
 
     printClassName("SBAddress")
     printFormat("SBAddress", address)
@@ -558,24 +629,9 @@ def pSBBreakpoint():
     printTraversal(bp, "GetNumLocations", "GetLocationAtIndex")  # [SBBreakpointLocation]
 
 
-# def pSBFunction():
-#     # TODO
-#     func = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")[0].GetFunction()
-#     func = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetFunction()
-#
-#
-# def pSBBlock():
-#     # TODO
-#     b = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")[0].GetBlock()
-#     b = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetBlock()
-#     b = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetFrameBlock()
-# def pSBInstructionList():
-#     # TODO
-#     instructionList = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")[0].GetSymbol().GetInstructions(lldb.debugger.GetSelectedTarget())
-
-
 def pSBType():
-    t = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().FindVariable("self").GetType()
+    t = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetFunction().GetType()
+    # t = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().FindVariable("self").GetType()
     # t = lldb.debugger.GetSelectedTarget().FindFirstType("UIAlertAction")
 
     printClassName("SBType")
