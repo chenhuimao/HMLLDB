@@ -34,6 +34,9 @@ def plldbClassInfo(debugger, command, exe_ctx, result, internal_dict):
     global gLastCommand
     gLastCommand = command
 
+    if compareName("SBHostOS"):
+        pSBHostOS()
+
     if compareName("SBDebugger"):
         pSBDebugger()
     if compareName("SBTarget"):
@@ -131,6 +134,27 @@ def printTraversal(obj, getsize, getelem):
         if i == 0:
             print (type(elem(i)))
         print (elem(i))
+
+
+def pSBHostOS():
+    hostOS = lldb.SBHostOS
+
+    printClassName("SBHostOS")
+    printFormat("GetProgramFileSpec", hostOS.GetProgramFileSpec())  # SBFileSpec
+    printFormat("GetLLDBPythonPath", hostOS.GetLLDBPythonPath())  # SBFileSpec
+    printFormat("GetUserHomeDirectory", hostOS.GetUserHomeDirectory())  # SBFileSpec
+
+    printFormat("GetLLDBPath(ePathTypeLLDBShlibDir)", hostOS.GetLLDBPath(lldb.ePathTypeLLDBShlibDir))  # SBFileSpec
+    printFormat("GetLLDBPath(ePathTypeSupportExecutableDir)", hostOS.GetLLDBPath(lldb.ePathTypeSupportExecutableDir))  # SBFileSpec
+    printFormat("GetLLDBPath(ePathTypeSupportFileDir)", hostOS.GetLLDBPath(lldb.ePathTypeSupportFileDir))  # SBFileSpec
+    printFormat("GetLLDBPath(ePathTypeHeaderDir)", hostOS.GetLLDBPath(lldb.ePathTypeHeaderDir))  # SBFileSpec
+    printFormat("GetLLDBPath(ePathTypePythonDir)", hostOS.GetLLDBPath(lldb.ePathTypePythonDir))  # SBFileSpec
+    printFormat("GetLLDBPath(ePathTypeLLDBSystemPlugins)", hostOS.GetLLDBPath(lldb.ePathTypeLLDBSystemPlugins))  # SBFileSpec
+    printFormat("GetLLDBPath(ePathTypeLLDBUserPlugins)", hostOS.GetLLDBPath(lldb.ePathTypeLLDBUserPlugins))  # SBFileSpec
+    printFormat("GetLLDBPath(ePathTypeLLDBTempSystemDir)", hostOS.GetLLDBPath(lldb.ePathTypeLLDBTempSystemDir))  # SBFileSpec
+    printFormat("GetLLDBPath(ePathTypeGlobalLLDBTempSystemDir)", hostOS.GetLLDBPath(lldb.ePathTypeGlobalLLDBTempSystemDir))  # SBFileSpec
+    printFormat("GetLLDBPath(ePathTypeClangDir)", hostOS.GetLLDBPath(lldb.ePathTypeClangDir))  # SBFileSpec
+    printFormat("GetLLDBPath(ePathTypeSwiftDir)", hostOS.GetLLDBPath(lldb.ePathTypeSwiftDir))  # SBFileSpec
 
 
 def pSBDebugger():
