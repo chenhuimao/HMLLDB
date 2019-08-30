@@ -52,12 +52,10 @@ def plldbClassInfo(debugger, command, exe_ctx, result, internal_dict):
     if compareName("SBValue"):
         pSBValue()
 
-    if compareName("SBModule"):
-        pSBModule()
-    if compareName("SBError"):
-        pSBError()
     if compareName("SBSymbolContext"):
         pSBSymbolContext()
+    if compareName("SBModule"):
+        pSBModule()
     if compareName("SBSymbol"):
         pSBSymbol()
     if compareName("SBInstruction"):
@@ -66,36 +64,39 @@ def plldbClassInfo(debugger, command, exe_ctx, result, internal_dict):
         pSBFunction()
     if compareName("SBBlock"):
         pSBBlock()
-    if compareName("SBFileSpec"):
-        pSBFileSpec()
     if compareName("SBCompileUnit"):
         pSBCompileUnit()
     if compareName("SBLineEntry"):
         pSBLineEntry()
+
+    if compareName("SBFileSpec"):
+        pSBFileSpec()
     if compareName("SBAddress"):
         pSBAddress()
     if compareName("SBBreakpoint"):
         pSBBreakpoint()
+    if compareName("SBError"):
+        pSBError()
 
     if compareName("SBType"):
         pSBType()
     if compareName("SBTypeMemberFunction"):
         pSBTypeMemberFunction()
+    if compareName("SBTypeCategory"):
+        pSBTypeCategory()
 
     if compareName("SBPlatform"):
         pSBPlatform()
+    if compareName("SBBroadcaster"):
+        pSBBroadcaster()
     if compareName("SBListener"):
         pSBListener()
-    if compareName("SBTypeCategory"):
-        pSBTypeCategory()
     if compareName("SBSourceManager"):
         pSBSourceManager()
     if compareName("SBStructuredData"):
         pSBStructuredData()
     if compareName("SBUnixSignals"):
         pSBUnixSignals()
-    if compareName("SBBroadcaster"):
-        pSBBroadcaster()
     if compareName("SBLaunchInfo"):
         pSBLaunchInfo()
     if compareName("SBCommandInterpreter"):
@@ -417,6 +418,21 @@ def pSBValue():
     printTraversal(value, "GetNumChildren", "GetChildAtIndex")  # [SBValue]
 
 
+def pSBSymbolContext():
+    ctx = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetSymbolContext(lldb.eSymbolContextEverything)
+    # ctx = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")[0]
+
+    printClassName("SBSymbolContext")
+    printFormat("SBSymbolContext", ctx)
+    printFormat("IsValid", ctx.IsValid())
+    printFormat("GetModule", ctx.GetModule())  # SBModule
+    printFormat("GetCompileUnit", ctx.GetCompileUnit())  # SBCompileUnit
+    printFormat("GetFunction", ctx.GetFunction())  # SBFunction
+    printFormat("GetBlock", ctx.GetBlock())  # SBBlock
+    printFormat("GetLineEntry", ctx.GetLineEntry())  # SBLineEntry
+    printFormat("GetSymbol", ctx.GetSymbol())  # SBSymbol
+
+
 def pSBModule():
     module = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetModule()
     # module = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")[0].GetModule()
@@ -444,34 +460,6 @@ def pSBModule():
     printTraversal(module, "GetNumCompileUnits", "GetCompileUnitAtIndex")  # [SBCompileUnit]
     printTraversal(module, "GetNumSymbols", "GetSymbolAtIndex")  # [SBSymbol]
     printTraversal(module, "GetNumSections", "GetSectionAtIndex")  # [SBSection]
-
-
-def pSBError():
-    error = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().FindVariable("self").GetError()
-
-    printClassName("SBError")
-    printFormat("SBError", error)
-    printFormat("GetCString", error.GetCString())
-    printFormat("Fail", error.Fail())
-    printFormat("Success", error.Success())
-    printFormat("GetError", error.GetError())
-    printFormat("GetType", error.GetType())  # ErrorType int
-    printFormat("IsValid", error.IsValid())
-
-
-def pSBSymbolContext():
-    ctx = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetSymbolContext(lldb.eSymbolContextEverything)
-    # ctx = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")[0]
-
-    printClassName("SBSymbolContext")
-    printFormat("SBSymbolContext", ctx)
-    printFormat("IsValid", ctx.IsValid())
-    printFormat("GetModule", ctx.GetModule())  # SBModule
-    printFormat("GetCompileUnit", ctx.GetCompileUnit())  # SBCompileUnit
-    printFormat("GetFunction", ctx.GetFunction())  # SBFunction
-    printFormat("GetBlock", ctx.GetBlock())  # SBBlock
-    printFormat("GetLineEntry", ctx.GetLineEntry())  # SBLineEntry
-    printFormat("GetSymbol", ctx.GetSymbol())  # SBSymbol
 
 
 def pSBSymbol():
@@ -557,22 +545,6 @@ def pSBBlock():
     printFormat("GetRangeStartAddress", block.GetRangeStartAddress(0))  # SBAddress
 
 
-def pSBFileSpec():
-    fileSpec = lldb.debugger.GetSelectedTarget().GetExecutable()
-    # fileSpec = lldb.debugger.GetSelectedTarget().GetLaunchInfo().GetExecutableFile()
-    # fileSpec = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetModule().GetFileSpec()
-    # fileSpec = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetCompileUnit().GetFileSpec()
-
-    printClassName("SBFileSpec")
-    printFormat("SBFileSpec", fileSpec)
-    printFormat("IsValid", fileSpec.IsValid())
-    printFormat("Exists", fileSpec.Exists())
-    printFormat("ResolveExecutableLocation", fileSpec.ResolveExecutableLocation())
-    printFormat("GetFilename", fileSpec.GetFilename())
-    printFormat("GetDirectory", fileSpec.GetDirectory())
-    printFormat("fullpath", fileSpec.fullpath)
-
-
 def pSBCompileUnit():
     unit = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetCompileUnit()
     # unit = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")[0].GetCompileUnit()
@@ -604,6 +576,22 @@ def pSBLineEntry():
     printFormat("GetFileSpec", le.GetFileSpec())  # SBFileSpec
     printFormat("GetLine", le.GetLine())
     printFormat("GetColumn", le.GetColumn())
+
+
+def pSBFileSpec():
+    fileSpec = lldb.debugger.GetSelectedTarget().GetExecutable()
+    # fileSpec = lldb.debugger.GetSelectedTarget().GetLaunchInfo().GetExecutableFile()
+    # fileSpec = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetModule().GetFileSpec()
+    # fileSpec = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetCompileUnit().GetFileSpec()
+
+    printClassName("SBFileSpec")
+    printFormat("SBFileSpec", fileSpec)
+    printFormat("IsValid", fileSpec.IsValid())
+    printFormat("Exists", fileSpec.Exists())
+    printFormat("ResolveExecutableLocation", fileSpec.ResolveExecutableLocation())
+    printFormat("GetFilename", fileSpec.GetFilename())
+    printFormat("GetDirectory", fileSpec.GetDirectory())
+    printFormat("fullpath", fileSpec.fullpath)
 
 
 def pSBAddress():
@@ -651,6 +639,19 @@ def pSBBreakpoint():
     printFormat("IsHardware", bp.IsHardware())
 
     printTraversal(bp, "GetNumLocations", "GetLocationAtIndex")  # [SBBreakpointLocation]
+
+
+def pSBError():
+    error = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().FindVariable("self").GetError()
+
+    printClassName("SBError")
+    printFormat("SBError", error)
+    printFormat("GetCString", error.GetCString())
+    printFormat("Fail", error.Fail())
+    printFormat("Success", error.Success())
+    printFormat("GetError", error.GetError())
+    printFormat("GetType", error.GetType())  # ErrorType int
+    printFormat("IsValid", error.IsValid())
 
 
 def pSBType():
@@ -719,6 +720,27 @@ def pSBTypeMemberFunction():
     printTraversal(func, "GetNumberOfArguments", "GetArgumentTypeAtIndex")  # [SBType]
 
 
+def pSBTypeCategory():
+    category = lldb.debugger.GetDefaultCategory()
+
+    printClassName("SBTypeCategory")
+    printFormat("SBTypeCategory", category)
+    printFormat("IsValid", category.IsValid())
+    printFormat("GetEnabled", category.GetEnabled())
+    printFormat("GetName", category.GetName())
+    printFormat("GetNumLanguages", category.GetNumLanguages())
+    printFormat("GetNumFormats", category.GetNumFormats())
+    printFormat("GetNumSummaries", category.GetNumSummaries())
+    printFormat("GetNumFilters", category.GetNumFilters())
+    printFormat("GetNumSynthetics", category.GetNumSynthetics())
+
+    printTraversal(category, "GetNumLanguages", "GetLanguageAtIndex")  # [LanguageType] [int]
+    printTraversal(category, "GetNumFormats", "GetFormatAtIndex")  # [SBTypeFormat]
+    printTraversal(category, "GetNumSummaries", "GetSummaryAtIndex")  # [SBTypeSummary]
+    printTraversal(category, "GetNumFilters", "GetFilterAtIndex")  # [SBTypeFilter]
+    printTraversal(category, "GetNumSynthetics", "GetSyntheticAtIndex")  # [SBTypeSynthetic]
+
+
 def pSBPlatform():
     platform = lldb.debugger.GetSelectedPlatform()
     # platform = lldb.debugger.GetSelectedTarget().GetPlatform()
@@ -739,6 +761,17 @@ def pSBPlatform():
     printFormat("GetUnixSignals", platform.GetUnixSignals())  # SBUnixSignals
 
 
+def pSBBroadcaster():
+    broadcaster = lldb.debugger.GetCommandInterpreter().GetBroadcaster()
+    # broadcaster = lldb.debugger.GetSelectedTarget().GetBroadcaster()
+    # broadcaster = lldb.debugger.GetSelectedTarget().GetProcess().GetBroadcaster()
+
+    printClassName("SBBroadcaster")
+    printFormat("SBBroadcaster", broadcaster)
+    printFormat("IsValid", broadcaster.IsValid())
+    printFormat("GetName", broadcaster.GetName())
+
+
 def pSBListener():
     listener = lldb.debugger.GetListener()
     # listener = lldb.debugger.GetSelectedTarget().GetLaunchInfo().GetListener()
@@ -746,27 +779,6 @@ def pSBListener():
     printClassName("SBListener")
     printFormat("SBListener", listener)
     printFormat("IsValid", listener.IsValid())
-
-
-def pSBTypeCategory():
-    category = lldb.debugger.GetDefaultCategory()
-
-    printClassName("SBTypeCategory")
-    printFormat("SBTypeCategory", category)
-    printFormat("IsValid", category.IsValid())
-    printFormat("GetEnabled", category.GetEnabled())
-    printFormat("GetName", category.GetName())
-    printFormat("GetNumLanguages", category.GetNumLanguages())
-    printFormat("GetNumFormats", category.GetNumFormats())
-    printFormat("GetNumSummaries", category.GetNumSummaries())
-    printFormat("GetNumFilters", category.GetNumFilters())
-    printFormat("GetNumSynthetics", category.GetNumSynthetics())
-
-    printTraversal(category, "GetNumLanguages", "GetLanguageAtIndex")  # [LanguageType] [int]
-    printTraversal(category, "GetNumFormats", "GetFormatAtIndex")  # [SBTypeFormat]
-    printTraversal(category, "GetNumSummaries", "GetSummaryAtIndex")  # [SBTypeSummary]
-    printTraversal(category, "GetNumFilters", "GetFilterAtIndex")  # [SBTypeFilter]
-    printTraversal(category, "GetNumSynthetics", "GetSyntheticAtIndex")  # [SBTypeSynthetic]
 
 
 def pSBSourceManager():
@@ -804,17 +816,6 @@ def pSBUnixSignals():
     printFormat("GetNumSignals", signals.GetNumSignals())
 
     printTraversal(signals, "GetNumSignals", "GetSignalAtIndex")  # [int]
-
-
-def pSBBroadcaster():
-    broadcaster = lldb.debugger.GetCommandInterpreter().GetBroadcaster()
-    # broadcaster = lldb.debugger.GetSelectedTarget().GetBroadcaster()
-    # broadcaster = lldb.debugger.GetSelectedTarget().GetProcess().GetBroadcaster()
-
-    printClassName("SBBroadcaster")
-    printFormat("SBBroadcaster", broadcaster)
-    printFormat("IsValid", broadcaster.IsValid())
-    printFormat("GetName", broadcaster.GetName())
 
 
 def pSBLaunchInfo():
