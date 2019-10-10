@@ -185,6 +185,7 @@ def pSBDebugger():
     printFormat("GetTerminalWidth", debugger.GetTerminalWidth())
     printFormat("GetID", debugger.GetID())
     printFormat("GetPrompt", debugger.GetPrompt())
+    printFormat("GetReproducerPath", debugger.GetReproducerPath())
     printFormat("GetScriptLanguage", debugger.GetScriptLanguage())  # ScriptLanguage int
     printFormat("GetCloseInputOnEOF", debugger.GetCloseInputOnEOF())
     printFormat("GetNumCategories", debugger.GetNumCategories())
@@ -310,10 +311,13 @@ def pSBThread():
     printFormat("GetNumFrames", thread.GetNumFrames())
     printFormat("GetSelectedFrame", thread.GetSelectedFrame())  # SBFrame
     printFormat("GetProcess", thread.GetProcess())  # SBProcess
-    printFormat("SafeToCallFunctions", thread.SafeToCallFunctions())
     stream = lldb.SBStream()
     thread.GetStatus(stream)
     printFormat("GetStatus", stream.GetData())
+    printFormat("GetExtendedBacktraceOriginatingIndexID", thread.GetExtendedBacktraceOriginatingIndexID())
+    printFormat("GetCurrentException", thread.GetCurrentException())  # SBValue
+    printFormat("GetCurrentExceptionBacktrace", thread.GetCurrentExceptionBacktrace())  # SBValue
+    printFormat("SafeToCallFunctions", thread.SafeToCallFunctions())
 
     printTraversal(thread, "GetStopReasonDataCount", "GetStopReasonDataAtIndex")  # [int]
     printTraversal(thread, "GetNumFrames", "GetFrameAtIndex")  # [SBFrame]
@@ -456,6 +460,7 @@ def pSBModule():
     printFormat("GetVersion", module.GetVersion())
     printFormat("GetSymbolFileSpec", module.GetSymbolFileSpec())  # SBFileSpec
     printFormat("GetObjectFileHeaderAddress", module.GetObjectFileHeaderAddress())  # SBAddress
+    printFormat("GetObjectFileEntryPointAddress", module.GetObjectFileEntryPointAddress())  # SBAddress
 
     printTraversal(module, "GetNumCompileUnits", "GetCompileUnitAtIndex")  # [SBCompileUnit]
     printTraversal(module, "GetNumSymbols", "GetSymbolAtIndex")  # [SBSymbol]
