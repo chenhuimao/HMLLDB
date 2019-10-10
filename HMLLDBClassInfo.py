@@ -12,7 +12,7 @@ def __lldb_init_module(debugger, internal_dict):
         'command script add -f HMLLDBClassInfo.plldbClassInfo plldbClassInfo -h "Print infomation of lldb class."')
 
 
-gLastCommand = ""  # List of module names that may be user-written
+gLastCommand = ""
 
 
 def plldbClassInfo(debugger, command, exe_ctx, result, internal_dict):
