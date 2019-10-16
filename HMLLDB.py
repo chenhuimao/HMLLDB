@@ -18,13 +18,15 @@ def __lldb_init_module(debugger, internal_dict):
 
 
 def load_python_scripts_dir(dir_name):
-    this_files_basename = os.path.basename(__file__)  # HMLLDB.py
+    ignoreFiles = {"HMLLDB.py", "HMLLDBHelpers.py"}
+
     for file in os.listdir(dir_name):
-        if file.endswith('.py'):
+        if file in ignoreFiles:
+            continue
+        elif file.endswith('.py'):
             cmd = 'command script import '
         else:
             continue
 
-        if file != this_files_basename:  # Skipping this file to prevent recursion
-            fullPath = dir_name + '/' + file
-            lldb.debugger.HandleCommand(cmd + fullPath)
+        fullPath = dir_name + '/' + file
+        lldb.debugger.HandleCommand(cmd + fullPath)

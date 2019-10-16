@@ -1,6 +1,6 @@
 """ File: HMLLDBClassInfo.py
 
-An lldb Python script to print infomation of lldb class.(In order to learn)
+An lldb Python script to print infomation of lldb class.
 
 """
 
@@ -28,7 +28,7 @@ def plldbClassInfo(debugger, command, exe_ctx, result, internal_dict):
     This command is implemented in HMLLDBClassInfo.py
     """
     if len(command) == 0:
-        print ("Error input, plase input 'help plldbClassInfo' for more infomation")
+        print("Error input, plase input 'help plldbClassInfo' for more infomation")
         return
 
     global gLastCommand
@@ -116,25 +116,25 @@ def compareName(className):
 
 
 def printFormat(desc, value):
-    print ("[{arg1}]: {arg2}\n\ttype: {arg3}".format(arg1=desc, arg2=value, arg3=type(value)))
+    print("[{arg1}]: {arg2}\n\ttype: {arg3}".format(arg1=desc, arg2=value, arg3=type(value)))
 
 
 def printClassName(title):
-    print ("\n\n====={arg1}================================".format(arg1=title))
+    print("\n\n====={arg1}================================".format(arg1=title))
 
 
 def printTraversal(obj, getsize, getelem):
     size = getattr(obj, getsize)
     elem = getattr(obj, getelem)
 
-    print ("\n##### [{arg1}]({arg2}) #####".format(arg1=getelem, arg2=size()))
+    print("\n##### [{arg1}]({arg2}) #####".format(arg1=getelem, arg2=size()))
 
     for i in range(size()):
         if i == 100:
             break
         if i == 0:
-            print (type(elem(i)))
-        print (elem(i))
+            print(type(elem(i)))
+        print(elem(i))
 
 
 def pSBHostOS():
