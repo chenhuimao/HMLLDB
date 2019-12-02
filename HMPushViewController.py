@@ -4,6 +4,7 @@ An lldb Python script to push view controller.
 
 """
 
+from typing import Optional, List
 import lldb
 import HMLLDBHelpers as HM
 
@@ -63,7 +64,7 @@ def push(debugger, command, exe_ctx, result, internal_dict):
         HM.processContinue()
 
 
-def verifyObjIsKindOfClass(obj, className):
+def verifyObjIsKindOfClass(obj: str, className: str) -> bool:
     result = HM.evaluateExpressionValue("(BOOL)[(id){obj} isKindOfClass:[{objClass} class]]".format(obj=obj, objClass=className)).GetValue()
     if result == "True" or result == "true" or result == "YES":
         return True
@@ -71,7 +72,7 @@ def verifyObjIsKindOfClass(obj, className):
         return False
 
 
-def getNavigationVC():
+def getNavigationVC() -> Optional[str]:
     rootViewController = HM.evaluateExpressionValue("[[[UIApplication sharedApplication] keyWindow] rootViewController]").GetValue()
     if verifyObjIsKindOfClass(rootViewController, "UINavigationController"):
         return rootViewController
@@ -86,7 +87,7 @@ def getNavigationVC():
 
 
 # Get list of module names that may be user-written
-def getModulesName():
+def getModulesName() -> List[str]:
     print("Getting module names when using this command for the first time")
     numOfModules = lldb.debugger.GetSelectedTarget().GetNumModules()
     modulesName = []

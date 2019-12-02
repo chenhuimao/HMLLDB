@@ -17,7 +17,7 @@ def __lldb_init_module(debugger, internal_dict):
     load_python_scripts_dir(dir_name)
 
 
-def load_python_scripts_dir(dir_name):
+def load_python_scripts_dir(dir_name: str) -> None:
     ignoreFiles = {"HMLLDB.py", "HMLLDBHelpers.py"}
 
     for file in os.listdir(dir_name):

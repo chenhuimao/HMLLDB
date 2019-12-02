@@ -7,7 +7,7 @@ lldb Python script helpers.
 import lldb
 
 
-def processContinue():
+def processContinue() -> None:
     asyncState = lldb.debugger.GetAsync()
     lldb.debugger.SetAsync(True)
     lldb.debugger.HandleCommand('process continue')
@@ -16,7 +16,7 @@ def processContinue():
 
 # https://github.com/facebook/chisel/blob/master/fblldbbase.py
 # evaluates expression in Objective-C++ context, so it will work even for Swift projects
-def evaluateExpressionValue(expression):
+def evaluateExpressionValue(expression: str) -> lldb.SBValue:
     frame = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame()
     options = lldb.SBExpressionOptions()
     options.SetLanguage(lldb.eLanguageTypeObjC_plus_plus)
@@ -48,7 +48,7 @@ def evaluateExpressionValue(expression):
 
 
 # https://github.com/facebook/chisel/blob/master/fblldbbase.py
-def isSuccess(error):
+def isSuccess(error: lldb.SBError) -> bool:
     # When evaluating a `void` expression, the returned value will indicate an
     # error. This error is named: kNoResult. This error value does *not* mean
     # there was a problem. This logic follows what the builtin `expression`
@@ -58,7 +58,7 @@ def isSuccess(error):
 
 
 # https://github.com/facebook/chisel/blob/master/fblldbbase.py
-def importModule(frame, module):
+def importModule(frame: lldb.SBFrame, module: str) -> bool:
     options = lldb.SBExpressionOptions()
     options.SetLanguage(lldb.eLanguageTypeObjC)
     value = frame.EvaluateExpression('@import ' + module, options)
