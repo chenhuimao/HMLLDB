@@ -116,9 +116,14 @@ def deleteFile(debugger, command, exe_ctx, result, internal_dict):
     hasOption = False
 
     if options.all:
+        # Reserve the directory under the Home directory
         hasOption = True
-        homeDirectoryValue = HM.evaluateExpressionValue("(NSString *)NSHomeDirectory()")
-        deleteAllFileInDirectory(homeDirectoryValue.GetObjectDescription())
+        subFileArrayValue = HM.evaluateExpressionValue("[[NSFileManager defaultManager] contentsOfDirectoryAtPath:(NSString *)NSHomeDirectory() error:nil]")
+        for i in range(subFileArrayValue.GetNumChildren()):
+            subFileValue = subFileArrayValue.GetChildAtIndex(i)
+            print(subFileValue.GetObjectDescription())
+            subFilePath = HM.evaluateExpressionValue("[(NSString *)NSHomeDirectory() stringByAppendingPathComponent:(NSString *){arg}]".format(arg=subFileValue.GetValue()))
+            deleteAllFileInDirectory(subFilePath.GetObjectDescription())
 
     if options.documents:
         hasOption = True
