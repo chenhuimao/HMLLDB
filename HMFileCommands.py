@@ -122,8 +122,8 @@ def deleteFile(debugger, command, exe_ctx, result, internal_dict):
         for i in range(subFileArrayValue.GetNumChildren()):
             subFileValue = subFileArrayValue.GetChildAtIndex(i)
             print(subFileValue.GetObjectDescription())
-            subFilePath = HM.evaluateExpressionValue("[(NSString *)NSHomeDirectory() stringByAppendingPathComponent:(NSString *){arg}]".format(arg=subFileValue.GetValue()))
-            deleteAllFileInDirectory(subFilePath.GetObjectDescription())
+            subFilePathValue = HM.evaluateExpressionValue("[(NSString *)NSHomeDirectory() stringByAppendingPathComponent:(NSString *){arg}]".format(arg=subFileValue.GetValue()))
+            deleteAllFileInDirectory(subFilePathValue.GetObjectDescription())
 
     if options.documents:
         hasOption = True
