@@ -63,3 +63,74 @@ def importModule(frame: lldb.SBFrame, module: str) -> bool:
     options.SetLanguage(lldb.eLanguageTypeObjC)
     value = frame.EvaluateExpression('@import ' + module, options)
     return isSuccess(value.error)
+
+
+def existClass(className: str) -> bool:
+    command_script = '''
+        Class cls = (Class)objc_getClass("{arg}");
+        BOOL exist = NO;
+        if (cls) {{
+            exist = YES;
+        }}
+        exist;
+    '''.format(arg=className)
+
+    result = evaluateExpressionValue(command_script).GetValue()
+    if result == "True" or result == "true" or result == "YES":
+        return True
+    else:
+        return False
+
+
+def allocateClass(className: str, superClassName: str) -> lldb.SBValue:
+    command_script = '''
+        Class newCls = (Class)objc_getClass("{arg0}");
+        if (!newCls) {{
+            Class superCls = (Class)objc_getClass("{arg1}");
+            newCls = (Class)objc_allocateClassPair(superCls, "{arg0}", 0);
+        }}
+        newCls;
+    '''.format(arg0=className, arg1=superClassName)
+
+    return evaluateExpressionValue(command_script)
+
+
+def registerClass(classAddress: str) -> None:
+    command_script = "(void)objc_registerClassPair(Class({arg}))".format(arg=classAddress)
+    evaluateExpressionValue(command_script)
+
+
+def addIvar(classAddress: str, ivarName: str, types: str) -> bool:
+    command_script = '''
+        const char * types = @encode({arg2});
+        NSUInteger size;
+        NSUInteger alingment;
+        NSGetSizeAndAlignment(types, &size, &alingment);
+        (BOOL)class_addIvar((Class){arg0}, "{arg1}", size, alingment, types);
+    '''.format(arg0=classAddress, arg1=ivarName, arg2=types)
+
+    return evaluateExpressionValue(command_script).GetValue()
+
+
+def addClassMethod(className: str, selector: str, impAddress: str, types: str) -> None:
+    command_script = '''
+        Class metaCls = (Class)objc_getMetaClass("{arg0}");
+        if (metaCls) {{
+            SEL selector = NSSelectorFromString([[NSString alloc] initWithUTF8String:"{arg1}"]);
+            (BOOL)class_addMethod(metaCls, selector, (IMP){arg2}, "{arg3}");
+        }}
+    '''.format(arg0=className, arg1=selector, arg2=impAddress, arg3=types)
+
+    evaluateExpressionValue(command_script)
+
+
+def addInstanceMethod(className: str, selector: str, impAddress: str, types: str) -> None:
+    command_script = '''
+        Class cls = (Class)objc_getClass("{arg0}");
+        if (cls) {{
+            SEL selector = NSSelectorFromString([[NSString alloc] initWithUTF8String:"{arg1}"]);
+            (BOOL)class_addMethod(cls, selector, (IMP){arg2}, "{arg3}");
+        }}
+    '''.format(arg0=className, arg1=selector, arg2=impAddress, arg3=types)
+
+    evaluateExpressionValue(command_script)
