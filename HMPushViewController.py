@@ -27,19 +27,23 @@ def push(debugger, command, exe_ctx, result, internal_dict):
     This command is implemented in HMPushViewController.py
     """
 
-    # print (type(command))  # <type 'str'>
-    # print (type(exe_ctx))  # <class 'lldb.SBExecutionContext'>
-    # print (type(result))  # <class 'lldb.SBCommandReturnObject'>
-    # print (type(internal_dict))  # <type 'dict'>
+    # HM.DPrint(type(command))  # <class 'str'>
+    # HM.DPrint(type(exe_ctx))  # <class 'lldb.SBExecutionContext'>
+    # HM.DPrint(type(result))  # <class 'lldb.SBCommandReturnObject'>
+    # HM.DPrint(type(internal_dict))  # <class 'dict'>
 
-    print("Waiting...")
+    if len(command) == 0:
+        HM.DPrint("Error input, plase input 'help push' for more infomation")
+        return
+
+    HM.DPrint("Waiting...")
 
     state = False
     makeVCExpression = "(UIViewController *)[[NSClassFromString(@\"{UIViewController}\") alloc] init]".format(UIViewController=command)
     VCObject = HM.evaluateExpressionValue(makeVCExpression).GetValue()     # address
     navigationVC = getNavigationVC()
     if navigationVC is None:
-        print("Cannot find a UINavigationController")
+        HM.DPrint("Cannot find a UINavigationController")
         return
 
     if verifyObjIsKindOfClass(VCObject, "UIViewController"):
@@ -59,7 +63,7 @@ def push(debugger, command, exe_ctx, result, internal_dict):
                 state = True
                 break
 
-    print("push succeed" if state else "push failed")
+    HM.DPrint("push succeed" if state else "push failed")
     if state:
         HM.processContinue()
 
@@ -88,7 +92,7 @@ def getNavigationVC() -> Optional[str]:
 
 # Get list of module names that may be user-written
 def getModulesName() -> List[str]:
-    print("Getting module names when using this command for the first time")
+    HM.DPrint("Getting module names when using this command for the first time")
     numOfModules = lldb.debugger.GetSelectedTarget().GetNumModules()
     modulesName = []
     for i in range(numOfModules):
@@ -102,6 +106,6 @@ def getModulesName() -> List[str]:
         if '.app' in directory and '.' not in filename:  # Filter out modules that may be user-written
             modulesName.append(filename)
 
-    # print(modulesName)
+    # HM.DPrint(modulesName)
     return modulesName
 

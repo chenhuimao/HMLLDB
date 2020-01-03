@@ -6,6 +6,7 @@ An lldb Python script to print infomation of lldb class.
 
 import lldb
 from typing import Optional
+import HMLLDBHelpers as HM
 
 
 def __lldb_init_module(debugger, internal_dict):
@@ -29,7 +30,7 @@ def plldbClassInfo(debugger, command, exe_ctx, result, internal_dict):
     This command is implemented in HMLLDBClassInfo.py
     """
     if len(command) == 0:
-        print("Error input, plase input 'help plldbClassInfo' for more infomation")
+        HM.DPrint("Error input, plase input 'help plldbClassInfo' for more infomation")
         return
 
     global gLastCommand

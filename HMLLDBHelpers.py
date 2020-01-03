@@ -14,6 +14,11 @@ def processContinue() -> None:
     lldb.debugger.SetAsync(asyncState)
 
 
+def DPrint(obj):
+    print('[HMLLDB] ', end='')
+    print(obj)
+    
+
 # https://github.com/facebook/chisel/blob/master/fblldbbase.py
 # evaluates expression in Objective-C++ context, so it will work even for Swift projects
 def evaluateExpressionValue(expression: str) -> lldb.SBValue:
@@ -42,7 +47,7 @@ def evaluateExpressionValue(expression: str) -> lldb.SBValue:
         error = value.GetError()
 
     if not isSuccess(error):
-        print(error)
+        DPrint(error)
 
     return value
 

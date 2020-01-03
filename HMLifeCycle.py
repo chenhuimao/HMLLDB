@@ -48,5 +48,5 @@ def plifecycle(debugger, command, exe_ctx, result, internal_dict):
 
     if not ignore:
         selectorDescription = HM.evaluateExpressionValue("(char *)$arg2").GetSummary()
-        print(selfDescription + '  ' + selectorDescription + '\n')
+        HM.DPrint(selfDescription + '  ' + selectorDescription + '\n')
 

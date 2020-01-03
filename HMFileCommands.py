@@ -43,7 +43,7 @@ def pHomeDirectory(debugger, command, exe_ctx, result, internal_dict):
 
     homeDirectoryValue = HM.evaluateExpressionValue('(NSString *)NSHomeDirectory()')
     path = homeDirectoryValue.GetObjectDescription()
-    print(path)
+    HM.DPrint(path)
     if options.open:
         os.system('open ' + path)
 
@@ -74,7 +74,7 @@ def pBundlePath(debugger, command, exe_ctx, result, internal_dict):
 
     bundlePathValue = HM.evaluateExpressionValue('(NSString*)[[NSBundle mainBundle] bundlePath]')
     path = bundlePathValue.GetObjectDescription()
-    print(path)
+    HM.DPrint(path)
     if options.open:
         # Cannot open the bundle, so we open the directory where the bundle is located.
         directoryValue = HM.evaluateExpressionValue('(NSString *)[(NSString *){path} stringByDeletingLastPathComponent]'.format(path=bundlePathValue.GetValue()))
@@ -121,7 +121,7 @@ def deleteFile(debugger, command, exe_ctx, result, internal_dict):
         subFileArrayValue = HM.evaluateExpressionValue("[[NSFileManager defaultManager] contentsOfDirectoryAtPath:(NSString *)NSHomeDirectory() error:nil]")
         for i in range(subFileArrayValue.GetNumChildren()):
             subFileValue = subFileArrayValue.GetChildAtIndex(i)
-            print(subFileValue.GetObjectDescription())
+            HM.DPrint("=============" + subFileValue.GetObjectDescription() + "=============")
             subFilePathValue = HM.evaluateExpressionValue("[(NSString *)NSHomeDirectory() stringByAppendingPathComponent:(NSString *){arg}]".format(arg=subFileValue.GetValue()))
             deleteAllFileInDirectory(subFilePathValue.GetObjectDescription())
 
@@ -152,7 +152,7 @@ def deleteFile(debugger, command, exe_ctx, result, internal_dict):
         deleteAllFileInDirectory(preferencesDirectoryValue.GetObjectDescription())
 
     if not hasOption:
-        print("Requires at least one target directory, Please enter \"help deletefile\" for help.")
+        HM.DPrint("Requires at least one target directory, Please enter \"help deletefile\" for help.")
         return
 
     if options.open:
@@ -169,13 +169,13 @@ def deleteAllFileInDirectory(directoryPath: str) -> None:
             for (NSString *subFileName in subFileArray) {{
                 NSString *subFilePath = [directoryPath stringByAppendingPathComponent:subFileName];
                 if ([fileMgr removeItemAtPath:subFilePath error:nil]) {{
-                    NSLog(@"removed file:%@", subFilePath);
+                    printf("[HMLLDB] removed file:%s\\n", subFilePath.UTF8String);
                 }} else {{
-                    NSLog(@"failed to remove file:%@", subFilePath);
+                    printf("[HMLLDB] failed to remove file:%s\\n", subFilePath.UTF8String);
                 }}
             }}
         }} else {{
-            NSLog(@"failed to remove non-existing file:%@", directoryPath);
+            printf("[HMLLDB] failed to remove non-existing file:%s\\n", directoryPath.UTF8String);
         }}
     '''.format(arg=directoryPath)
 
