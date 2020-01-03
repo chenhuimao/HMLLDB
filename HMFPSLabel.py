@@ -26,20 +26,24 @@ def showFPS(debugger, command, exe_ctx, result, internal_dict):
     """
 
     FPSClassName = "HMFPSLabel"
-    if not HM.existClass(FPSClassName):
-        FPSLabelClassValue = HM.allocateClass(FPSClassName, "UILabel")
-        HM.addIvar(FPSLabelClassValue.GetValue(), "_link", "CADisplayLink *")
-        HM.addIvar(FPSLabelClassValue.GetValue(), "_count", "int")
-        HM.addIvar(FPSLabelClassValue.GetValue(), "_lastTime", "double")
-        HM.registerClass(FPSLabelClassValue.GetValue())
+    if HM.existClass(FPSClassName):
+        HM.DPrint("HMFPSLabel is already on display")
+        return
 
-        addToKeyWindowIMPValue = makeAddToKeyWindowIMP()
-        HM.addClassMethod(FPSClassName, "addToKeyWindow", addToKeyWindowIMPValue.GetValue(), "@@:")
+    # Register class
+    FPSLabelClassValue = HM.allocateClass(FPSClassName, "UILabel")
+    HM.addIvar(FPSLabelClassValue.GetValue(), "_link", "CADisplayLink *")
+    HM.addIvar(FPSLabelClassValue.GetValue(), "_count", "int")
+    HM.addIvar(FPSLabelClassValue.GetValue(), "_lastTime", "double")
+    HM.registerClass(FPSLabelClassValue.GetValue())
 
-        tickIMPValue = makeTickIMP()
-        HM.addInstanceMethod(FPSClassName, "tick:", tickIMPValue.GetValue(), "v@:@")
+    addToKeyWindowIMPValue = makeAddToKeyWindowIMP()
+    HM.addClassMethod(FPSClassName, "addToKeyWindow", addToKeyWindowIMPValue.GetValue(), "@@:")
 
+    tickIMPValue = makeTickIMP()
+    HM.addInstanceMethod(FPSClassName, "tick:", tickIMPValue.GetValue(), "v@:@")
 
+    # Show fps command
     addToKeyWindowCommand = '''
         Class fps = NSClassFromString(@"HMFPSLabel");
         (UILabel *)[fps performSelector:@selector(addToKeyWindow)];
@@ -99,7 +103,7 @@ def makeTickIMP() -> lldb.SBValue:
             CGFloat progress = fps / 60.0;
             UIColor *color = [UIColor colorWithHue:0.27 * (progress - 0.2) saturation:1 brightness:0.9 alpha:1];
             
-            NSMutableAttributedString *text = [[NSMutableAttributedString alloc] initWithString:[NSString stringWithFormat:@"%d",(int)round(fps)] attributes:@{(id)NSFontAttributeName: fpsLabel.font, (id)NSForegroundColorAttributeName: color}];
+            NSMutableAttributedString *text = [[NSMutableAttributedString alloc] initWithString:[NSString stringWithFormat:@"%d",(int)(fps + 0.5)] attributes:@{(id)NSFontAttributeName: fpsLabel.font, (id)NSForegroundColorAttributeName: color}];
             NSAttributedString *FPSString = [[NSAttributedString alloc] initWithString:@" FPS" attributes:@{(id)NSFontAttributeName: fpsLabel.font, (id)NSForegroundColorAttributeName: [UIColor whiteColor]}];
             [text appendAttributedString:FPSString];
             
