@@ -5,6 +5,7 @@ lldb Python script helpers.
 """
 
 import lldb
+from typing import Any
 
 
 def processContinue() -> None:
@@ -14,7 +15,7 @@ def processContinue() -> None:
     lldb.debugger.SetAsync(asyncState)
 
 
-def DPrint(obj):
+def DPrint(obj: Any) -> None:
     print('[HMLLDB] ', end='')
     print(obj)
     

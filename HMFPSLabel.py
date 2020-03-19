@@ -6,8 +6,6 @@ An lldb Python script about HMFPSLabel.
 
 import lldb
 import HMLLDBHelpers as HM
-import os
-import HMLLDBClassInfo
 
 
 def __lldb_init_module(debugger, internal_dict):
