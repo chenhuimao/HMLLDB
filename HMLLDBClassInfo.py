@@ -6,6 +6,8 @@ An lldb Python script to print infomation of lldb class.
 
 import lldb
 from typing import Optional
+import optparse
+import shlex
 import HMLLDBHelpers as HM
 
 
@@ -15,26 +17,42 @@ def __lldb_init_module(debugger, internal_dict):
 
 
 gLastCommand = ""
+gUnlimited = False
 
 
 def plldbClassInfo(debugger, command, exe_ctx, result, internal_dict):
     """
     Syntax:
-        plldbClassInfo <className>
+        plldbClassInfo [--entire] <className/all>
 
     Examples:
         (lldb) plldbClassInfo all
         (lldb) plldbClassInfo SBTarget
+        (lldb) plldbClassInfo -e SBTarget
         (lldb) plldbClassInfo SBValue
 
     This command is implemented in HMLLDBClassInfo.py
     """
-    if len(command) == 0:
+
+    command_args = shlex.split(command)
+    parser = generate_option_parser()
+    try:
+        # options: optparse.Values
+        # args: list
+        (options, args) = parser.parse_args(command_args)
+    except:
+        result.SetError(parser.usage)
+        return
+
+    if len(args) != 1:
         HM.DPrint("Error input, plase input 'help plldbClassInfo' for more infomation")
         return
 
+    global gUnlimited
+    gUnlimited = options.entire
+
     global gLastCommand
-    gLastCommand = command
+    gLastCommand = args[0]
 
     if compareName("SBHostOS"):
         pSBHostOS(None)
@@ -128,15 +146,29 @@ def printClassName(title: str) -> None:
 def printTraversal(obj: object, getsize: str, getelem: str) -> None:
     size = getattr(obj, getsize)
     elem = getattr(obj, getelem)
+    global gUnlimited
 
     print("\n##### [{arg1}]({arg2}) #####".format(arg1=getelem, arg2=size()))
 
     for i in range(size()):
-        if i == 100:
+        if i == 100 and not gUnlimited:
             break
         if i == 0:
             print(type(elem(i)))
         print(elem(i))
+
+
+def generate_option_parser() -> optparse.OptionParser:
+    usage = "usage: plldbClassInfo [--entire] <className/all>"
+    parser = optparse.OptionParser(usage=usage, prog="plldbClassInfo")
+
+    parser.add_option("-e", "--entire",
+                      action="store_true",
+                      default=False,
+                      dest="entire",
+                      help="Print all elements of the list, otherwise only 100")
+
+    return parser
 
 
 def pSBHostOS(obj: Optional[lldb.SBHostOS]) -> None:

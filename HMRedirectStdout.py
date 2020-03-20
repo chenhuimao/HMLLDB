@@ -74,7 +74,7 @@ def logRedirectResult(val: lldb.SBValue, stream: str) -> None:
 
 
 def generate_option_parser() -> optparse.OptionParser:
-    usage = "usage: redirect [--option]"
+    usage = "usage: redirect [--append] <stdout/stderr/both> <path>"
     parser = optparse.OptionParser(usage=usage, prog="redirect")
 
     parser.add_option("-a", "--append",
