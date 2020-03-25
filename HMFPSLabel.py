@@ -58,9 +58,9 @@ def makeAddToKeyWindowIMP() -> lldb.SBValue:
             fpsLabel.layer.zPosition = 100;
             fpsLabel.layer.cornerRadius = 5;
             fpsLabel.clipsToBounds = YES;
-            fpsLabel.textAlignment = (NSTextAlignment)NSTextAlignmentCenter;
+            fpsLabel.textAlignment = NSTextAlignmentCenter;
             fpsLabel.userInteractionEnabled = NO;
-            fpsLabel.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0.6];
+            (void)[fpsLabel setBackgroundColor:[[UIColor blackColor] colorWithAlphaComponent:0.6]];
             fpsLabel.font = [UIFont systemFontOfSize:14];
     
             CADisplayLink *link = [CADisplayLink displayLinkWithTarget:fpsLabel selector:NSSelectorFromString(@"tick:")];

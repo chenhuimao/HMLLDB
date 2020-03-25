@@ -36,7 +36,12 @@ def plifecycle(debugger, command, exe_ctx, result, internal_dict):
                      "UIKeyboardCandidateGridCollectionViewController",
                      "UISystemKeyboardDockController",
                      "_UIRemoteInputViewController",
-                     "UIApplicationRotationFollowingController"]
+                     "UIApplicationRotationFollowingController",
+                     "UISystemInputAssistantViewController",
+                     "UIPredictionViewController",
+                     "UICandidateViewController",
+                     "_SFAppPasswordSavingViewController",
+                     "SFPasswordSavingRemoteViewController"]
 
     selfDescription = HM.evaluateExpressionValue("(id)$arg1").GetObjectDescription()
 
