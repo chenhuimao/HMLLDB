@@ -19,9 +19,12 @@ def plifecycle(debugger, command, exe_ctx, result, internal_dict):
     Syntax:
         plifecycle [-i/--ignore_system_classes]
 
+    Options:
+        --ignore_system_classes/-i; Ignore the system generated UIViewController classes
+
     Notice:
         You should use plifecycle in symbolic breakpoint(UIViewController's life cycle) for easier control.
-        This command can ignore the system generated UIViewController class, Otherwise you may use the following command directly.
+        This command can ignore the system generated UIViewController classes, Otherwise you may use the following command directly.
 
         Method A: expression -l objc -O -- [[$arg1 description] stringByAppendingString:@"  dealloc/viewDidAppear:/..."]
         Method B: expression -l objc -O -- @import UIKit; [[NSString alloc] initWithFormat:@"%@  %s", (id)$arg1, (char *)$arg2]

@@ -25,11 +25,14 @@ def plldbClassInfo(debugger, command, exe_ctx, result, internal_dict):
     Syntax:
         plldbClassInfo [--entire] <className/all>
 
+    Options:
+        --entire/-e; Print all elements of the list, otherwise only 100
+
     Examples:
         (lldb) plldbClassInfo all
+        (lldb) plldbClassInfo SBValue
         (lldb) plldbClassInfo SBTarget
         (lldb) plldbClassInfo -e SBTarget
-        (lldb) plldbClassInfo SBValue
 
     This command is implemented in HMLLDBClassInfo.py
     """

@@ -26,7 +26,8 @@ def pHomeDirectory(debugger, command, exe_ctx, result, internal_dict):
         --open/-o; open in Finder
 
     Examples:
-        (lldb) phomedirectory --open
+        (lldb) phomedirectory
+        (lldb) phomedirectory -o
 
     This command is implemented in HMFileCommands.py
     """
@@ -57,7 +58,8 @@ def pBundlePath(debugger, command, exe_ctx, result, internal_dict):
         --open/-o; open in Finder
 
     Examples:
-        (lldb) pbundlepath --open
+        (lldb) pbundlepath
+        (lldb) pbundlepath -o
 
     This command is implemented in HMFileCommands.py
     """
@@ -97,9 +99,9 @@ def deleteFile(debugger, command, exe_ctx, result, internal_dict):
         --file/-f; Delete the file or directory
 
     Examples:
-        (lldb) deletefile --all
+        (lldb) deletefile -a
         (lldb) deletefile -c -p
-        (lldb) deletefile --file path/to/fileOrDirectory
+        (lldb) deletefile -f path/to/fileOrDirectory
 
     This command is implemented in HMFileCommands.py
     """
