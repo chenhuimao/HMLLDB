@@ -85,6 +85,7 @@ def deleteFile(debugger, command, exe_ctx, result, internal_dict):
     """
     Syntax:
         deletefile [--option]
+        deletefile [--file] <path>
 
     Options:
         --all/-a; Delete all file in the sandbox
@@ -93,12 +94,12 @@ def deleteFile(debugger, command, exe_ctx, result, internal_dict):
         --tmp/-t; Delete tmp's file
         --caches/-c; Delete caches's file
         --preferences/-p; Delete preferences's file
-        --open/-o; Opens the home directory in Finder
+        --file/-f; Delete the file or directory
 
     Examples:
         (lldb) deletefile --all
-        (lldb) deletefile --all --open
         (lldb) deletefile -c -p
+        (lldb) deletefile --file path/to/fileOrDirectory
 
     This command is implemented in HMFileCommands.py
     """
@@ -151,13 +152,12 @@ def deleteFile(debugger, command, exe_ctx, result, internal_dict):
         preferencesDirectoryValue = HM.evaluateExpressionValue("(NSString *)[(NSString *){arg} stringByAppendingPathComponent:@\"Preferences\"]".format(arg=libraryDirectoryValue.GetValue()))
         deleteAllFileInDirectory(preferencesDirectoryValue.GetObjectDescription())
 
-    if not hasOption:
-        HM.DPrint("Requires at least one target directory, Please enter \"help deletefile\" for help.")
-        return
+    if options.file:
+        hasOption = True
+        deleteFileOrDirectory(options.file)
 
-    if options.open:
-        homeDirectoryValue = HM.evaluateExpressionValue('(NSString *)NSHomeDirectory()')
-        os.system('open ' + homeDirectoryValue.GetObjectDescription())
+    if not hasOption:
+        HM.DPrint("Requires at least one target file/directory, Please enter \"help deletefile\" for help.")
 
 
 def deleteAllFileInDirectory(directoryPath: str) -> None:
@@ -169,16 +169,32 @@ def deleteAllFileInDirectory(directoryPath: str) -> None:
             for (NSString *subFileName in subFileArray) {{
                 NSString *subFilePath = [directoryPath stringByAppendingPathComponent:subFileName];
                 if ([fileMgr removeItemAtPath:subFilePath error:nil]) {{
-                    printf("[HMLLDB] removed file:%s\\n", subFilePath.UTF8String);
+                    printf("[HMLLDB] removed file:%s\\n", (const char *)[subFilePath UTF8String]);
                 }} else {{
-                    printf("[HMLLDB] failed to remove file:%s\\n", subFilePath.UTF8String);
+                    printf("[HMLLDB] failed to remove file:%s\\n", (const char *)[subFilePath UTF8String]);
                 }}
             }}
         }} else {{
-            printf("[HMLLDB] failed to remove non-existing file:%s\\n", directoryPath.UTF8String);
+            printf("[HMLLDB] failed to remove non-existing file:%s\\n", (const char *)[directoryPath UTF8String]);
         }}
     '''.format(arg=directoryPath)
+    HM.evaluateExpressionValue(command_script)
 
+
+def deleteFileOrDirectory(filePath: str) -> None:
+    command_script = '''
+        NSString *filePath = @"{arg}";
+        NSFileManager *fileMgr = [NSFileManager defaultManager];
+        if ([fileMgr fileExistsAtPath:filePath]) {{
+            if ([fileMgr removeItemAtPath:filePath error:nil]) {{
+                printf("[HMLLDB] removed file:%s\\n", (const char *)[filePath UTF8String]);
+            }} else {{
+                printf("[HMLLDB] failed to remove file:%s\\n", (const char *)[filePath UTF8String]);
+            }}
+        }} else {{
+            printf("[HMLLDB] failed to remove non-existing file:%s\\n", (const char *)[filePath UTF8String]);
+        }}
+    '''.format(arg=filePath)
     HM.evaluateExpressionValue(command_script)
 
 
@@ -195,7 +211,7 @@ def generate_option_parser(command: str) -> optparse.OptionParser:
 
 
 def generate_DeleteFile_optionParser() -> optparse.OptionParser:
-    usage = "usage: deleteFile [--option]"
+    usage = "usage: \ndeleteFile [--option] \ndeletefile [--file] <path>"
     parser = optparse.OptionParser(usage=usage, prog="deleteFile")
 
     parser.add_option("-a", "--all",
@@ -234,11 +250,11 @@ def generate_DeleteFile_optionParser() -> optparse.OptionParser:
                       dest="preferences",
                       help="Delete preferences's file")
 
-    parser.add_option("-o", "--open",
-                      action="store_true",
-                      default=False,
-                      dest="open",
-                      help="Opens the home directory in Finder")
+    parser.add_option("-f", "--file",
+                      action="store",
+                      default=None,
+                      dest="file",
+                      help="Delete the file or directory")
 
     return parser
 
