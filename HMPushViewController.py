@@ -7,22 +7,33 @@ An lldb Python script to push view controller.
 from typing import Optional, List
 import lldb
 import HMLLDBHelpers as HM
+import optparse
+import shlex
 
 
 def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand('command script add -f HMPushViewController.push push -h "Find navigationController in keyWindow then push a viewController."')
 
 
-gModulesName = []   # List of module names that may be user-written
+gModulesName: List[str] = []   # List of module names that may be user-written
 
 
 def push(debugger, command, exe_ctx, result, internal_dict):
     """
     Syntax:
         push <className>
+        push [--instance] <classInstance>
+
+    Options:
+        --instance/-i; Push the UIViewController instance.
 
     Examples:
         (lldb) push PersonalViewController
+        (lldb) push -i [[PersonalViewController alloc] init]
+
+        (lldb) expression -l objc -O -- [PersonalViewController new] (<PersonalViewController: 0x7fed30c5a070>)
+        (lldb) push -i 0x7fed30c5a070
+
 
     This command is implemented in HMPushViewController.py
     """
@@ -32,25 +43,44 @@ def push(debugger, command, exe_ctx, result, internal_dict):
     # HM.DPrint(type(result))  # <class 'lldb.SBCommandReturnObject'>
     # HM.DPrint(type(internal_dict))  # <class 'dict'>
 
-    if len(command) == 0:
+
+    command_args = shlex.split(command)
+    parser = generate_option_parser()
+    try:
+        # options: optparse.Values
+        # args: list
+        (options, args) = parser.parse_args(command_args)
+    except:
+        result.SetError(parser.usage)
+        return
+
+    if len(args) == 0:
         HM.DPrint("Error input, plase input 'help push' for more infomation")
         return
 
     HM.DPrint("Waiting...")
 
-    state = False
-    makeVCExpression = "(UIViewController *)[[NSClassFromString(@\"{UIViewController}\") alloc] init]".format(UIViewController=command)
-    VCObject = HM.evaluateExpressionValue(makeVCExpression).GetValue()     # address
     navigationVC = getNavigationVC()
     if navigationVC is None:
         HM.DPrint("Cannot find a UINavigationController")
         return
 
+    state = False
+    if options.instance:
+        instanceExpr: str = ""
+        for string in args:
+            instanceExpr += string + " "
+        instanceExpr = instanceExpr.rstrip()
+        VCObject = HM.evaluateExpressionValue(instanceExpr).GetValue()
+    else:
+        makeVCExpression = "(UIViewController *)[[NSClassFromString(@\"{UIViewController}\") alloc] init]".format(UIViewController=command)
+        VCObject = HM.evaluateExpressionValue(makeVCExpression).GetValue()     # address
+
     if verifyObjIsKindOfClass(VCObject, "UIViewController"):
         pushExpression = "(void)[{arg1} pushViewController:(id){arg2} animated:YES]".format(arg1=navigationVC, arg2=VCObject)
         debugger.HandleCommand('expression -l objc -O -- ' + pushExpression)
         state = True
-    else:
+    elif not options.instance:
         global gModulesName
         if len(gModulesName) == 0:
             gModulesName = getModulesName()
@@ -69,6 +99,9 @@ def push(debugger, command, exe_ctx, result, internal_dict):
 
 
 def verifyObjIsKindOfClass(obj: str, className: str) -> bool:
+    if obj is None or len(obj) == 0:
+        return False
+    
     result = HM.evaluateExpressionValue("(BOOL)[(id){obj} isKindOfClass:[{objClass} class]]".format(obj=obj, objClass=className)).GetValue()
     if result == "True" or result == "true" or result == "YES":
         return True
@@ -109,3 +142,15 @@ def getModulesName() -> List[str]:
     # HM.DPrint(modulesName)
     return modulesName
 
+
+def generate_option_parser() -> optparse.OptionParser:
+    usage = "usage: \npush <className> \npush [--instance] <classInstance>"
+    parser = optparse.OptionParser(usage=usage, prog="push")
+
+    parser.add_option("-i", "--instance",
+                      action="store_true",
+                      default=False,
+                      dest="instance",
+                      help="Push the UIViewController instance.")
+
+    return parser
