@@ -128,6 +128,8 @@ def plldbClassInfo(debugger, command, exe_ctx, result, internal_dict):
         pSBQueue(None)
     if compareName("SBSection"):
         pSBSection(None)
+    if compareName("SBExpressionOptions"):
+        pSBExpressionOptions(None)
 
 
 def compareName(className: str) -> bool:
@@ -1050,3 +1052,29 @@ def pSBSection(obj: Optional[lldb.SBSection]) -> None:
 
     printTraversal(section, "GetNumSubSections", "GetSubSectionAtIndex")  # [SBSection]
 
+
+def pSBExpressionOptions(obj: Optional[lldb.SBExpressionOptions]) -> None:
+    if obj:
+        options = obj
+    else:
+        options = lldb.SBExpressionOptions()
+
+    printClassName("SBExpressionOptions")
+    printFormat("SBExpressionOptions", options)
+    printFormat("GetCoerceResultToId", options.GetCoerceResultToId())
+    printFormat("GetUnwindOnError", options.GetUnwindOnError())
+    printFormat("GetIgnoreBreakpoints", options.GetIgnoreBreakpoints())
+    printFormat("GetFetchDynamicValue", options.GetFetchDynamicValue())
+    printFormat("GetTimeoutInMicroSeconds", options.GetTimeoutInMicroSeconds())
+    printFormat("GetOneThreadTimeoutInMicroSeconds", options.GetOneThreadTimeoutInMicroSeconds())
+    printFormat("GetTryAllThreads", options.GetTryAllThreads())
+    printFormat("GetStopOthers", options.GetStopOthers())
+    printFormat("GetTrapExceptions", options.GetTrapExceptions())
+    printFormat("GetPlaygroundTransformEnabled", options.GetPlaygroundTransformEnabled())
+    printFormat("GetREPLMode", options.GetREPLMode())
+    printFormat("GetGenerateDebugInfo", options.GetGenerateDebugInfo())
+    printFormat("GetSuppressPersistentResult", options.GetSuppressPersistentResult())
+    printFormat("GetPrefix", options.GetPrefix())
+    printFormat("GetAutoApplyFixIts", options.GetAutoApplyFixIts())
+    printFormat("GetTopLevel", options.GetTopLevel())
+    printFormat("GetAllowJIT", options.GetAllowJIT())
