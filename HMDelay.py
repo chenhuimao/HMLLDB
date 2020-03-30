@@ -24,10 +24,14 @@ def delay(debugger, command, exe_ctx, result, internal_dict):
     Options:
         --continue/-c; "process continue" after executing specified lldb command
 
+    Notice:
+        If <lldb command> has options, you should enclose it in quotes.
+
     Examples:
         (lldb) delay 1 showfps
         (lldb) delay -c 1 showfps
-        (lldb) delay 0.5 "push PersonalViewController"
+        (lldb) delay 0.5 push PersonalViewController
+        (lldb) delay 2 "deletefile -f path/to/fileOrDirectory"
 
     This command is implemented in HMDelay.py
     """
@@ -42,14 +46,21 @@ def delay(debugger, command, exe_ctx, result, internal_dict):
         result.SetError(parser.usage)
         return
 
-    if len(args) != 2:
+    if len(args) < 2:
         HM.DPrint("Requires two arguments(second and lldb command), Please enter \"help delay\" for help.")
         return
 
     debugger.SetAsync(True)
     debugger.HandleCommand("process continue")
     seconds = float(args[0])
-    specifiedCommand = str(args[1])
+    specifiedCommand: str = ""
+    for i, item in enumerate(args):
+        if i == 0:
+            continue
+        specifiedCommand += item + " "
+    specifiedCommand = specifiedCommand.rstrip()
+
+    HM.DPrint("Execute lldb command after {second} seconds: {command}".format(second=seconds, command=specifiedCommand))
     t = Timer(seconds, lambda: runDelayed(specifiedCommand, options.isContinue))
     t.start()
 
