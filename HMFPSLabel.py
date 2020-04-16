@@ -9,7 +9,7 @@ import HMLLDBHelpers as HM
 
 
 def __lldb_init_module(debugger, internal_dict):
-    debugger.HandleCommand('command script add -f HMFPSLabel.showFPS showfps -h "Show the FPS on key window(main thread)."')
+    debugger.HandleCommand('command script add -f HMFPSLabel.showFPS showfps -h "(deprecated)Show the FPS on key window(main thread)."')
 
 
 def showFPS(debugger, command, exe_ctx, result, internal_dict):
@@ -20,8 +20,13 @@ def showFPS(debugger, command, exe_ctx, result, internal_dict):
     Examples:
         (lldb) showfps
 
+    Notice:
+        showfps is deprecated. Use showdebughud instead.
+
     This command is implemented in HMFPSLabel.py
     """
+
+    HM.DPrint("showfps is deprecated. Use showdebughud instead.")
 
     FPSClassName = "HMFPSLabel"
     if HM.existClass(FPSClassName):

@@ -71,6 +71,12 @@ def importModule(frame: lldb.SBFrame, module: str) -> bool:
     return isSuccess(value.error)
 
 
+def judgeSBValueHasValue(val: lldb.SBValue) -> bool:
+    if val.GetValue() is None:
+        return False
+    return True
+
+
 def existClass(className: str) -> bool:
     command_script = '''
         Class cls = (Class)objc_getClass("{arg}");
