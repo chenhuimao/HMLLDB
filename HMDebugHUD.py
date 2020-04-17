@@ -14,6 +14,9 @@ def __lldb_init_module(debugger, internal_dict):
         'command script add -f HMDebugHUD.showDebugHUD showdebughud -h "Show debug HUD on key window.(HMDebugHUD)"')
 
 
+HUDClassName = "HMDebugHUD"
+
+
 def showDebugHUD(debugger, command, exe_ctx, result, internal_dict):
     """
     Syntax:
@@ -31,8 +34,7 @@ def showDebugHUD(debugger, command, exe_ctx, result, internal_dict):
 
     This command is implemented in HMDebugHUD.py
     """
-
-    HUDClassName = "HMDebugHUD"
+    global HUDClassName
     if HM.existClass(HUDClassName):
         HM.DPrint("HMDebugHUD is already on display")
         return
@@ -58,29 +60,14 @@ def showDebugHUD(debugger, command, exe_ctx, result, internal_dict):
         return
     HM.addClassMethod(HUDClassName, "addToKeyWindow", addToKeyWindowIMPValue.GetValue(), "@@:")
 
-    debugHUDtickIMPValue = makeDebugHUDtickIMP()
-    if not HM.judgeSBValueHasValue(debugHUDtickIMPValue):
-        HM.DPrint("Error debugHUDtickIMPValue, please fix it.")
+    # Add methods(update)
+    if not addUpdateMethods():
         return
-    HM.addInstanceMethod(HUDClassName, "debugHUDtick:", debugHUDtickIMPValue.GetValue(), "v@:@")
 
-    updateMemoryFootprintIMPValue = makeUpdateMemoryFootprintIMP()
-    if not HM.judgeSBValueHasValue(updateMemoryFootprintIMPValue):
-        HM.DPrint("Error updateMemoryFootprintIMPValue, please fix it.")
+    # Add methods(move)
+    HM.DPrint("Add methods to HMDebugHUD......")
+    if not addMoveMethods():
         return
-    HM.addInstanceMethod(HUDClassName, "updateMemoryFootprint", updateMemoryFootprintIMPValue.GetValue(), "v@:")
-
-    updateCPUUtilizationIMPValue = makeUpdateCPUUtilizationIMP()
-    if not HM.judgeSBValueHasValue(updateCPUUtilizationIMPValue):
-        HM.DPrint("Error updateCPUUtilizationIMPValue, please fix it.")
-        return
-    HM.addInstanceMethod(HUDClassName, "updateCPUUtilization", updateCPUUtilizationIMPValue.GetValue(), "v@:")
-
-    updateFPSIMPValue = makeUpdateFPSIMP()
-    if not HM.judgeSBValueHasValue(updateFPSIMPValue):
-        HM.DPrint("Error updateFPSIMPValue, please fix it.")
-        return
-    HM.addInstanceMethod(HUDClassName, "updateFPS:", updateFPSIMPValue.GetValue(), "v@:i")
 
     # Show HUD command
     HM.DPrint("Show HUD command...")
@@ -90,12 +77,42 @@ def showDebugHUD(debugger, command, exe_ctx, result, internal_dict):
     '''
     HM.evaluateExpressionValue(addToKeyWindowCommand)
 
-    HM.DPrint("Done.")
+    HM.DPrint("Done!")
 
 
 def currentTask() -> lldb.SBValue:
     taskValue = HM.evaluateExpressionValue("(unsigned int)(long)mach_task_self_")
     return taskValue
+
+
+def addUpdateMethods() -> bool:
+    global HUDClassName
+
+    debugHUDtickIMPValue = makeDebugHUDtickIMP()
+    if not HM.judgeSBValueHasValue(debugHUDtickIMPValue):
+        HM.DPrint("Error debugHUDtickIMPValue, please fix it.")
+        return False
+    HM.addInstanceMethod(HUDClassName, "debugHUDtick:", debugHUDtickIMPValue.GetValue(), "v@:@")
+
+    updateMemoryFootprintIMPValue = makeUpdateMemoryFootprintIMP()
+    if not HM.judgeSBValueHasValue(updateMemoryFootprintIMPValue):
+        HM.DPrint("Error updateMemoryFootprintIMPValue, please fix it.")
+        return False
+    HM.addInstanceMethod(HUDClassName, "updateMemoryFootprint", updateMemoryFootprintIMPValue.GetValue(), "v@:")
+
+    updateCPUUtilizationIMPValue = makeUpdateCPUUtilizationIMP()
+    if not HM.judgeSBValueHasValue(updateCPUUtilizationIMPValue):
+        HM.DPrint("Error updateCPUUtilizationIMPValue, please fix it.")
+        return False
+    HM.addInstanceMethod(HUDClassName, "updateCPUUtilization", updateCPUUtilizationIMPValue.GetValue(), "v@:")
+
+    updateFPSIMPValue = makeUpdateFPSIMP()
+    if not HM.judgeSBValueHasValue(updateFPSIMPValue):
+        HM.DPrint("Error updateFPSIMPValue, please fix it.")
+        return False
+    HM.addInstanceMethod(HUDClassName, "updateFPS:", updateFPSIMPValue.GetValue(), "v@:i")
+
+    return True
 
 
 def makeAddToKeyWindowIMP() -> lldb.SBValue:
@@ -294,6 +311,165 @@ def makeUpdateFPSIMP() -> lldb.SBValue:
         };
 
         (IMP)imp_implementationWithBlock(updateFPSBlock);
+
+    '''
+    return HM.evaluateExpressionValue(command_script)
+
+
+def addMoveMethods() -> bool:
+    global HUDClassName
+
+    touchesMovedWithEventIMPValue = makeTouchesMovedWithEventIMP()
+    if not HM.judgeSBValueHasValue(touchesMovedWithEventIMPValue):
+        HM.DPrint("Error touchesMovedWithEventIMPValue, please fix it.")
+        return False
+    HM.addInstanceMethod(HUDClassName, "touchesMoved:withEvent:", touchesMovedWithEventIMPValue.GetValue(), "v@:@@")
+
+    touchesEndedWithEventIMPValue = makeTouchesEndedWithEventIMP()
+    if not HM.judgeSBValueHasValue(touchesEndedWithEventIMPValue):
+        HM.DPrint("Error touchesEndedWithEventIMPValue, please fix it.")
+        return False
+    HM.addInstanceMethod(HUDClassName, "touchesEnded:withEvent:", touchesEndedWithEventIMPValue.GetValue(), "v@:@@")
+
+    touchesCancelledWithEventIMPValue = makeTouchesCancelledWithEventIMP()
+    if not HM.judgeSBValueHasValue(touchesCancelledWithEventIMPValue):
+        HM.DPrint("Error touchesCancelledWithEventIMPValue, please fix it.")
+        return False
+    HM.addInstanceMethod(HUDClassName, "touchesCancelled:withEvent:", touchesCancelledWithEventIMPValue.GetValue(), "v@:@@")
+
+    attachToEdgeIMPValue = makeAttachToEdgeIMP()
+    if not HM.judgeSBValueHasValue(attachToEdgeIMPValue):
+        HM.DPrint("Error attachToEdgeIMPValue, please fix it.")
+        return False
+    HM.addInstanceMethod(HUDClassName, "attachToEdge", attachToEdgeIMPValue.GetValue(), "v@:")
+
+    return True
+
+
+def makeTouchesMovedWithEventIMP() -> lldb.SBValue:
+    command_script = '''
+
+        void (^touchesMovedWithEventBlock)(HMDebugHUD *, NSSet *, UIEvent *) = ^(HMDebugHUD *HUD, NSSet * touches, UIEvent *event) {
+            struct objc_super superInfo = {
+                .receiver = HUD,
+                .super_class = (Class)class_getSuperclass((Class)[HUD class])
+            };
+
+            ((void (*)(struct objc_super *, SEL, id, id))objc_msgSendSuper)(&superInfo, @selector(touchesMoved:withEvent:), touches, event);
+        
+            UIView *superView = HUD.superview;
+            if (!superView) {
+                return;
+            }
+        
+            UITouch *touch = [touches anyObject];
+            CGPoint previousPoint = [touch previousLocationInView:HUD];
+            CGPoint currentPoint = [touch locationInView:HUD];
+            CGPoint targetCenter = HUD.center;
+            CGFloat offsetX = currentPoint.x - previousPoint.x;
+            CGFloat offsetY = currentPoint.y - previousPoint.y;
+        
+            if ((offsetX * offsetX < 1) && (offsetY * offsetY < 1)) {
+                return;
+            }
+            targetCenter.x = ceil(HUD.center.x + offsetX);
+            targetCenter.y = ceil(HUD.center.y + offsetY);
+        
+            HUD.center = targetCenter;
+        };
+
+        (IMP)imp_implementationWithBlock(touchesMovedWithEventBlock);
+
+    '''
+    return HM.evaluateExpressionValue(command_script)
+
+
+def makeTouchesEndedWithEventIMP() -> lldb.SBValue:
+    command_script = '''
+
+        void (^touchesEndedWithEventBlock)(HMDebugHUD *, NSSet *, UIEvent *) = ^(HMDebugHUD *HUD, NSSet * touches, UIEvent *event) {
+            struct objc_super superInfo = {
+                .receiver = HUD,
+                .super_class = (Class)class_getSuperclass((Class)[HUD class])
+            };
+
+            ((void (*)(struct objc_super *, SEL, id, id))objc_msgSendSuper)(&superInfo, @selector(touchesEnded:withEvent:), touches, event);
+
+            (void)[HUD attachToEdge];
+        };
+
+        (IMP)imp_implementationWithBlock(touchesEndedWithEventBlock);
+
+    '''
+    return HM.evaluateExpressionValue(command_script)
+
+
+def makeTouchesCancelledWithEventIMP() -> lldb.SBValue:
+    command_script = '''
+
+        void (^touchesCancelledWithEventBlock)(HMDebugHUD *, NSSet *, UIEvent *) = ^(HMDebugHUD *HUD, NSSet * touches, UIEvent *event) {
+            struct objc_super superInfo = {
+                .receiver = HUD,
+                .super_class = (Class)class_getSuperclass((Class)[HUD class])
+            };
+
+            ((void (*)(struct objc_super *, SEL, id, id))objc_msgSendSuper)(&superInfo, @selector(touchesCancelled:withEvent:), touches, event);
+
+            (void)[HUD attachToEdge];
+        };
+
+        (IMP)imp_implementationWithBlock(touchesCancelledWithEventBlock);
+
+    '''
+    return HM.evaluateExpressionValue(command_script)
+
+
+def makeAttachToEdgeIMP() -> lldb.SBValue:
+    command_script = '''
+
+        void (^attachToEdgeBlock)(HMDebugHUD *, NSSet *, UIEvent *) = ^(HMDebugHUD *HUD, NSSet * touches, UIEvent *event) {
+            
+            if (!HUD.window) {
+                return;
+            }
+        
+            UIEdgeInsets safeAreaInsets = UIEdgeInsetsZero;
+            if ([HUD.window respondsToSelector:@selector(safeAreaInsets)]) {
+                safeAreaInsets = [HUD.window safeAreaInsets];
+            }
+            
+            CGFloat minX = safeAreaInsets.left;
+            CGFloat maxX = HUD.window.bounds.size.width - safeAreaInsets.right;
+            CGFloat minY = safeAreaInsets.top;
+            CGFloat maxY = HUD.window.bounds.size.height - safeAreaInsets.bottom;
+        
+            
+            CGFloat x = HUD.frame.origin.x;
+            if (x < minX) {
+                x = minX;
+            }
+            if (x > maxX - HUD.frame.size.width) {
+                x = maxX - HUD.frame.size.width;
+            }
+            
+            CGFloat y = HUD.frame.origin.y;
+            if (y < minY) {
+                y = minY;
+            }
+            if (y > maxY - HUD.frame.size.height) {
+                y = maxY - HUD.frame.size.height;
+            }
+        
+            CGRect targetFrame = HUD.frame;
+            targetFrame.origin = CGPointMake(x, y);
+            
+            [UIView animateWithDuration:0.2 animations:^{
+                HUD.frame = targetFrame;
+            }];
+            
+        };
+
+        (IMP)imp_implementationWithBlock(attachToEdgeBlock);
 
     '''
     return HM.evaluateExpressionValue(command_script)
