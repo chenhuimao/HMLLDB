@@ -12,8 +12,7 @@ import HMLLDBHelpers as HM
 
 
 def __lldb_init_module(debugger, internal_dict):
-    debugger.HandleCommand(
-        'command script add -f HMLLDBClassInfo.plldbClassInfo plldbClassInfo -h "Print infomation of lldb class."')
+    debugger.HandleCommand('command script add -f HMLLDBClassInfo.plldbClassInfo plldbClassInfo -h "Print infomation of lldb class."')
 
 
 gLastCommand = ""

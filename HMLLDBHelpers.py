@@ -72,9 +72,16 @@ def importModule(frame: lldb.SBFrame, module: str) -> bool:
 
 
 def judgeSBValueHasValue(val: lldb.SBValue) -> bool:
-    if val.GetValue() is None:
+    if val.GetValue() is None or val.GetValueAsSigned() == 0:
         return False
     return True
+
+
+def boolOfSBValue(val: lldb.SBValue) -> bool:
+    result = val.GetValue()
+    if result == "True" or result == "true" or result == "YES":
+        return True
+    return False
 
 
 def existClass(className: str) -> bool:

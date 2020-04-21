@@ -10,8 +10,8 @@ import HMLLDBClassInfo
 
 
 def __lldb_init_module(debugger, internal_dict):
-    debugger.HandleCommand(
-        'command script add -f HMDebugHUD.showDebugHUD showdebughud -h "Show debug HUD on key window.(HMDebugHUD)"')
+    debugger.HandleCommand('command script add -f HMDebugHUD.showDebugHUD showhud -h "Show debug HUD on key window.(HMDebugHUD)"')
+    debugger.HandleCommand('command script add -f HMDebugHUD.removeDebugHUD removehud -h "Remove debug HUD from key window.(HMDebugHUD)"')
 
 
 HUDClassName = "HMDebugHUD"
@@ -20,10 +20,10 @@ HUDClassName = "HMDebugHUD"
 def showDebugHUD(debugger, command, exe_ctx, result, internal_dict):
     """
     Syntax:
-        showdebughud
+        showhud
 
     Examples:
-        (lldb) showdebughud
+        (lldb) showhud
 
     Summary:
         Show debug HUD.
@@ -35,8 +35,11 @@ def showDebugHUD(debugger, command, exe_ctx, result, internal_dict):
     This command is implemented in HMDebugHUD.py
     """
     global HUDClassName
-    if HM.existClass(HUDClassName):
+    if isDisplayingHUD():
         HM.DPrint("HMDebugHUD is already on display")
+        return
+    elif HM.existClass(HUDClassName):
+        showHUDFunc()
         return
 
     # Register class
@@ -70,6 +73,68 @@ def showDebugHUD(debugger, command, exe_ctx, result, internal_dict):
         return
 
     # Show HUD command
+    showHUDFunc()
+
+
+def removeDebugHUD(debugger, command, exe_ctx, result, internal_dict) -> None:
+    """
+    Syntax:
+        removehud
+
+    Examples:
+        (lldb) removehud
+
+    This command is implemented in HMDebugHUD.py
+    """
+
+    global HUDClassName
+    if not HM.existClass(HUDClassName):
+        HM.DPrint("HMDebugHUD does not exist.")
+        return
+
+    command_script = '''
+        UIView *keyWindow = [UIApplication sharedApplication].keyWindow;
+        Class HUDClass = (Class)objc_getClass("HMDebugHUD");
+        UIView *objView = nil;
+        for (UIView *subView in keyWindow.subviews) {
+            if ([subView isKindOfClass:HUDClass]) {
+                objView = subView;
+                break;
+            }
+        }
+        [objView removeFromSuperview];
+        objView;
+    '''
+
+    val = HM.evaluateExpressionValue(command_script)
+    if HM.judgeSBValueHasValue(val):
+        HM.DPrint("remove done!")
+    else:
+        HM.DPrint("HMDebugHUD does not exist.")
+
+
+def isDisplayingHUD() -> bool:
+    if not HM.existClass(HUDClassName):
+        return False
+
+    command_script = '''
+        BOOL isDisplaying = NO;
+        UIView *keyWindow = [UIApplication sharedApplication].keyWindow;
+        Class HUDClass = (Class)objc_getClass("HMDebugHUD");
+        for (UIView *subView in keyWindow.subviews) {
+            if ([subView isKindOfClass:HUDClass]) {
+                isDisplaying = YES;
+                break;
+            }
+        }
+        isDisplaying;
+    '''
+
+    val = HM.evaluateExpressionValue(command_script)
+    return HM.boolOfSBValue(val)
+
+
+def showHUDFunc() -> None:
     HM.DPrint("Show HUD command...")
     addToKeyWindowCommand = '''
         Class HUD = NSClassFromString(@"HMDebugHUD");
