@@ -21,12 +21,12 @@ def showFPS(debugger, command, exe_ctx, result, internal_dict):
         (lldb) showfps
 
     Notice:
-        showfps is deprecated. Use showdebughud instead.
+        showfps is deprecated. Use showhud instead.
 
     This command is implemented in HMFPSLabel.py
     """
 
-    HM.DPrint("showfps is deprecated. Use showdebughud instead.")
+    HM.DPrint("showfps is deprecated. Use showhud instead.")
 
     FPSClassName = "HMFPSLabel"
     if HM.existClass(FPSClassName):
@@ -59,7 +59,7 @@ def makeAddToKeyWindowIMP() -> lldb.SBValue:
 
         UILabel * (^addToKeyWindowBlock)(id) = ^UILabel *(id classSelf) {
             UILabel *fpsLabel = (UILabel *)[[NSClassFromString(@"HMFPSLabel") alloc] init];
-            fpsLabel.frame = CGRectMake(60, [UIApplication sharedApplication].statusBarFrame.size.height, 58, 20);
+            fpsLabel.frame = (CGRect){60, [UIApplication sharedApplication].statusBarFrame.size.height, 58, 20};
             fpsLabel.layer.zPosition = 100;
             fpsLabel.layer.cornerRadius = 5;
             fpsLabel.clipsToBounds = YES;

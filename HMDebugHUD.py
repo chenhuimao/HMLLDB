@@ -185,23 +185,23 @@ def makeAddToKeyWindowIMP() -> lldb.SBValue:
 
         UIView * (^addToKeyWindowBlock)(id) = ^UIView *(id classSelf) {
             UIView *HUD = (UIView *)[[NSClassFromString(@"HMDebugHUD") alloc] init];
-            HUD.frame = CGRectMake(60, [UIApplication sharedApplication].statusBarFrame.size.height, 42, 42);
+            HUD.frame = (CGRect){60, [UIApplication sharedApplication].statusBarFrame.size.height, 42, 42};
             HUD.layer.zPosition = 910326;            
             (void)[HUD setBackgroundColor:[UIColor colorWithWhite:0.6 alpha:0.8]];
 
             CGFloat rowHeight = 14;
             CGFloat rowWidth = 40;
-            UILabel *memoryLab = [[UILabel alloc] initWithFrame:CGRectMake(0, 0 * rowHeight, rowWidth, rowHeight)];
+            UILabel *memoryLab = [[UILabel alloc] initWithFrame:(CGRect){0, 0 * rowHeight, rowWidth, rowHeight}];
             memoryLab.textAlignment = NSTextAlignmentRight;
             [HUD addSubview:memoryLab];
             [HUD setValue:memoryLab forKey:@"_memoryLab"];
             
-            UILabel *cpuUtilizationLab = [[UILabel alloc] initWithFrame:CGRectMake(0, 1 * rowHeight, rowWidth, rowHeight)];
+            UILabel *cpuUtilizationLab = [[UILabel alloc] initWithFrame:(CGRect){0, 1 * rowHeight, rowWidth, rowHeight}];
             cpuUtilizationLab.textAlignment = NSTextAlignmentRight;
             [HUD addSubview:cpuUtilizationLab];
             [HUD setValue:cpuUtilizationLab forKey:@"_cpuUtilizationLab"];
             
-            UILabel *fpsLab = [[UILabel alloc] initWithFrame:CGRectMake(0, 2 * rowHeight, rowWidth, rowHeight)];
+            UILabel *fpsLab = [[UILabel alloc] initWithFrame:(CGRect){0, 2 * rowHeight, rowWidth, rowHeight}];
             fpsLab.textAlignment = NSTextAlignmentRight;
             [HUD addSubview:fpsLab];
             [HUD setValue:fpsLab forKey:@"_fpsLab"];
@@ -526,7 +526,7 @@ def makeAttachToEdgeIMP() -> lldb.SBValue:
             }
         
             CGRect targetFrame = HUD.frame;
-            targetFrame.origin = CGPointMake(x, y);
+            targetFrame.origin = (CGPoint){x, y};
             
             [UIView animateWithDuration:0.2 animations:^{
                 HUD.frame = targetFrame;
