@@ -44,18 +44,19 @@ def registerHMDebugMainViewController() -> None:
 
 def makePresentIMP() -> lldb.SBValue:
     command_script = '''
-        UIViewController * (^presentBlock)(id) = ^UIViewController *(id classSelf) {
-            UIViewController *vc = (UIViewController *)[[NSClassFromString(@"HMDebugMainViewController") alloc] init];
+        UIViewController * (^presentBlock)(id) = ^UIViewController *(id classSelf) {{
+            UIViewController *vc = (UIViewController *)[[NSClassFromString(@"{arg0}") alloc] init];
             UINavigationController *nv = [[UINavigationController alloc] initWithRootViewController:vc];
             nv.modalPresentationStyle = (UIModalPresentationStyle)UIModalPresentationFullScreen;
             [[UIApplication sharedApplication].keyWindow.rootViewController presentViewController:nv animated:YES completion:nil];
             
              return vc;
-         };
+         }};
 
          (IMP)imp_implementationWithBlock(presentBlock);
 
-     '''
+     '''.format(arg0=gClassName)
+
     return HM.evaluateExpressionValue(command_script)
 
 

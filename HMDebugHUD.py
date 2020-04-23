@@ -11,11 +11,11 @@ import HMDebugMainViewController
 
 
 def __lldb_init_module(debugger, internal_dict):
-    debugger.HandleCommand('command script add -f HMDebugHUD.showDebugHUD showhud -h "Show debug HUD on key window.(HMDebugHUD)"')
-    debugger.HandleCommand('command script add -f HMDebugHUD.removeDebugHUD removehud -h "Remove debug HUD from key window.(HMDebugHUD)"')
+    debugger.HandleCommand('command script add -f HMDebugHUD.showDebugHUD showhud -h "Show debug HUD on key window.({arg})"'.format(arg=gClassName))
+    debugger.HandleCommand('command script add -f HMDebugHUD.removeDebugHUD removehud -h "Remove debug HUD from key window.({arg})"'.format(arg=gClassName))
 
 
-HUDClassName = "HMDebugHUD"
+gClassName = "HMDebugHUD"
 
 
 def showDebugHUD(debugger, command, exe_ctx, result, internal_dict):
@@ -35,17 +35,17 @@ def showDebugHUD(debugger, command, exe_ctx, result, internal_dict):
 
     This command is implemented in HMDebugHUD.py
     """
-    global HUDClassName
+    global gClassName
     if isDisplayingHUD():
-        HM.DPrint("HMDebugHUD is already on display")
+        HM.DPrint("{arg} is already on display".format(arg=gClassName))
         return
-    elif HM.existClass(HUDClassName):
+    elif HM.existClass(gClassName):
         showHUDFunc()
         return
 
     # Register class
-    HM.DPrint("Register HMDebugHUD...")
-    classValue = HM.allocateClass(HUDClassName, "UIView")
+    HM.DPrint("Register {arg}...".format(arg=gClassName))
+    classValue = HM.allocateClass(gClassName, "UIView")
     HM.addIvar(classValue.GetValue(), "_link", "CADisplayLink *")
     HM.addIvar(classValue.GetValue(), "_count", "int")  # count in 1 second
     HM.addIvar(classValue.GetValue(), "_lastTime", "double")
@@ -57,25 +57,25 @@ def showDebugHUD(debugger, command, exe_ctx, result, internal_dict):
     HM.registerClass(classValue.GetValue())
 
     # Add methods
-    HM.DPrint("Add methods to HMDebugHUD...")
+    HM.DPrint("Add methods to {arg}...".format(arg=gClassName))
     addToKeyWindowIMPValue = makeAddToKeyWindowIMP()
     if not HM.judgeSBValueHasValue(addToKeyWindowIMPValue):
         HM.DPrint("Error addToKeyWindowIMPValue, please fix it.")
         return
-    HM.addClassMethod(HUDClassName, "addToKeyWindow", addToKeyWindowIMPValue.GetValue(), "@@:")
+    HM.addClassMethod(gClassName, "addToKeyWindow", addToKeyWindowIMPValue.GetValue(), "@@:")
 
     tapSelfIMPValue = makeTapSelfIMP()
     if not HM.judgeSBValueHasValue(tapSelfIMPValue):
         HM.DPrint("Error tapSelfIMPValue, please fix it.")
         return
-    HM.addInstanceMethod(HUDClassName, "tapSelf", tapSelfIMPValue.GetValue(), "v@:")
+    HM.addInstanceMethod(gClassName, "tapSelf", tapSelfIMPValue.GetValue(), "v@:")
 
     # Add methods(update)
     if not addUpdateMethods():
         return
 
     # Add methods(move)
-    HM.DPrint("Add methods to HMDebugHUD......")
+    HM.DPrint("Add methods to {arg}......".format(arg=gClassName))
     if not addMoveMethods():
         return
 
@@ -83,7 +83,7 @@ def showDebugHUD(debugger, command, exe_ctx, result, internal_dict):
     HM.DPrint("Hook tapSelf method...")
     addTapSelfBreakPoint(tapSelfIMPValue.GetValueAsUnsigned())
 
-    HM.DPrint("Register HMDebugHUD done!")
+    HM.DPrint("Register {arg} done!".format(arg=gClassName))
 
     # Show HUD command
     showHUDFunc()
@@ -100,48 +100,48 @@ def removeDebugHUD(debugger, command, exe_ctx, result, internal_dict) -> None:
     This command is implemented in HMDebugHUD.py
     """
 
-    global HUDClassName
-    if not HM.existClass(HUDClassName):
-        HM.DPrint("HMDebugHUD does not exist.")
+    global gClassName
+    if not HM.existClass(gClassName):
+        HM.DPrint("{arg} does not exist.".format(arg=gClassName))
         return
 
     command_script = '''
         UIView *keyWindow = [UIApplication sharedApplication].keyWindow;
-        Class HUDClass = (Class)objc_getClass("HMDebugHUD");
+        Class HUDClass = (Class)objc_getClass("{arg0}");
         UIView *objView = nil;
-        for (UIView *subView in keyWindow.subviews) {
-            if ([subView isKindOfClass:HUDClass]) {
+        for (UIView *subView in keyWindow.subviews) {{
+            if ([subView isKindOfClass:HUDClass]) {{
                 objView = subView;
                 break;
-            }
-        }
+            }}
+        }}
         [objView removeFromSuperview];
         objView;
-    '''
+    '''.format(arg0=gClassName)
 
     val = HM.evaluateExpressionValue(command_script)
     if HM.judgeSBValueHasValue(val):
         HM.DPrint("remove done!")
     else:
-        HM.DPrint("HMDebugHUD does not exist.")
+        HM.DPrint("{arg} does not exist.".format(arg=gClassName))
 
 
 def isDisplayingHUD() -> bool:
-    if not HM.existClass(HUDClassName):
+    if not HM.existClass(gClassName):
         return False
 
     command_script = '''
         BOOL isDisplaying = NO;
         UIView *keyWindow = [UIApplication sharedApplication].keyWindow;
-        Class HUDClass = (Class)objc_getClass("HMDebugHUD");
-        for (UIView *subView in keyWindow.subviews) {
-            if ([subView isKindOfClass:HUDClass]) {
+        Class HUDClass = (Class)objc_getClass("{arg0}");
+        for (UIView *subView in keyWindow.subviews) {{
+            if ([subView isKindOfClass:HUDClass]) {{
                 isDisplaying = YES;
                 break;
-            }
-        }
+            }}
+        }}
         isDisplaying;
-    '''
+    '''.format(arg0=gClassName)
 
     val = HM.evaluateExpressionValue(command_script)
     return HM.boolOfSBValue(val)
@@ -149,9 +149,9 @@ def isDisplayingHUD() -> bool:
 
 def showHUDFunc() -> None:
     addToKeyWindowCommand = '''
-        Class HUD = NSClassFromString(@"HMDebugHUD");
+        Class HUD = NSClassFromString(@"{arg0}");
         (UIView *)[HUD performSelector:@selector(addToKeyWindow)];
-    '''
+    '''.format(arg0=gClassName)
     HM.evaluateExpressionValue(addToKeyWindowCommand)
 
 
@@ -161,31 +161,31 @@ def currentTask() -> lldb.SBValue:
 
 
 def addUpdateMethods() -> bool:
-    global HUDClassName
+    global gClassName
 
     debugHUDtickIMPValue = makeDebugHUDtickIMP()
     if not HM.judgeSBValueHasValue(debugHUDtickIMPValue):
         HM.DPrint("Error debugHUDtickIMPValue, please fix it.")
         return False
-    HM.addInstanceMethod(HUDClassName, "debugHUDtick:", debugHUDtickIMPValue.GetValue(), "v@:@")
+    HM.addInstanceMethod(gClassName, "debugHUDtick:", debugHUDtickIMPValue.GetValue(), "v@:@")
 
     updateMemoryFootprintIMPValue = makeUpdateMemoryFootprintIMP()
     if not HM.judgeSBValueHasValue(updateMemoryFootprintIMPValue):
         HM.DPrint("Error updateMemoryFootprintIMPValue, please fix it.")
         return False
-    HM.addInstanceMethod(HUDClassName, "updateMemoryFootprint", updateMemoryFootprintIMPValue.GetValue(), "v@:")
+    HM.addInstanceMethod(gClassName, "updateMemoryFootprint", updateMemoryFootprintIMPValue.GetValue(), "v@:")
 
     updateCPUUtilizationIMPValue = makeUpdateCPUUtilizationIMP()
     if not HM.judgeSBValueHasValue(updateCPUUtilizationIMPValue):
         HM.DPrint("Error updateCPUUtilizationIMPValue, please fix it.")
         return False
-    HM.addInstanceMethod(HUDClassName, "updateCPUUtilization", updateCPUUtilizationIMPValue.GetValue(), "v@:")
+    HM.addInstanceMethod(gClassName, "updateCPUUtilization", updateCPUUtilizationIMPValue.GetValue(), "v@:")
 
     updateFPSIMPValue = makeUpdateFPSIMP()
     if not HM.judgeSBValueHasValue(updateFPSIMPValue):
         HM.DPrint("Error updateFPSIMPValue, please fix it.")
         return False
-    HM.addInstanceMethod(HUDClassName, "updateFPS:", updateFPSIMPValue.GetValue(), "v@:i")
+    HM.addInstanceMethod(gClassName, "updateFPS:", updateFPSIMPValue.GetValue(), "v@:i")
 
     return True
 
@@ -193,24 +193,24 @@ def addUpdateMethods() -> bool:
 def makeAddToKeyWindowIMP() -> lldb.SBValue:
     command_script = '''
 
-        UIView * (^addToKeyWindowBlock)(id) = ^UIView *(id classSelf) {
-            UIView *HUD = (UIView *)[[NSClassFromString(@"HMDebugHUD") alloc] init];
-            HUD.frame = (CGRect){60, [UIApplication sharedApplication].statusBarFrame.size.height, 42, 42};
+        UIView * (^addToKeyWindowBlock)(id) = ^UIView *(id classSelf) {{
+            UIView *HUD = (UIView *)[[NSClassFromString(@"{arg0}") alloc] init];
+            HUD.frame = (CGRect){{60, [UIApplication sharedApplication].statusBarFrame.size.height, 42, 42}};
             (void)[HUD setBackgroundColor:[UIColor colorWithWhite:0.6 alpha:0.8]];
 
             CGFloat rowHeight = 14;
             CGFloat rowWidth = 40;
-            UILabel *memoryLab = [[UILabel alloc] initWithFrame:(CGRect){0, 0 * rowHeight, rowWidth, rowHeight}];
+            UILabel *memoryLab = [[UILabel alloc] initWithFrame:(CGRect){{0, 0 * rowHeight, rowWidth, rowHeight}}];
             memoryLab.textAlignment = NSTextAlignmentRight;
             [HUD addSubview:memoryLab];
             [HUD setValue:memoryLab forKey:@"_memoryLab"];
             
-            UILabel *cpuUtilizationLab = [[UILabel alloc] initWithFrame:(CGRect){0, 1 * rowHeight, rowWidth, rowHeight}];
+            UILabel *cpuUtilizationLab = [[UILabel alloc] initWithFrame:(CGRect){{0, 1 * rowHeight, rowWidth, rowHeight}}];
             cpuUtilizationLab.textAlignment = NSTextAlignmentRight;
             [HUD addSubview:cpuUtilizationLab];
             [HUD setValue:cpuUtilizationLab forKey:@"_cpuUtilizationLab"];
             
-            UILabel *fpsLab = [[UILabel alloc] initWithFrame:(CGRect){0, 2 * rowHeight, rowWidth, rowHeight}];
+            UILabel *fpsLab = [[UILabel alloc] initWithFrame:(CGRect){{0, 2 * rowHeight, rowWidth, rowHeight}}];
             fpsLab.textAlignment = NSTextAlignmentRight;
             [HUD addSubview:fpsLab];
             [HUD setValue:fpsLab forKey:@"_fpsLab"];
@@ -225,17 +225,18 @@ def makeAddToKeyWindowIMP() -> lldb.SBValue:
             [[UIApplication sharedApplication].keyWindow addSubview:HUD];
             
             return HUD;
-        };
+        }};
 
         (IMP)imp_implementationWithBlock(addToKeyWindowBlock);
 
-    '''
+    '''.format(arg0=gClassName)
+
     return HM.evaluateExpressionValue(command_script)
 
 
 def makeTapSelfIMP() -> lldb.SBValue:
     command_script = '''
-        void (^tapSelfBlock)(HMDebugHUD *) = ^(HMDebugHUD *HUD) {
+        void (^tapSelfBlock)(UIView *) = ^(UIView *HUD) {
             Class cls = (Class)objc_getClass("HMDebugMainViewController");
             (id)[cls performSelector:@selector(present)];
         };
@@ -249,7 +250,7 @@ def makeTapSelfIMP() -> lldb.SBValue:
 def makeDebugHUDtickIMP() -> lldb.SBValue:
     command_script = '''
 
-        void (^debugHUDtickBlock)(HMDebugHUD *, CADisplayLink *) = ^(HMDebugHUD *HUD, CADisplayLink *link) {
+        void (^debugHUDtickBlock)(UIView *, CADisplayLink *) = ^(UIView *HUD, CADisplayLink *link) {
             NSNumber *countNum = [HUD valueForKey:@"_count"];
             int count = [countNum intValue] + 1;
             [HUD setValue:@(count) forKey:@"_count"];
@@ -280,7 +281,7 @@ def makeUpdateMemoryFootprintIMP() -> lldb.SBValue:
 
     command_script = '''
     
-        void (^updateMemoryFootprintBlock)(HMDebugHUD *) = ^(HMDebugHUD *HUD) {{
+        void (^updateMemoryFootprintBlock)(UIView *) = ^(UIView *HUD) {{
             
             task_vm_info_data_t vmInfo;
             vmInfo.phys_footprint = 0;
@@ -318,7 +319,7 @@ def makeUpdateMemoryFootprintIMP() -> lldb.SBValue:
 def makeUpdateCPUUtilizationIMP() -> lldb.SBValue:
     command_script = '''
 
-        void (^updateCPUUtilizationBlock)(HMDebugHUD *) = ^(HMDebugHUD *HUD) {{
+        void (^updateCPUUtilizationBlock)(UIView *) = ^(UIView *HUD) {{
             double totalUsageRatio = 0;
             double maxRatio = 0;
         
@@ -381,7 +382,7 @@ def makeUpdateCPUUtilizationIMP() -> lldb.SBValue:
 def makeUpdateFPSIMP() -> lldb.SBValue:
     command_script = '''
 
-        void (^updateFPSBlock)(HMDebugHUD *, int) = ^(HMDebugHUD *HUD, int fps) {
+        void (^updateFPSBlock)(UIView *, int) = ^(UIView *HUD, int fps) {
             UIColor *valueColor = [UIColor whiteColor];
             if (fps < 45) {
                 valueColor = [[UIColor alloc] initWithRed:0.88 green:0.36 blue:0.36 alpha:1];
@@ -407,31 +408,31 @@ def makeUpdateFPSIMP() -> lldb.SBValue:
 
 
 def addMoveMethods() -> bool:
-    global HUDClassName
+    global gClassName
 
     touchesMovedWithEventIMPValue = makeTouchesMovedWithEventIMP()
     if not HM.judgeSBValueHasValue(touchesMovedWithEventIMPValue):
         HM.DPrint("Error touchesMovedWithEventIMPValue, please fix it.")
         return False
-    HM.addInstanceMethod(HUDClassName, "touchesMoved:withEvent:", touchesMovedWithEventIMPValue.GetValue(), "v@:@@")
+    HM.addInstanceMethod(gClassName, "touchesMoved:withEvent:", touchesMovedWithEventIMPValue.GetValue(), "v@:@@")
 
     touchesEndedWithEventIMPValue = makeTouchesEndedWithEventIMP()
     if not HM.judgeSBValueHasValue(touchesEndedWithEventIMPValue):
         HM.DPrint("Error touchesEndedWithEventIMPValue, please fix it.")
         return False
-    HM.addInstanceMethod(HUDClassName, "touchesEnded:withEvent:", touchesEndedWithEventIMPValue.GetValue(), "v@:@@")
+    HM.addInstanceMethod(gClassName, "touchesEnded:withEvent:", touchesEndedWithEventIMPValue.GetValue(), "v@:@@")
 
     touchesCancelledWithEventIMPValue = makeTouchesCancelledWithEventIMP()
     if not HM.judgeSBValueHasValue(touchesCancelledWithEventIMPValue):
         HM.DPrint("Error touchesCancelledWithEventIMPValue, please fix it.")
         return False
-    HM.addInstanceMethod(HUDClassName, "touchesCancelled:withEvent:", touchesCancelledWithEventIMPValue.GetValue(), "v@:@@")
+    HM.addInstanceMethod(gClassName, "touchesCancelled:withEvent:", touchesCancelledWithEventIMPValue.GetValue(), "v@:@@")
 
     attachToEdgeIMPValue = makeAttachToEdgeIMP()
     if not HM.judgeSBValueHasValue(attachToEdgeIMPValue):
         HM.DPrint("Error attachToEdgeIMPValue, please fix it.")
         return False
-    HM.addInstanceMethod(HUDClassName, "attachToEdge", attachToEdgeIMPValue.GetValue(), "v@:")
+    HM.addInstanceMethod(gClassName, "attachToEdge", attachToEdgeIMPValue.GetValue(), "v@:")
 
     return True
 
@@ -439,7 +440,7 @@ def addMoveMethods() -> bool:
 def makeTouchesMovedWithEventIMP() -> lldb.SBValue:
     command_script = '''
 
-        void (^touchesMovedWithEventBlock)(HMDebugHUD *, NSSet *, UIEvent *) = ^(HMDebugHUD *HUD, NSSet * touches, UIEvent *event) {
+        void (^touchesMovedWithEventBlock)(UIView *, NSSet *, UIEvent *) = ^(UIView *HUD, NSSet * touches, UIEvent *event) {
             struct objc_super superInfo = {
                 .receiver = HUD,
                 .super_class = (Class)class_getSuperclass((Class)[HUD class])
@@ -477,7 +478,7 @@ def makeTouchesMovedWithEventIMP() -> lldb.SBValue:
 def makeTouchesEndedWithEventIMP() -> lldb.SBValue:
     command_script = '''
 
-        void (^touchesEndedWithEventBlock)(HMDebugHUD *, NSSet *, UIEvent *) = ^(HMDebugHUD *HUD, NSSet * touches, UIEvent *event) {
+        void (^touchesEndedWithEventBlock)(UIView *, NSSet *, UIEvent *) = ^(UIView *HUD, NSSet * touches, UIEvent *event) {
             struct objc_super superInfo = {
                 .receiver = HUD,
                 .super_class = (Class)class_getSuperclass((Class)[HUD class])
@@ -497,7 +498,7 @@ def makeTouchesEndedWithEventIMP() -> lldb.SBValue:
 def makeTouchesCancelledWithEventIMP() -> lldb.SBValue:
     command_script = '''
 
-        void (^touchesCancelledWithEventBlock)(HMDebugHUD *, NSSet *, UIEvent *) = ^(HMDebugHUD *HUD, NSSet * touches, UIEvent *event) {
+        void (^touchesCancelledWithEventBlock)(UIView *, NSSet *, UIEvent *) = ^(UIView *HUD, NSSet * touches, UIEvent *event) {
             struct objc_super superInfo = {
                 .receiver = HUD,
                 .super_class = (Class)class_getSuperclass((Class)[HUD class])
@@ -517,7 +518,7 @@ def makeTouchesCancelledWithEventIMP() -> lldb.SBValue:
 def makeAttachToEdgeIMP() -> lldb.SBValue:
     command_script = '''
 
-        void (^attachToEdgeBlock)(HMDebugHUD *, NSSet *, UIEvent *) = ^(HMDebugHUD *HUD, NSSet * touches, UIEvent *event) {
+        void (^attachToEdgeBlock)(UIView *, NSSet *, UIEvent *) = ^(UIView *HUD, NSSet * touches, UIEvent *event) {
             
             if (!HUD.window) {
                 return;
