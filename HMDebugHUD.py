@@ -7,6 +7,7 @@ An lldb Python script about HMDebugHUD.
 import lldb
 import HMLLDBHelpers as HM
 import HMLLDBClassInfo
+import HMDebugMainViewController
 
 
 def __lldb_init_module(debugger, internal_dict):
@@ -44,16 +45,16 @@ def showDebugHUD(debugger, command, exe_ctx, result, internal_dict):
 
     # Register class
     HM.DPrint("Register HMDebugHUD...")
-    FPSLabelClassValue = HM.allocateClass(HUDClassName, "UIView")
-    HM.addIvar(FPSLabelClassValue.GetValue(), "_link", "CADisplayLink *")
-    HM.addIvar(FPSLabelClassValue.GetValue(), "_count", "int")  # count in 1 second
-    HM.addIvar(FPSLabelClassValue.GetValue(), "_lastTime", "double")
+    classValue = HM.allocateClass(HUDClassName, "UIView")
+    HM.addIvar(classValue.GetValue(), "_link", "CADisplayLink *")
+    HM.addIvar(classValue.GetValue(), "_count", "int")  # count in 1 second
+    HM.addIvar(classValue.GetValue(), "_lastTime", "double")
 
-    HM.addIvar(FPSLabelClassValue.GetValue(), "_memoryLab", "UILabel *")
-    HM.addIvar(FPSLabelClassValue.GetValue(), "_cpuUtilizationLab", "UILabel *")
-    HM.addIvar(FPSLabelClassValue.GetValue(), "_fpsLab", "UILabel *")
+    HM.addIvar(classValue.GetValue(), "_memoryLab", "UILabel *")
+    HM.addIvar(classValue.GetValue(), "_cpuUtilizationLab", "UILabel *")
+    HM.addIvar(classValue.GetValue(), "_fpsLab", "UILabel *")
 
-    HM.registerClass(FPSLabelClassValue.GetValue())
+    HM.registerClass(classValue.GetValue())
 
     # Add methods
     HM.DPrint("Add methods to HMDebugHUD...")
@@ -63,6 +64,12 @@ def showDebugHUD(debugger, command, exe_ctx, result, internal_dict):
         return
     HM.addClassMethod(HUDClassName, "addToKeyWindow", addToKeyWindowIMPValue.GetValue(), "@@:")
 
+    tapSelfIMPValue = makeTapSelfIMP()
+    if not HM.judgeSBValueHasValue(tapSelfIMPValue):
+        HM.DPrint("Error tapSelfIMPValue, please fix it.")
+        return
+    HM.addInstanceMethod(HUDClassName, "tapSelf", tapSelfIMPValue.GetValue(), "v@:")
+
     # Add methods(update)
     if not addUpdateMethods():
         return
@@ -71,6 +78,12 @@ def showDebugHUD(debugger, command, exe_ctx, result, internal_dict):
     HM.DPrint("Add methods to HMDebugHUD......")
     if not addMoveMethods():
         return
+
+    # Add breakpoint in tapSelf
+    HM.DPrint("Hook tapSelf method...")
+    addTapSelfBreakPoint(tapSelfIMPValue.GetValueAsUnsigned())
+
+    HM.DPrint("Register HMDebugHUD done!")
 
     # Show HUD command
     showHUDFunc()
@@ -135,14 +148,11 @@ def isDisplayingHUD() -> bool:
 
 
 def showHUDFunc() -> None:
-    HM.DPrint("Show HUD command...")
     addToKeyWindowCommand = '''
         Class HUD = NSClassFromString(@"HMDebugHUD");
         (UIView *)[HUD performSelector:@selector(addToKeyWindow)];
     '''
     HM.evaluateExpressionValue(addToKeyWindowCommand)
-
-    HM.DPrint("Done!")
 
 
 def currentTask() -> lldb.SBValue:
@@ -186,7 +196,6 @@ def makeAddToKeyWindowIMP() -> lldb.SBValue:
         UIView * (^addToKeyWindowBlock)(id) = ^UIView *(id classSelf) {
             UIView *HUD = (UIView *)[[NSClassFromString(@"HMDebugHUD") alloc] init];
             HUD.frame = (CGRect){60, [UIApplication sharedApplication].statusBarFrame.size.height, 42, 42};
-            HUD.layer.zPosition = 910326;            
             (void)[HUD setBackgroundColor:[UIColor colorWithWhite:0.6 alpha:0.8]];
 
             CGFloat rowHeight = 14;
@@ -209,6 +218,9 @@ def makeAddToKeyWindowIMP() -> lldb.SBValue:
             CADisplayLink *link = [CADisplayLink displayLinkWithTarget:HUD selector:NSSelectorFromString(@"debugHUDtick:")];
             [link addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
             [HUD setValue:link forKey:@"_link"];
+            
+            UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:HUD action:@selector(tapSelf)];
+            [HUD addGestureRecognizer:tap];
 
             [[UIApplication sharedApplication].keyWindow addSubview:HUD];
             
@@ -216,6 +228,19 @@ def makeAddToKeyWindowIMP() -> lldb.SBValue:
         };
 
         (IMP)imp_implementationWithBlock(addToKeyWindowBlock);
+
+    '''
+    return HM.evaluateExpressionValue(command_script)
+
+
+def makeTapSelfIMP() -> lldb.SBValue:
+    command_script = '''
+        void (^tapSelfBlock)(HMDebugHUD *) = ^(HMDebugHUD *HUD) {
+            Class cls = (Class)objc_getClass("HMDebugMainViewController");
+            (id)[cls performSelector:@selector(present)];
+        };
+
+        (IMP)imp_implementationWithBlock(tapSelfBlock);
 
     '''
     return HM.evaluateExpressionValue(command_script)
@@ -538,3 +563,17 @@ def makeAttachToEdgeIMP() -> lldb.SBValue:
 
     '''
     return HM.evaluateExpressionValue(command_script)
+
+
+def addTapSelfBreakPoint(address: int) -> None:
+    target = lldb.debugger.GetSelectedTarget()
+    bp = target.BreakpointCreateByAddress(address)
+    bp.AddName("HMDebugHUD_TapSelf_Breakpoint")
+    bp.SetOneShot(True)
+    bp.SetScriptCallbackFunction("HMDebugHUD.tapSelfBreakPointHandler")
+
+
+def tapSelfBreakPointHandler(frame, bp_loc, internal_dict) -> bool:
+    HMDebugMainViewController.registerHMDebugMainViewController()
+    HM.processContinue()
+    return True
