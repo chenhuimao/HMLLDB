@@ -7,12 +7,13 @@ Implementation of HMDebugMainViewController class.
 import lldb
 import HMLLDBHelpers as HM
 import HMLLDBClassInfo
+import HMDebugInfoViewController
 
 
 gClassName = "HMDebugMainViewController"
 
 
-def registerHMDebugMainViewController() -> None:
+def register() -> None:
 
     if HM.existClass(gClassName):
         return
@@ -38,6 +39,16 @@ def registerHMDebugMainViewController() -> None:
     if not HM.judgeSBValueHasValue(dismissSelfIMPValue):
         return
     HM.addInstanceMethod(gClassName, "dismissSelf", dismissSelfIMPValue.GetValue(), "v@:")
+
+    # Methods related to tableView.
+    HM.DPrint("Add methods to {arg0}......".format(arg0=gClassName))
+    if not addTableViewMethods():
+        return
+
+    # Methods related to features.
+    HM.DPrint("Add methods to {arg0}.........".format(arg0=gClassName))
+    if not addFeatureMethods():
+        return
 
     HM.DPrint("Register {arg0} done!".format(arg0=gClassName))
 
@@ -74,11 +85,14 @@ def makeViewDidLoadIMP() -> lldb.SBValue:
             vc.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:vc action:@selector(dismissSelf)];
             vc.navigationItem.title = @"Tool";
             
-            UILabel *remindLab = [[UILabel alloc] initWithFrame:(CGRect){10, 100, 0, 0}];
-            remindLab.text = @"New tools are being developed...";
-            remindLab.textColor = [UIColor blackColor];
-            [remindLab sizeToFit];
-            [vc.view addSubview:remindLab];
+            // tableView
+            UITableView *tv = [[UITableView alloc] init];
+            tv.frame = vc.view.bounds;
+            tv.delegate = vc;
+            tv.dataSource = vc;
+            tv.rowHeight = 50;
+            tv.tableFooterView = [[UIView alloc] init];
+            [vc.view addSubview:tv];
         };
         
         (IMP)imp_implementationWithBlock(viewDidLoadBlock);
@@ -97,3 +111,108 @@ def makeDismissSelfIMP() -> lldb.SBValue:
 
      '''
     return HM.evaluateExpressionValue(command_script)
+
+
+def addTableViewMethods() -> bool:
+    global gClassName
+
+    numberOfRowsInSectionIMPValue = makeNumberOfRowsInSectionIMP()
+    if not HM.judgeSBValueHasValue(numberOfRowsInSectionIMPValue):
+        return False
+    HM.addInstanceMethod(gClassName, "tableView:numberOfRowsInSection:", numberOfRowsInSectionIMPValue.GetValue(), "l@:@l")
+
+    cellForRowAtIndexPathIMPValue = makeCellForRowAtIndexPathIMP()
+    if not HM.judgeSBValueHasValue(cellForRowAtIndexPathIMPValue):
+        return False
+    HM.addInstanceMethod(gClassName, "tableView:cellForRowAtIndexPath:", cellForRowAtIndexPathIMPValue.GetValue(), "@@:@@")
+
+    didSelectRowAtIndexPathIMPValue = makeDidSelectRowAtIndexPathIMP()
+    if not HM.judgeSBValueHasValue(didSelectRowAtIndexPathIMPValue):
+        return False
+    HM.addInstanceMethod(gClassName, "tableView:didSelectRowAtIndexPath:", didSelectRowAtIndexPathIMPValue.GetValue(), "v@:@@")
+
+    return True
+
+
+def makeNumberOfRowsInSectionIMP() -> lldb.SBValue:
+    command_script = '''
+        long (^IMPBlock)(UIViewController *, UITableView *, long) = ^long(UIViewController *vc, UITableView *tv, long section) {
+            return 1;
+        };
+        (IMP)imp_implementationWithBlock(IMPBlock);    
+    '''
+
+    return HM.evaluateExpressionValue(command_script)
+
+
+def makeCellForRowAtIndexPathIMP() -> lldb.SBValue:
+    command_script = '''
+        UITableViewCell * (^IMPBlock)(UIViewController *, UITableView *, NSIndexPath *) = ^UITableViewCell *(UIViewController *vc, UITableView *tv, NSIndexPath *indexPath) {
+            NSString * reuseIdentifier = @"Cell";
+            UITableViewCell *cell = [tv dequeueReusableCellWithIdentifier:reuseIdentifier];
+            if (cell == nil) {
+                cell = [[UITableViewCell alloc] initWithStyle:(UITableViewCellStyle)UITableViewCellStyleDefault reuseIdentifier:reuseIdentifier];
+                cell.selectionStyle = UITableViewCellSelectionStyleNone;
+                cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+            }
+            
+            long row = indexPath.row;
+            if (row == 0) {
+                cell.textLabel.text = @"APP and system information";
+            }
+            return cell;
+        };
+        
+        (IMP)imp_implementationWithBlock(IMPBlock);    
+    '''
+
+    return HM.evaluateExpressionValue(command_script)
+
+
+def makeDidSelectRowAtIndexPathIMP() -> lldb.SBValue:
+    command_script = '''
+        void (^IMPBlock)(UIViewController *, UITableView *, NSIndexPath *) = ^(UIViewController *vc, UITableView *tv, NSIndexPath *indexPath) {
+            long row = indexPath.row;
+            if (row == 0) {
+                (void)[vc performSelector:@selector(selectedAPPInfo)];
+            }
+        };
+
+        (IMP)imp_implementationWithBlock(IMPBlock);    
+    '''
+
+    return HM.evaluateExpressionValue(command_script)
+
+
+def addFeatureMethods() -> bool:
+    global gClassName
+
+    selectedAPPInfoIMPValue = makeSelectedAPPInfoIMP()
+    if not HM.judgeSBValueHasValue(selectedAPPInfoIMPValue):
+        return False
+    HM.addInstanceMethod(gClassName, "selectedAPPInfo", selectedAPPInfoIMPValue.GetValue(), "v@:")
+
+    HM.DPrint("Add breakpoints to hook method...")
+    HM.addOneShotBreakPointInIMP(selectedAPPInfoIMPValue, "HMDebugMainViewController.selectedAPPInfoBreakPointHandler", "HMDebugMainViewController_selectedAPPInfo_Breakpoint")
+
+    return True
+
+
+def makeSelectedAPPInfoIMP() -> lldb.SBValue:
+    command_script = '''
+        void (^IMPBlock)(UIViewController *) = ^(UIViewController *vc) {
+            Class objClass = (Class)objc_getClass("HMDebugInfoViewController");
+            UIViewController * objVC = (UIViewController *)[[objClass alloc] init];
+            [vc.navigationController pushViewController:objVC animated:YES];
+        };
+
+        (IMP)imp_implementationWithBlock(IMPBlock);    
+    '''
+
+    return HM.evaluateExpressionValue(command_script)
+
+
+def selectedAPPInfoBreakPointHandler(frame, bp_loc, internal_dict) -> bool:
+    HMDebugInfoViewController.register()
+    HM.processContinue()
+    return True

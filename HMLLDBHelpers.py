@@ -84,6 +84,14 @@ def boolOfSBValue(val: lldb.SBValue) -> bool:
     return False
 
 
+def addOneShotBreakPointInIMP(imp: lldb.SBValue, callbackFunc: str, name: str) -> None:
+    target = lldb.debugger.GetSelectedTarget()
+    bp = target.BreakpointCreateByAddress(imp.GetValueAsUnsigned())
+    bp.AddName(name)
+    bp.SetOneShot(True)
+    bp.SetScriptCallbackFunction(callbackFunc)
+
+
 def existClass(className: str) -> bool:
     command_script = '''
         Class cls = (Class)objc_getClass("{arg}");
