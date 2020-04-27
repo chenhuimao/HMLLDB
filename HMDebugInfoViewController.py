@@ -41,12 +41,13 @@ def register() -> None:
 
 
 def makeViewDidLoadIMP() -> lldb.SBValue:
+    lldbVersion = lldb.debugger.GetVersionString().replace('\n', '\\n')
     command_script = '''
-        void (^IMPBlock)(UIViewController *) = ^(UIViewController *vc) {
-            struct objc_super superInfo = {
+        void (^IMPBlock)(UIViewController *) = ^(UIViewController *vc) {{
+            struct objc_super superInfo = {{
                 .receiver = vc,
                 .super_class = (Class)class_getSuperclass((Class)[vc class])
-            };
+            }};
     
             ((void (*)(struct objc_super *, SEL))objc_msgSendSuper)(&superInfo, @selector(viewDidLoad));
             
@@ -100,7 +101,7 @@ def makeViewDidLoadIMP() -> lldb.SBValue:
             
             // 8
             [leftTextArray addObject:@"LLDB version"];
-            NSString *LLDBVersion = @"(placeholder text)lldb-1103.0.22.8\\nApple Swift version 5.2.2 (swiftlang-1103.0.32.6 clang-1103.0.32.51)";
+            NSString *LLDBVersion = @"{arg0}";
             [rightTextArray addObject:LLDBVersion];
             
             // property initialize
@@ -115,10 +116,10 @@ def makeViewDidLoadIMP() -> lldb.SBValue:
             tv.rowHeight = UITableViewAutomaticDimension;
             tv.tableFooterView = [[UIView alloc] init];
             [vc.view addSubview:tv];
-        };
+        }};
 
         (IMP)imp_implementationWithBlock(IMPBlock);    
-    '''
+    '''.format(arg0=lldbVersion)
 
     return HM.evaluateExpressionValue(command_script)
 
