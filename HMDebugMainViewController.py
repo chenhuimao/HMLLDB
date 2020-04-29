@@ -8,6 +8,7 @@ import lldb
 import HMLLDBHelpers as HM
 import HMLLDBClassInfo
 import HMDebugInfoViewController
+import HMProgressHUD
 
 
 gClassName = "HMDebugMainViewController"
@@ -19,38 +20,44 @@ def register() -> None:
         return
 
     # Register class
-    HM.DPrint("Register {arg0}...".format(arg0=gClassName))
+    HMProgressHUD.show("Register {arg0}...".format(arg0=gClassName))
     classValue = HM.allocateClass(gClassName, "UIViewController")
     HM.registerClass(classValue.GetValue())
 
     # Add methods
-    HM.DPrint("Add methods to {arg0}...".format(arg0=gClassName))
+    HMProgressHUD.show("Add methods to {arg0}...".format(arg0=gClassName))
     presentIMPValue = makePresentIMP()
     if not HM.judgeSBValueHasValue(presentIMPValue):
+        HMProgressHUD.hide()
         return
     HM.addClassMethod(gClassName, "present", presentIMPValue.GetValue(), "@@:")
 
     viewDidLoadIMPValue = makeViewDidLoadIMP()
     if not HM.judgeSBValueHasValue(viewDidLoadIMPValue):
+        HMProgressHUD.hide()
         return
     HM.addInstanceMethod(gClassName, "viewDidLoad", viewDidLoadIMPValue.GetValue(), "v@:")
 
     dismissSelfIMPValue = makeDismissSelfIMP()
     if not HM.judgeSBValueHasValue(dismissSelfIMPValue):
+        HMProgressHUD.hide()
         return
     HM.addInstanceMethod(gClassName, "dismissSelf", dismissSelfIMPValue.GetValue(), "v@:")
 
     # Methods related to tableView.
-    HM.DPrint("Add methods to {arg0}......".format(arg0=gClassName))
+    HMProgressHUD.show("Add methods to {arg0}......".format(arg0=gClassName))
     if not addTableViewMethods():
+        HMProgressHUD.hide()
         return
 
     # Methods related to features.
-    HM.DPrint("Add methods to {arg0}.........".format(arg0=gClassName))
+    HMProgressHUD.show("Add methods to {arg0}.........".format(arg0=gClassName))
     if not addFeatureMethods():
+        HMProgressHUD.hide()
         return
 
-    HM.DPrint("Register {arg0} done!".format(arg0=gClassName))
+    HMProgressHUD.show("Register {arg0} done!".format(arg0=gClassName))
+    HMProgressHUD.hide()
 
 
 def makePresentIMP() -> lldb.SBValue:

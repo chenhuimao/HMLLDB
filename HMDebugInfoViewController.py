@@ -7,6 +7,7 @@ Implementation of HMDebugInfoViewController class.
 import lldb
 import HMLLDBHelpers as HM
 import HMLLDBClassInfo
+import HMProgressHUD
 
 
 gClassName = "HMDebugInfoViewController"
@@ -18,26 +19,30 @@ def register() -> None:
         return
 
     # Register class
-    HM.DPrint("Register {arg0}...".format(arg0=gClassName))
+    HMProgressHUD.show("Register {arg0}...".format(arg0=gClassName))
+
     classValue = HM.allocateClass(gClassName, "UIViewController")
     HM.addIvar(classValue.GetValue(), "_leftTextArray", "NSMutableArray *")
     HM.addIvar(classValue.GetValue(), "_rightTextArray", "NSMutableArray *")
     HM.registerClass(classValue.GetValue())
 
     # Add methods
-    HM.DPrint("Add methods to {arg0}...".format(arg0=gClassName))
+    HMProgressHUD.show("Add methods to {arg0}...".format(arg0=gClassName))
     viewDidLoadIMPValue = makeViewDidLoadIMP()
     if not HM.judgeSBValueHasValue(viewDidLoadIMPValue):
+        HMProgressHUD.hide()
         return
     HM.addInstanceMethod(gClassName, "viewDidLoad", viewDidLoadIMPValue.GetValue(), "v@:")
 
     # Methods related to tableView.
-    HM.DPrint("Add methods to {arg0}......".format(arg0=gClassName))
+    HMProgressHUD.show("Add methods to {arg0}......".format(arg0=gClassName))
+
     if not addTableViewMethods():
+        HMProgressHUD.hide()
         return
 
-
-    HM.DPrint("Register {arg0} done!".format(arg0=gClassName))
+    HMProgressHUD.show("Register {arg0} done!".format(arg0=gClassName))
+    HMProgressHUD.hide()
 
 
 def makeViewDidLoadIMP() -> lldb.SBValue:

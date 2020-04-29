@@ -8,6 +8,7 @@ import lldb
 import HMLLDBHelpers as HM
 import HMLLDBClassInfo
 import HMDebugMainViewController
+import HMProgressHUD
 
 
 def __lldb_init_module(debugger, internal_dict):
@@ -35,6 +36,9 @@ def showDebugHUD(debugger, command, exe_ctx, result, internal_dict):
 
     This command is implemented in HMDebugHUD.py
     """
+
+    HMProgressHUD.register()
+
     global gClassName
     if isDisplayingHUD():
         HM.DPrint("{arg} is already on display".format(arg=gClassName))
@@ -44,7 +48,8 @@ def showDebugHUD(debugger, command, exe_ctx, result, internal_dict):
         return
 
     # Register class
-    HM.DPrint("Register {arg}...".format(arg=gClassName))
+    HMProgressHUD.show("Register {arg}...".format(arg=gClassName))
+
     classValue = HM.allocateClass(gClassName, "UIView")
     HM.addIvar(classValue.GetValue(), "_link", "CADisplayLink *")
     HM.addIvar(classValue.GetValue(), "_count", "int")  # count in 1 second
@@ -57,36 +62,43 @@ def showDebugHUD(debugger, command, exe_ctx, result, internal_dict):
     HM.registerClass(classValue.GetValue())
 
     # Add methods
-    HM.DPrint("Add methods to {arg}...".format(arg=gClassName))
+    HMProgressHUD.show("Add methods to {arg}...".format(arg=gClassName))
+
     addToKeyWindowIMPValue = makeAddToKeyWindowIMP()
     if not HM.judgeSBValueHasValue(addToKeyWindowIMPValue):
-        HM.DPrint("Error addToKeyWindowIMPValue, please fix it.")
+        HMProgressHUD.hide()
         return
     HM.addClassMethod(gClassName, "addToKeyWindow", addToKeyWindowIMPValue.GetValue(), "@@:")
 
     tapSelfIMPValue = makeTapSelfIMP()
     if not HM.judgeSBValueHasValue(tapSelfIMPValue):
-        HM.DPrint("Error tapSelfIMPValue, please fix it.")
+        HMProgressHUD.hide()
         return
     HM.addInstanceMethod(gClassName, "tapSelf", tapSelfIMPValue.GetValue(), "v@:")
 
     # Add methods(update)
     if not addUpdateMethods():
+        HMProgressHUD.hide()
         return
 
     # Add methods(move)
-    HM.DPrint("Add methods to {arg}......".format(arg=gClassName))
+    HMProgressHUD.show("Add methods to {arg}......".format(arg=gClassName))
     if not addMoveMethods():
+        HMProgressHUD.hide()
         return
 
     # Add breakpoint in tapSelf
-    HM.DPrint("Add breakpoint to hook method...")
+    HMProgressHUD.show("Add breakpoint to hook method...")
     HM.addOneShotBreakPointInIMP(tapSelfIMPValue, "HMDebugHUD.tapSelfBreakPointHandler", "HMDebugHUD_TapSelf_Breakpoint")
 
-    HM.DPrint("Register {arg} done!".format(arg=gClassName))
+    HMProgressHUD.show("Register {arg} done!".format(arg=gClassName))
 
     # Show HUD command
     showHUDFunc()
+
+    HMProgressHUD.hide()
+
+    HM.processContinue()
 
 
 def removeDebugHUD(debugger, command, exe_ctx, result, internal_dict) -> None:
