@@ -63,7 +63,7 @@ def makeAddToKeyWindowIMP() -> lldb.SBValue:
             fpsLabel.layer.zPosition = 100;
             fpsLabel.layer.cornerRadius = 5;
             fpsLabel.clipsToBounds = YES;
-            fpsLabel.textAlignment = NSTextAlignmentCenter;
+            fpsLabel.textAlignment = (NSTextAlignment)1;
             fpsLabel.userInteractionEnabled = NO;
             (void)[fpsLabel setBackgroundColor:[[UIColor blackColor] colorWithAlphaComponent:0.6]];
             fpsLabel.font = [UIFont systemFontOfSize:14];

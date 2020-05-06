@@ -66,7 +66,7 @@ def makeViewDidLoadIMP() -> lldb.SBValue:
             [leftTextArray addObject:@"Model identifier"];
             struct utsname systemInfo;
             (int)uname(&systemInfo);
-            NSString *modelIdentifier = [NSString stringWithCString:systemInfo.machine encoding:NSUTF8StringEncoding];
+            NSString *modelIdentifier = [NSString stringWithCString:systemInfo.machine encoding:(NSStringEncoding)4];
             [rightTextArray addObject:modelIdentifier];
     
             //  1
@@ -164,8 +164,8 @@ def makeCellForRowAtIndexPathIMP() -> lldb.SBValue:
             NSString * reuseIdentifier = @"Cell";
             UITableViewCell *cell = [tv dequeueReusableCellWithIdentifier:reuseIdentifier];
             if (cell == nil) {
-                cell = [[UITableViewCell alloc] initWithStyle:(UITableViewCellStyle)UITableViewCellStyleDefault reuseIdentifier:reuseIdentifier];
-                cell.selectionStyle = UITableViewCellSelectionStyleNone;
+                cell = [[UITableViewCell alloc] initWithStyle:(UITableViewCellStyle)0 reuseIdentifier:reuseIdentifier];
+                cell.selectionStyle = (UITableViewCellSelectionStyle)0;
                 
                 CGFloat marginX = 16;
                 CGFloat marginY = 12;
@@ -177,7 +177,7 @@ def makeCellForRowAtIndexPathIMP() -> lldb.SBValue:
                 [cell.contentView addSubview:leftLab];
                 
                 leftLab.translatesAutoresizingMaskIntoConstraints = NO;
-                [leftLab setContentCompressionResistancePriority:1000 forAxis:(UILayoutConstraintAxis)UILayoutConstraintAxisHorizontal];
+                [leftLab setContentCompressionResistancePriority:1000 forAxis:(UILayoutConstraintAxis)0];
                 [NSLayoutConstraint constraintWithItem:leftLab attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:cell.contentView attribute:NSLayoutAttributeTop multiplier:1.0 constant:marginY].active = YES;
                 [NSLayoutConstraint constraintWithItem:leftLab attribute:NSLayoutAttributeLeft relatedBy:NSLayoutRelationEqual toItem:cell.contentView attribute:NSLayoutAttributeLeft multiplier:1.0 constant:marginX].active = YES;
                 [NSLayoutConstraint constraintWithItem:leftLab attribute:NSLayoutAttributeBottom relatedBy:NSLayoutRelationLessThanOrEqual toItem:cell.contentView attribute:NSLayoutAttributeBottom multiplier:1.0 constant:-marginY].active = YES;
@@ -186,7 +186,7 @@ def makeCellForRowAtIndexPathIMP() -> lldb.SBValue:
                 rightLab.tag = 2222;
                 rightLab.font = [UIFont systemFontOfSize:16];
                 rightLab.textColor = [UIColor grayColor];
-                rightLab.textAlignment = NSTextAlignmentRight;
+                rightLab.textAlignment = (NSTextAlignment)2;
                 rightLab.numberOfLines = 0;
                 [cell.contentView addSubview:rightLab];
                 

@@ -190,7 +190,7 @@ def makeInitWithFrameIMP() -> lldb.SBValue:
                 contentView.layer.cornerRadius = 5.0;
                 [HUD addSubview:contentView];
     
-                UIActivityIndicatorView *indicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:(UIActivityIndicatorViewStyle)UIActivityIndicatorViewStyleWhiteLarge];
+                UIActivityIndicatorView *indicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:(UIActivityIndicatorViewStyle)0];
                 [HUD setValue:indicator forKey:@"_indicator"];
                 indicator.color = color;
                 [contentView addSubview:indicator];
@@ -199,7 +199,7 @@ def makeInitWithFrameIMP() -> lldb.SBValue:
                 [HUD setValue:textLab forKey:@"_textLab"];
                 textLab.font = [UIFont boldSystemFontOfSize:15];
                 textLab.textColor = color;
-                textLab.textAlignment = NSTextAlignmentCenter;
+                textLab.textAlignment = (NSTextAlignment)1;
                 [contentView addSubview:textLab];
             }
             

@@ -213,17 +213,17 @@ def makeAddToKeyWindowIMP() -> lldb.SBValue:
             CGFloat rowHeight = 14;
             CGFloat rowWidth = 40;
             UILabel *memoryLab = [[UILabel alloc] initWithFrame:(CGRect){{0, 0 * rowHeight, rowWidth, rowHeight}}];
-            memoryLab.textAlignment = NSTextAlignmentRight;
+            memoryLab.textAlignment = (NSTextAlignment)2;
             [HUD addSubview:memoryLab];
             [HUD setValue:memoryLab forKey:@"_memoryLab"];
             
             UILabel *cpuUtilizationLab = [[UILabel alloc] initWithFrame:(CGRect){{0, 1 * rowHeight, rowWidth, rowHeight}}];
-            cpuUtilizationLab.textAlignment = NSTextAlignmentRight;
+            cpuUtilizationLab.textAlignment = (NSTextAlignment)2;
             [HUD addSubview:cpuUtilizationLab];
             [HUD setValue:cpuUtilizationLab forKey:@"_cpuUtilizationLab"];
             
             UILabel *fpsLab = [[UILabel alloc] initWithFrame:(CGRect){{0, 2 * rowHeight, rowWidth, rowHeight}}];
-            fpsLab.textAlignment = NSTextAlignmentRight;
+            fpsLab.textAlignment = (NSTextAlignment)2;
             [HUD addSubview:fpsLab];
             [HUD setValue:fpsLab forKey:@"_fpsLab"];
 

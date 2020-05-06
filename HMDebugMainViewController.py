@@ -65,7 +65,7 @@ def makePresentIMP() -> lldb.SBValue:
         UIViewController * (^presentBlock)(id) = ^UIViewController *(id classSelf) {{
             UIViewController *vc = (UIViewController *)[[NSClassFromString(@"{arg0}") alloc] init];
             UINavigationController *nv = [[UINavigationController alloc] initWithRootViewController:vc];
-            nv.modalPresentationStyle = (UIModalPresentationStyle)UIModalPresentationFullScreen;
+            nv.modalPresentationStyle = (UIModalPresentationStyle)0;
             [[UIApplication sharedApplication].keyWindow.rootViewController presentViewController:nv animated:YES completion:nil];
             
              return vc;
@@ -158,9 +158,9 @@ def makeCellForRowAtIndexPathIMP() -> lldb.SBValue:
             NSString * reuseIdentifier = @"Cell";
             UITableViewCell *cell = [tv dequeueReusableCellWithIdentifier:reuseIdentifier];
             if (cell == nil) {
-                cell = [[UITableViewCell alloc] initWithStyle:(UITableViewCellStyle)UITableViewCellStyleDefault reuseIdentifier:reuseIdentifier];
-                cell.selectionStyle = UITableViewCellSelectionStyleNone;
-                cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+                cell = [[UITableViewCell alloc] initWithStyle:(UITableViewCellStyle)0 reuseIdentifier:reuseIdentifier];
+                cell.selectionStyle = (UITableViewCellSelectionStyle)0;
+                cell.accessoryType = (UITableViewCellAccessoryType)1;
             }
             
             long row = indexPath.row;

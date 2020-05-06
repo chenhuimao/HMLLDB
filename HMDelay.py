@@ -28,8 +28,8 @@ def delay(debugger, command, exe_ctx, result, internal_dict):
         If <lldb command> has options, you should enclose it in quotes.
 
     Examples:
-        (lldb) delay 1 showfps
-        (lldb) delay -c 1 showfps
+        (lldb) delay 3 showhud
+        (lldb) delay -c 2 phomedirectory
         (lldb) delay 0.5 push PersonalViewController
         (lldb) delay 2 "deletefile -f path/to/fileOrDirectory"
 
