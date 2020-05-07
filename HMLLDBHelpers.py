@@ -20,7 +20,7 @@ def DPrint(obj: Any) -> None:
     print(obj)
     
 
-# https://github.com/facebook/chisel/blob/master/fblldbbase.py
+# From https://github.com/facebook/chisel/blob/master/fblldbbase.py
 # evaluates expression in Objective-C++ context, so it will work even for Swift projects
 def evaluateExpressionValue(expression: str) -> lldb.SBValue:
     frame = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame()
@@ -53,7 +53,7 @@ def evaluateExpressionValue(expression: str) -> lldb.SBValue:
     return value
 
 
-# https://github.com/facebook/chisel/blob/master/fblldbbase.py
+# From https://github.com/facebook/chisel/blob/master/fblldbbase.py
 def isSuccess(error: lldb.SBError) -> bool:
     # When evaluating a `void` expression, the returned value will indicate an
     # error. This error is named: kNoResult. This error value does *not* mean
@@ -63,7 +63,7 @@ def isSuccess(error: lldb.SBError) -> bool:
     return error.success or error.value == kNoResult
 
 
-# https://github.com/facebook/chisel/blob/master/fblldbbase.py
+# From https://github.com/facebook/chisel/blob/master/fblldbbase.py
 def importModule(frame: lldb.SBFrame, module: str) -> bool:
     options = lldb.SBExpressionOptions()
     options.SetLanguage(lldb.eLanguageTypeObjC)

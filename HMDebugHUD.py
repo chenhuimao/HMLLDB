@@ -32,7 +32,7 @@ def showDebugHUD(debugger, command, exe_ctx, result, internal_dict):
         1.Memory footprint.
         2.CPU utilization.
         3.FPS in main thread.
-        The UI style refers to https://github.com/meitu/MTHawkeye
+        The UI style is based on https://github.com/meitu/MTHawkeye
 
     This command is implemented in HMDebugHUD.py
     """

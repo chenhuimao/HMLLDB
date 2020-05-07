@@ -14,10 +14,10 @@ import os
 def __lldb_init_module(debugger, internal_dict):
     file_path = os.path.realpath(__file__)  # Absolute path
     dir_name = os.path.dirname(file_path)
-    load_python_scripts_dir(dir_name)
+    loadPythonScriptsDir(dir_name)
 
 
-def load_python_scripts_dir(dir_name: str) -> None:
+def loadPythonScriptsDir(dir_name: str) -> None:
     ignoreFiles = {"HMLLDB.py"}
 
     for file in os.listdir(dir_name):
@@ -25,6 +25,8 @@ def load_python_scripts_dir(dir_name: str) -> None:
             continue
         elif file.endswith('.py'):
             cmd = 'command script import '
+        elif file.endswith('.h'):
+            cmd = 'command source -e0 -s1 '
         else:
             continue
 
