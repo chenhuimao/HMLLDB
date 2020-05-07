@@ -64,6 +64,9 @@ def register() -> None:
 
 
 def show(text: Optional[str]) -> None:
+
+    register()
+
     command_script = '''
         Class progressHUDCls = (Class)objc_getClass("{arg0}");
         (UIView *)[progressHUDCls performSelector:@selector(showHUD)];
@@ -71,7 +74,6 @@ def show(text: Optional[str]) -> None:
 
     if len(text) > 0:
         command_script += '(void)[progressHUDCls performSelector:@selector(setText:) withObject:@"{arg1}"];'.format(arg1=text)
-        HM.DPrint(text)
 
     command_script += "(void)[CATransaction flush];"
     HM.evaluateExpressionValue(command_script)

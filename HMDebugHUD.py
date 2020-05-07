@@ -37,8 +37,6 @@ def showDebugHUD(debugger, command, exe_ctx, result, internal_dict):
     This command is implemented in HMDebugHUD.py
     """
 
-    HMProgressHUD.register()
-
     global gClassName
     if isDisplayingHUD():
         HM.DPrint("{arg} is already on display".format(arg=gClassName))
@@ -49,6 +47,7 @@ def showDebugHUD(debugger, command, exe_ctx, result, internal_dict):
 
     # Register class
     HMProgressHUD.show("Register {arg}...".format(arg=gClassName))
+    HM.DPrint("Register {arg}...".format(arg=gClassName))
 
     classValue = HM.allocateClass(gClassName, "UIView")
     HM.addIvar(classValue.GetValue(), "_link", "CADisplayLink *")
@@ -62,7 +61,7 @@ def showDebugHUD(debugger, command, exe_ctx, result, internal_dict):
     HM.registerClass(classValue.GetValue())
 
     # Add methods
-    HMProgressHUD.show("Add methods to {arg}...".format(arg=gClassName))
+    HM.DPrint("Add methods to {arg}...".format(arg=gClassName))
 
     addToKeyWindowIMPValue = makeAddToKeyWindowIMP()
     if not HM.judgeSBValueHasValue(addToKeyWindowIMPValue):
@@ -82,16 +81,16 @@ def showDebugHUD(debugger, command, exe_ctx, result, internal_dict):
         return
 
     # Add methods(move)
-    HMProgressHUD.show("Add methods to {arg}......".format(arg=gClassName))
+    HM.DPrint("Add methods to {arg}......".format(arg=gClassName))
     if not addMoveMethods():
         HMProgressHUD.hide()
         return
 
     # Add breakpoint in tapSelf
-    HMProgressHUD.show("Add breakpoint to hook method...")
+    HM.DPrint("Add breakpoint to hook method...")
     HM.addOneShotBreakPointInIMP(tapSelfIMPValue, "HMDebugHUD.tapSelfBreakPointHandler", "HMDebugHUD_TapSelf_Breakpoint")
 
-    HMProgressHUD.show("Register {arg} done!".format(arg=gClassName))
+    HM.DPrint("Register {arg} done!".format(arg=gClassName))
 
     # Show HUD command
     showHUDFunc()

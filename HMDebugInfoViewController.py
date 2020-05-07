@@ -20,6 +20,7 @@ def register() -> None:
 
     # Register class
     HMProgressHUD.show("Register {arg0}...".format(arg0=gClassName))
+    HM.DPrint("Register {arg0}...".format(arg0=gClassName))
 
     classValue = HM.allocateClass(gClassName, "UIViewController")
     HM.addIvar(classValue.GetValue(), "_leftTextArray", "NSMutableArray *")
@@ -27,7 +28,7 @@ def register() -> None:
     HM.registerClass(classValue.GetValue())
 
     # Add methods
-    HMProgressHUD.show("Add methods to {arg0}...".format(arg0=gClassName))
+    HM.DPrint("Add methods to {arg0}...".format(arg0=gClassName))
     viewDidLoadIMPValue = makeViewDidLoadIMP()
     if not HM.judgeSBValueHasValue(viewDidLoadIMPValue):
         HMProgressHUD.hide()
@@ -35,13 +36,13 @@ def register() -> None:
     HM.addInstanceMethod(gClassName, "viewDidLoad", viewDidLoadIMPValue.GetValue(), "v@:")
 
     # Methods related to tableView.
-    HMProgressHUD.show("Add methods to {arg0}......".format(arg0=gClassName))
+    HM.DPrint("Add methods to {arg0}......".format(arg0=gClassName))
 
     if not addTableViewMethods():
         HMProgressHUD.hide()
         return
 
-    HMProgressHUD.show("Register {arg0} done!".format(arg0=gClassName))
+    HM.DPrint("Register {arg0} done!".format(arg0=gClassName))
     HMProgressHUD.hide()
 
 
