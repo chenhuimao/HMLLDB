@@ -59,7 +59,7 @@ def makeAddToKeyWindowIMP() -> lldb.SBValue:
 
         UILabel * (^addToKeyWindowBlock)(id) = ^UILabel *(id classSelf) {
             UILabel *fpsLabel = (UILabel *)[[NSClassFromString(@"HMFPSLabel") alloc] init];
-            fpsLabel.frame = (CGRect){60, [UIApplication sharedApplication].statusBarFrame.size.height, 58, 20};
+            (void)[fpsLabel setFrame:(CGRect){60, [UIApplication sharedApplication].statusBarFrame.size.height, 58, 20}];
             fpsLabel.layer.zPosition = 100;
             fpsLabel.layer.cornerRadius = 5;
             fpsLabel.clipsToBounds = YES;

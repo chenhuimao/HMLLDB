@@ -240,21 +240,21 @@ def makeLayoutSubviewsIMP() -> lldb.SBValue:
                 contentViewWidth = HUD.bounds.size.width;
             }
                     
-            contentView.bounds = (CGRect){0, 0, contentViewWidth, contentViewHeight};
-            contentView.center = (CGPoint){HUD.bounds.size.width / 2, HUD.bounds.size.height / 2};
+            (void)[contentView setBounds:(CGRect){0, 0, contentViewWidth, contentViewHeight}];
+            (void)[contentView setCenter:(CGPoint){HUD.bounds.size.width / 2, HUD.bounds.size.height / 2}];
             
             UIActivityIndicatorView *indicator = [HUD valueForKey:@"_indicator"];
             CGFloat indicatorWidth = indicator.intrinsicContentSize.width;
             CGFloat indicatorHeight = indicator.intrinsicContentSize.height;
             if ([textLab.text length] > 0) {
-                indicator.frame = (CGRect){(contentViewWidth - indicatorWidth) / 2, 20, indicatorWidth, indicatorHeight};
+                (void)[indicator setFrame:(CGRect){(contentViewWidth - indicatorWidth) / 2, 20, indicatorWidth, indicatorHeight}];
             } else {
-                indicator.frame = (CGRect){(contentViewWidth - indicatorWidth) / 2, (contentViewHeight - indicatorHeight) / 2, indicatorWidth, indicatorHeight};
+                (void)[indicator setFrame:(CGRect){(contentViewWidth - indicatorWidth) / 2, (contentViewHeight - indicatorHeight) / 2, indicatorWidth, indicatorHeight}];
             }
             
             if ([textLab.text length] > 0) {
                 CGFloat textLabHeight = textLab.intrinsicContentSize.height;
-                textLab.frame = (CGRect){0, contentViewHeight - 15 - textLabHeight, contentViewWidth, textLabHeight};
+                (void)[textLab setFrame:(CGRect){0, contentViewHeight - 15 - textLabHeight, contentViewWidth, textLabHeight}];
             }
         };
 

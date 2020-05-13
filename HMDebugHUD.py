@@ -43,6 +43,7 @@ def showDebugHUD(debugger, command, exe_ctx, result, internal_dict):
         return
     elif HM.existClass(gClassName):
         showHUDFunc()
+        HM.processContinue()
         return
 
     # Register class
@@ -144,12 +145,17 @@ def isDisplayingHUD() -> bool:
     command_script = '''
         BOOL isDisplaying = NO;
         UIView *keyWindow = [UIApplication sharedApplication].keyWindow;
+        UIView *HUD = nil;
         Class HUDClass = (Class)objc_getClass("{arg0}");
         for (UIView *subView in keyWindow.subviews) {{
             if ([subView isKindOfClass:HUDClass]) {{
                 isDisplaying = YES;
+                HUD = subView;
                 break;
             }}
+        }}
+        if (HUD) {{
+            [keyWindow bringSubviewToFront:HUD];
         }}
         isDisplaying;
     '''.format(arg0=gClassName)
@@ -206,7 +212,7 @@ def makeAddToKeyWindowIMP() -> lldb.SBValue:
 
         UIView * (^addToKeyWindowBlock)(id) = ^UIView *(id classSelf) {{
             UIView *HUD = (UIView *)[[NSClassFromString(@"{arg0}") alloc] init];
-            HUD.frame = (CGRect){{60, [UIApplication sharedApplication].statusBarFrame.size.height, 42, 42}};
+            (void)[HUD setFrame:(CGRect){{60, [UIApplication sharedApplication].statusBarFrame.size.height, 42, 42}}];
             (void)[HUD setBackgroundColor:[UIColor colorWithWhite:0.6 alpha:0.8]];
 
             CGFloat rowHeight = 14;
@@ -562,7 +568,7 @@ def makeAttachToEdgeIMP() -> lldb.SBValue:
                 y = maxY - HUD.frame.size.height;
             }
         
-            CGRect targetFrame = HUD.frame;
+            CGRect targetFrame = (CGRect)[HUD frame];
             targetFrame.origin = (CGPoint){x, y};
             
             [UIView animateWithDuration:0.2 animations:^{
