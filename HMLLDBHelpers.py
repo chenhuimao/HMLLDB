@@ -8,6 +8,9 @@ import lldb
 from typing import Any
 
 
+gIsFirstCall = True
+
+
 def processContinue() -> None:
     asyncState = lldb.debugger.GetAsync()
     lldb.debugger.SetAsync(True)
@@ -20,10 +23,22 @@ def DPrint(obj: Any) -> None:
     print(obj)
     
 
-# From https://github.com/facebook/chisel/blob/master/fblldbbase.py
-# evaluates expression in Objective-C++ context, so it will work even for Swift projects
+# Based on https://github.com/facebook/chisel/blob/master/fblldbbase.py
 def evaluateExpressionValue(expression: str) -> lldb.SBValue:
     frame = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame()
+
+    global gIsFirstCall
+    if gIsFirstCall:
+        gIsFirstCall = False
+        op = lldb.SBExpressionOptions()
+        op.SetLanguage(lldb.eLanguageTypeObjC_plus_plus)
+        frame.EvaluateExpression('''
+            @import Foundation;
+            @import UIKit;
+            @import ObjectiveC;
+        ''', op)
+
+
     options = lldb.SBExpressionOptions()
     options.SetLanguage(lldb.eLanguageTypeObjC_plus_plus)
 
@@ -39,36 +54,17 @@ def evaluateExpressionValue(expression: str) -> lldb.SBValue:
     # Most commands are not multithreaded.
     options.SetTryAllThreads(False)
 
+    options.SetSuppressPersistentResult(True)
+
     value = frame.EvaluateExpression(expression, options)
     error = value.GetError()
 
-    # Retry if the error could be resolved by first importing UIKit.
-    if error.type == lldb.eErrorTypeExpression and error.value == lldb.eExpressionParseError and importModule(frame, 'UIKit'):
-        value = frame.EvaluateExpression(expression, options)
-        error = value.GetError()
-
-    if not isSuccess(error):
+    kNoResult = 0x1001  # 4097
+    isSuccess = error.success or error.value == kNoResult
+    if not isSuccess:
         DPrint(error)
 
     return value
-
-
-# From https://github.com/facebook/chisel/blob/master/fblldbbase.py
-def isSuccess(error: lldb.SBError) -> bool:
-    # When evaluating a `void` expression, the returned value will indicate an
-    # error. This error is named: kNoResult. This error value does *not* mean
-    # there was a problem. This logic follows what the builtin `expression`
-    # command does. See: https://git.io/vwpjl (UserExpression.h)
-    kNoResult = 0x1001
-    return error.success or error.value == kNoResult
-
-
-# From https://github.com/facebook/chisel/blob/master/fblldbbase.py
-def importModule(frame: lldb.SBFrame, module: str) -> bool:
-    options = lldb.SBExpressionOptions()
-    options.SetLanguage(lldb.eLanguageTypeObjC)
-    value = frame.EvaluateExpression('@import ' + module, options)
-    return isSuccess(value.error)
 
 
 def judgeSBValueHasValue(val: lldb.SBValue) -> bool:
@@ -144,7 +140,7 @@ def addClassMethod(className: str, selector: str, impAddress: str, types: str) -
         Class metaCls = (Class)objc_getMetaClass("{arg0}");
         if (metaCls) {{
             SEL selector = NSSelectorFromString([[NSString alloc] initWithUTF8String:"{arg1}"]);
-            (BOOL)class_addMethod(metaCls, selector, (IMP){arg2}, "{arg3}");
+            (BOOL)class_addMethod(metaCls, selector, (void (*)()){arg2}, "{arg3}");
         }}
     '''.format(arg0=className, arg1=selector, arg2=impAddress, arg3=types)
 
@@ -156,7 +152,7 @@ def addInstanceMethod(className: str, selector: str, impAddress: str, types: str
         Class cls = (Class)objc_getClass("{arg0}");
         if (cls) {{
             SEL selector = NSSelectorFromString([[NSString alloc] initWithUTF8String:"{arg1}"]);
-            (BOOL)class_addMethod(cls, selector, (IMP){arg2}, "{arg3}");
+            (BOOL)class_addMethod(cls, selector, (void (*)()){arg2}, "{arg3}");
         }}
     '''.format(arg0=className, arg1=selector, arg2=impAddress, arg3=types)
 

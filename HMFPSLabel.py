@@ -53,6 +53,9 @@ def showFPS(debugger, command, exe_ctx, result, internal_dict):
     '''
     HM.evaluateExpressionValue(addToKeyWindowCommand)
 
+    HM.DPrint("showfps Done!")
+    HM.processContinue()
+
 
 def makeAddToKeyWindowIMP() -> lldb.SBValue:
     command_script = '''
@@ -100,14 +103,19 @@ def makeTickIMP() -> lldb.SBValue:
     
             [fpsLabel setValue:@(link.timestamp) forKey:@"_lastTime"];
             
-            double fps = count / delta;
+            int fps = (int)((count / delta) + 0.5);
             [fpsLabel setValue:@(0) forKey:@"_count"];
             
-            CGFloat progress = fps / 60.0;
-            UIColor *color = [UIColor colorWithHue:0.27 * (progress - 0.2) saturation:1 brightness:0.9 alpha:1];
+            UIColor *valueColor = [UIColor whiteColor];
+            if (fps < 45) {
+                valueColor = [[UIColor alloc] initWithRed:0.88 green:0.36 blue:0.36 alpha:1];
+            } else if (fps < 52) {
+                valueColor = [[UIColor alloc] initWithRed:0.91 green:0.73 blue:0.45 alpha:1];
+            }
+            UIColor *unitColor = [UIColor whiteColor];
             
-            NSMutableAttributedString *text = [[NSMutableAttributedString alloc] initWithString:[NSString stringWithFormat:@"%d",(int)(fps + 0.5)] attributes:@{(id)NSFontAttributeName: fpsLabel.font, (id)NSForegroundColorAttributeName: color}];
-            NSAttributedString *FPSString = [[NSAttributedString alloc] initWithString:@" FPS" attributes:@{(id)NSFontAttributeName: fpsLabel.font, (id)NSForegroundColorAttributeName: [UIColor whiteColor]}];
+            NSMutableAttributedString *text = [[NSMutableAttributedString alloc] initWithString:[NSString stringWithFormat:@"%d", fps] attributes:@{(id)NSFontAttributeName: fpsLabel.font, (id)NSForegroundColorAttributeName: valueColor}];
+            NSAttributedString *FPSString = [[NSAttributedString alloc] initWithString:@" FPS" attributes:@{(id)NSFontAttributeName: fpsLabel.font, (id)NSForegroundColorAttributeName: unitColor}];
             [text appendAttributedString:FPSString];
             
             fpsLabel.attributedText = text;

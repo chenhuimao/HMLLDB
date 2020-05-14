@@ -23,7 +23,7 @@ def redirect(debugger, command, exe_ctx, result, internal_dict):
         --append/-a; Use "a+" mode instead of "w+" mode in freopen function
 
     Examples:
-        (lldb) redirect both /dev/ttys000
+        (lldb) redirect both /dev/ttys000  (Simulator)
         (lldb) redirect stdout /path/to/file
         (lldb) redirect -a stderr /path/to/file
 
