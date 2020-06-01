@@ -7,8 +7,9 @@ Implementation of HMDebugMainViewController class.
 import lldb
 import HMLLDBHelpers as HM
 import HMLLDBClassInfo
-import HMDebugInfoViewController
 import HMProgressHUD
+import HMDebugInfoViewController
+import HMSandboxViewController
 
 
 gClassName = "HMDebugMainViewController"
@@ -82,7 +83,7 @@ def makePresentIMP() -> lldb.SBValue:
 
 def makeViewDidLoadIMP() -> lldb.SBValue:
     command_script = '''
-        void (^viewDidLoadBlock)(UIViewController *) = ^(UIViewController *vc) {
+        void (^IMPBlock)(UIViewController *) = ^(UIViewController *vc) {
             struct objc_super superInfo = {
                 .receiver = vc,
                 .super_class = (Class)class_getSuperclass((Class)[vc class])
@@ -104,7 +105,7 @@ def makeViewDidLoadIMP() -> lldb.SBValue:
             [vc.view addSubview:tv];
         };
         
-        (IMP)imp_implementationWithBlock(viewDidLoadBlock);
+        (IMP)imp_implementationWithBlock(IMPBlock);
 
      '''
     return HM.evaluateExpressionValue(command_script)
@@ -146,7 +147,7 @@ def addTableViewMethods() -> bool:
 def makeNumberOfRowsInSectionIMP() -> lldb.SBValue:
     command_script = '''
         long (^IMPBlock)(UIViewController *, UITableView *, long) = ^long(UIViewController *vc, UITableView *tv, long section) {
-            return 1;
+            return 2;
         };
         (IMP)imp_implementationWithBlock(IMPBlock);    
     '''
@@ -167,7 +168,9 @@ def makeCellForRowAtIndexPathIMP() -> lldb.SBValue:
             
             long row = indexPath.row;
             if (row == 0) {
-                cell.textLabel.text = @"APP and system information";
+                cell.textLabel.text = @"App and system information";
+            } else if (row == 1) {
+                cell.textLabel.text = @"Sandbox";
             }
             return cell;
         };
@@ -184,6 +187,8 @@ def makeDidSelectRowAtIndexPathIMP() -> lldb.SBValue:
             long row = indexPath.row;
             if (row == 0) {
                 (void)[vc performSelector:@selector(selectedAPPInfo)];
+            } else if (row == 1) {
+                (void)[vc performSelector:@selector(selectedSandbox)];
             }
         };
 
@@ -201,8 +206,14 @@ def addFeatureMethods() -> bool:
         return False
     HM.addInstanceMethod(gClassName, "selectedAPPInfo", selectedAPPInfoIMPValue.GetValue(), "v@:")
 
+    selectedSandboxIMPValue = makeSelectedSandboxIMP()
+    if not HM.judgeSBValueHasValue(selectedSandboxIMPValue):
+        return False
+    HM.addInstanceMethod(gClassName, "selectedSandbox", selectedSandboxIMPValue.GetValue(), "v@:")
+
     HM.DPrint("Add breakpoints to hook method...")
     HM.addOneShotBreakPointInIMP(selectedAPPInfoIMPValue, "HMDebugMainViewController.selectedAPPInfoBreakPointHandler", "HMDebugMainViewController_selectedAPPInfo_Breakpoint")
+    HM.addOneShotBreakPointInIMP(selectedSandboxIMPValue, "HMDebugMainViewController.selectedSandboxBreakPointHandler", "HMDebugMainViewController_selectedSandbox_Breakpoint")
 
     return True
 
@@ -221,7 +232,27 @@ def makeSelectedAPPInfoIMP() -> lldb.SBValue:
     return HM.evaluateExpressionValue(command_script)
 
 
+def makeSelectedSandboxIMP() -> lldb.SBValue:
+    command_script = '''
+        void (^IMPBlock)(UIViewController *) = ^(UIViewController *vc) {
+            Class objClass = (Class)objc_getClass("HMSandboxViewController");
+            UIViewController * objVC = (UIViewController *)[[objClass alloc] init];
+            [vc.navigationController pushViewController:objVC animated:YES];
+        };
+
+        (IMP)imp_implementationWithBlock(IMPBlock);    
+    '''
+
+    return HM.evaluateExpressionValue(command_script)
+
+
 def selectedAPPInfoBreakPointHandler(frame, bp_loc, internal_dict) -> bool:
     HMDebugInfoViewController.register()
+    HM.processContinue()
+    return True
+
+
+def selectedSandboxBreakPointHandler(frame, bp_loc, internal_dict) -> bool:
+    HMSandboxViewController.register()
     HM.processContinue()
     return True
