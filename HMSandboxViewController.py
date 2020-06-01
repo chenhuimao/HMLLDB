@@ -91,6 +91,7 @@ def makeViewDidLoadIMP() -> lldb.SBValue:
             tv.frame = vc.view.bounds;
             (void)[tv setBackgroundColor:(UIColor *)[vc.view backgroundColor]];
             tv.rowHeight = 56;
+            tv.estimatedSectionHeaderHeight = 40;
             tv.tableFooterView = [[UIView alloc] init];
             tv.dataSource = vc;
             tv.delegate = vc;
@@ -121,6 +122,11 @@ def makeLoadPathIMP() -> lldb.SBValue:
             [vc setValue:childPaths forKey:@"_childPaths"];
             
             UITableView *tableView = (UITableView *)[vc valueForKey:@"_tableView"];
+            if ([tableView respondsToSelector:@selector(adjustedContentInset)]) {
+                [tableView setContentOffset:CGPointMake(0, -tableView.adjustedContentInset.top) animated:NO];
+            } else {
+                [tableView setContentOffset:CGPointMake(0, -tableView.contentInset.top) animated:NO];
+            }
             [tableView reloadData];
         };
         
