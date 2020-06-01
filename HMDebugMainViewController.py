@@ -69,6 +69,9 @@ def makePresentIMP() -> lldb.SBValue:
             UIViewController *vc = (UIViewController *)[[NSClassFromString(@"{arg0}") alloc] init];
             UINavigationController *nv = [[UINavigationController alloc] initWithRootViewController:vc];
             nv.modalPresentationStyle = (UIModalPresentationStyle)0;
+            if ([nv respondsToSelector:@selector(setOverrideUserInterfaceStyle:)]) {{
+                [nv setOverrideUserInterfaceStyle:UIUserInterfaceStyleLight];
+            }}
             [[UIApplication sharedApplication].keyWindow.rootViewController presentViewController:nv animated:YES completion:nil];
             
              return vc;
@@ -91,6 +94,7 @@ def makeViewDidLoadIMP() -> lldb.SBValue:
     
             ((void (*)(struct objc_super *, SEL))objc_msgSendSuper)(&superInfo, @selector(viewDidLoad));
             
+            // property initialize
             (void)[vc.view setBackgroundColor:[UIColor whiteColor]];
             vc.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:vc action:@selector(dismissSelf)];
             vc.navigationItem.title = @"Tool";

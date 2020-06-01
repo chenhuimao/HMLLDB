@@ -123,9 +123,9 @@ def makeLoadPathIMP() -> lldb.SBValue:
             
             UITableView *tableView = (UITableView *)[vc valueForKey:@"_tableView"];
             if ([tableView respondsToSelector:@selector(adjustedContentInset)]) {
-                [tableView setContentOffset:CGPointMake(0, -tableView.adjustedContentInset.top) animated:NO];
+                [tableView setContentOffset:(CGPoint){0, -tableView.adjustedContentInset.top} animated:NO];
             } else {
-                [tableView setContentOffset:CGPointMake(0, -tableView.contentInset.top) animated:NO];
+                [tableView setContentOffset:(CGPoint){0, -tableView.contentInset.top} animated:NO];
             }
             [tableView reloadData];
         };
