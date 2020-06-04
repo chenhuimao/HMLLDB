@@ -54,6 +54,13 @@ def register() -> None:
         return
     HM.addInstanceMethod(gClassName, "clickPopItem", clickPopItemIMPValue.GetValue(), "v@:")
 
+    deleteFileOrDirIMPValue = makeDeleteFileOrDirIMP()
+    if not HM.judgeSBValueHasValue(deleteFileOrDirIMPValue):
+        HMProgressHUD.hide()
+        return
+    HM.addInstanceMethod(gClassName, "deleteFileOrDir:", deleteFileOrDirIMPValue.GetValue(), "v@:@")
+
+
     # Methods related to tableView.
     HM.DPrint("Add methods to {arg0}......".format(arg0=gClassName))
     if not addTableViewMethods():
@@ -165,9 +172,33 @@ def makeClickPopItemIMP() -> lldb.SBValue:
     return HM.evaluateExpressionValue(command_script)
 
 
+def makeDeleteFileOrDirIMP() -> lldb.SBValue:
+    command_script = '''
+        void (^IMPBlock)(UIViewController *, NSString *) = ^(UIViewController *vc, NSString *path) {
+            NSString *title = [[NSString alloc] initWithFormat:@"Delete %@?", [path lastPathComponent]];
+            UIAlertController *alertController = [UIAlertController alertControllerWithTitle:title message:nil preferredStyle:(UIAlertControllerStyle)UIAlertControllerStyleAlert];
+    
+            [alertController addAction:[UIAlertAction actionWithTitle:@"Delete" style:(UIAlertActionStyle)UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                NSFileManager *fileMgr = [NSFileManager defaultManager];
+                [fileMgr removeItemAtPath:path error:nil];
+                
+                NSString *currentPath = (NSString *)[vc valueForKey:@"_currentPath"];
+                (void)[vc performSelector:@selector(loadPath:) withObject:currentPath];
+            }]];
+            [alertController addAction:[UIAlertAction actionWithTitle:@"Cancel" style:(UIAlertActionStyle)UIAlertActionStyleCancel handler:nil]];
+            
+            [vc presentViewController:alertController animated:YES completion:nil];
+        };
+        (IMP)imp_implementationWithBlock(IMPBlock);
+
+     '''
+    return HM.evaluateExpressionValue(command_script)
+
+
 def addTableViewMethods() -> bool:
     global gClassName
 
+    # data source
     numberOfRowsInSectionIMPValue = makeNumberOfRowsInSectionIMP()
     if not HM.judgeSBValueHasValue(numberOfRowsInSectionIMPValue):
         return False
@@ -178,6 +209,17 @@ def addTableViewMethods() -> bool:
         return False
     HM.addInstanceMethod(gClassName, "tableView:cellForRowAtIndexPath:", cellForRowAtIndexPathIMPValue.GetValue(), "@@:@@")
 
+    canEditRowAtIndexPathIMPValue = makeCanEditRowAtIndexPathIMP()
+    if not HM.judgeSBValueHasValue(canEditRowAtIndexPathIMPValue):
+        return False
+    HM.addInstanceMethod(gClassName, "tableView:canEditRowAtIndexPath:", canEditRowAtIndexPathIMPValue.GetValue(), "B@:@@")
+
+    commitEditingStyleForRowAtIndexPathIMPValue = makeCommitEditingStyleForRowAtIndexPathIMP()
+    if not HM.judgeSBValueHasValue(commitEditingStyleForRowAtIndexPathIMPValue):
+        return False
+    HM.addInstanceMethod(gClassName, "tableView:commitEditingStyle:forRowAtIndexPath:", commitEditingStyleForRowAtIndexPathIMPValue.GetValue(), "v@:@q@")
+
+    # delegate
     didSelectRowAtIndexPathIMPValue = makeDidSelectRowAtIndexPathIMP()
     if not HM.judgeSBValueHasValue(didSelectRowAtIndexPathIMPValue):
         return False
@@ -187,6 +229,11 @@ def addTableViewMethods() -> bool:
     if not HM.judgeSBValueHasValue(viewForHeaderInSectionIMPValue):
         return False
     HM.addInstanceMethod(gClassName, "tableView:viewForHeaderInSection:", viewForHeaderInSectionIMPValue.GetValue(), "@@:@l")
+
+    editingStyleForRowAtIndexPathIMPValue = makeEditingStyleForRowAtIndexPathIMP()
+    if not HM.judgeSBValueHasValue(editingStyleForRowAtIndexPathIMPValue):
+        return False
+    HM.addInstanceMethod(gClassName, "tableView:editingStyleForRowAtIndexPath:", editingStyleForRowAtIndexPathIMPValue.GetValue(), "q@:@@")
 
     return True
 
@@ -286,6 +333,30 @@ def makeCellForRowAtIndexPathIMP() -> lldb.SBValue:
     return HM.evaluateExpressionValue(command_script)
 
 
+def makeCanEditRowAtIndexPathIMP() -> lldb.SBValue:
+    command_script = '''
+        BOOL (^IMPBlock)(UIViewController *, UITableView *, NSIndexPath *) = ^BOOL(UIViewController *vc, UITableView *tv, NSIndexPath * indexPath) {
+            return YES;
+        };
+        (IMP)imp_implementationWithBlock(IMPBlock);
+     '''
+    return HM.evaluateExpressionValue(command_script)
+
+
+def makeCommitEditingStyleForRowAtIndexPathIMP() -> lldb.SBValue:
+    command_script = '''
+        void (^IMPBlock)(UIViewController *, UITableView *, UITableViewCellEditingStyle, NSIndexPath *) = ^(UIViewController *vc, UITableView *tv, UITableViewCellEditingStyle editingStyle, NSIndexPath *indexPath) {
+            if (editingStyle == UITableViewCellEditingStyleDelete) {
+                NSMutableArray *childPaths = (NSMutableArray *)[vc valueForKey:@"childPaths"];
+                NSString *path = childPaths[indexPath.row];
+                (void)[vc performSelector:@selector(deleteFileOrDir:) withObject:path];
+            }
+        };
+        (IMP)imp_implementationWithBlock(IMPBlock);
+     '''
+    return HM.evaluateExpressionValue(command_script)
+
+
 def makeDidSelectRowAtIndexPathIMP() -> lldb.SBValue:
     command_script = '''
         void (^IMPBlock)(UIViewController *, UITableView *, NSIndexPath *) = ^(UIViewController *vc, UITableView *tv, NSIndexPath *indexPath) {
@@ -303,9 +374,28 @@ def makeDidSelectRowAtIndexPathIMP() -> lldb.SBValue:
                 [vc presentViewController:alertController animated:YES completion:nil];
                 return;
             }
-    
+            
             if (isDirectory) {
                 (void)[vc performSelector:@selector(loadPath:) withObject:path];
+            } else {
+                UIAlertController *alertController = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:(UIAlertControllerStyle)UIAlertControllerStyleActionSheet];
+                
+                [alertController addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
+                    (void)[vc performSelector:@selector(deleteFileOrDir:) withObject:path];
+                }]];
+                
+                [alertController addAction:[UIAlertAction actionWithTitle:@"Share" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                    NSURL *url = [[NSURL alloc] initFileURLWithPath:path];
+                    if (url) {
+                        NSArray *items = @[url];    // NSString、NSURL、UIImage
+                        UIActivityViewController *controller = [[UIActivityViewController alloc] initWithActivityItems:items applicationActivities:nil];
+                        [vc presentViewController:controller animated:YES completion:nil];
+                    }
+                }]];
+                
+                [alertController addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:nil]];
+                
+                [vc presentViewController:alertController animated:YES completion:nil];
             }
         };
         (IMP)imp_implementationWithBlock(IMPBlock);
@@ -342,6 +432,16 @@ def makeViewForHeaderInSectionIMP() -> lldb.SBValue:
             titleLab.text = [currentPath stringByAbbreviatingWithTildeInPath];
     
             return header;
+        };
+        (IMP)imp_implementationWithBlock(IMPBlock);
+     '''
+    return HM.evaluateExpressionValue(command_script)
+
+
+def makeEditingStyleForRowAtIndexPathIMP() -> lldb.SBValue:
+    command_script = '''
+        UITableViewCellEditingStyle (^IMPBlock)(UIViewController *, UITableView *, NSIndexPath *) = ^UITableViewCellEditingStyle(UIViewController *vc, UITableView *tv, NSIndexPath *indexPath) {
+            return UITableViewCellEditingStyleDelete;
         };
         (IMP)imp_implementationWithBlock(IMPBlock);
      '''
