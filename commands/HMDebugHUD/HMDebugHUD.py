@@ -119,7 +119,7 @@ def removeDebugHUD(debugger, command, exe_ctx, result, internal_dict) -> None:
 
     command_script = '''
         UIView *keyWindow = [UIApplication sharedApplication].keyWindow;
-        Class HUDClass = (Class)objc_getClass("{arg0}");
+        Class HUDClass = (Class)objc_lookUpClass("{arg0}");
         UIView *objView = nil;
         for (UIView *subView in keyWindow.subviews) {{
             if ([subView isKindOfClass:HUDClass]) {{
@@ -146,7 +146,7 @@ def isDisplayingHUD() -> bool:
         BOOL isDisplaying = NO;
         UIView *keyWindow = [UIApplication sharedApplication].keyWindow;
         UIView *HUD = nil;
-        Class HUDClass = (Class)objc_getClass("{arg0}");
+        Class HUDClass = (Class)objc_lookUpClass("{arg0}");
         for (UIView *subView in keyWindow.subviews) {{
             if ([subView isKindOfClass:HUDClass]) {{
                 isDisplaying = YES;
@@ -254,7 +254,7 @@ def makeAddToKeyWindowIMP() -> lldb.SBValue:
 def makeTapSelfIMP() -> lldb.SBValue:
     command_script = '''
         void (^tapSelfBlock)(UIView *) = ^(UIView *HUD) {
-            Class cls = (Class)objc_getClass("HMDebugMainViewController");
+            Class cls = (Class)objc_lookUpClass("HMDebugMainViewController");
             (id)[cls performSelector:@selector(present)];
         };
 

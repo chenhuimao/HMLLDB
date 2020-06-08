@@ -225,7 +225,7 @@ def addFeatureMethods() -> bool:
 def makeSelectedAPPInfoIMP() -> lldb.SBValue:
     command_script = '''
         void (^IMPBlock)(UIViewController *) = ^(UIViewController *vc) {
-            Class objClass = (Class)objc_getClass("HMDebugInfoViewController");
+            Class objClass = (Class)objc_lookUpClass("HMDebugInfoViewController");
             UIViewController * objVC = (UIViewController *)[[objClass alloc] init];
             [vc.navigationController pushViewController:objVC animated:YES];
         };
@@ -239,7 +239,7 @@ def makeSelectedAPPInfoIMP() -> lldb.SBValue:
 def makeSelectedSandboxIMP() -> lldb.SBValue:
     command_script = '''
         void (^IMPBlock)(UIViewController *) = ^(UIViewController *vc) {
-            Class objClass = (Class)objc_getClass("HMSandboxViewController");
+            Class objClass = (Class)objc_lookUpClass("HMSandboxViewController");
             UIViewController * objVC = (UIViewController *)[[objClass alloc] init];
             [vc.navigationController pushViewController:objVC animated:YES];
         };

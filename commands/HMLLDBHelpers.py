@@ -90,7 +90,7 @@ def addOneShotBreakPointInIMP(imp: lldb.SBValue, callbackFunc: str, name: str) -
 
 def existClass(className: str) -> bool:
     command_script = '''
-        Class cls = (Class)objc_getClass("{arg}");
+        Class cls = (Class)objc_lookUpClass("{arg}");
         BOOL exist = NO;
         if (cls) {{
             exist = YES;
@@ -107,9 +107,9 @@ def existClass(className: str) -> bool:
 
 def allocateClass(className: str, superClassName: str) -> lldb.SBValue:
     command_script = '''
-        Class newCls = (Class)objc_getClass("{arg0}");
+        Class newCls = (Class)objc_lookUpClass("{arg0}");
         if (!newCls) {{
-            Class superCls = (Class)objc_getClass("{arg1}");
+            Class superCls = (Class)objc_lookUpClass("{arg1}");
             newCls = (Class)objc_allocateClassPair(superCls, "{arg0}", 0);
         }}
         newCls;
@@ -149,7 +149,7 @@ def addClassMethod(className: str, selector: str, impAddress: str, types: str) -
 
 def addInstanceMethod(className: str, selector: str, impAddress: str, types: str) -> None:
     command_script = '''
-        Class cls = (Class)objc_getClass("{arg0}");
+        Class cls = (Class)objc_lookUpClass("{arg0}");
         if (cls) {{
             SEL selector = NSSelectorFromString([[NSString alloc] initWithUTF8String:"{arg1}"]);
             (BOOL)class_addMethod(cls, selector, (void (*)()){arg2}, "{arg3}");

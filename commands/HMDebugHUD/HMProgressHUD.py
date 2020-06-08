@@ -68,7 +68,7 @@ def show(text: Optional[str]) -> None:
     register()
 
     command_script = '''
-        Class progressHUDCls = (Class)objc_getClass("{arg0}");
+        Class progressHUDCls = (Class)objc_lookUpClass("{arg0}");
         (UIView *)[progressHUDCls performSelector:@selector(showHUD)];
     '''.format(arg0=gClassName)
 
@@ -81,7 +81,7 @@ def show(text: Optional[str]) -> None:
 
 def hide() -> None:
     command_script = '''
-        Class progressHUDCls = (Class)objc_getClass("{arg0}");
+        Class progressHUDCls = (Class)objc_lookUpClass("{arg0}");
         (UIView *)[progressHUDCls performSelector:@selector(hideHUD)];
         (void)[CATransaction flush];
     '''.format(arg0=gClassName)
@@ -94,7 +94,7 @@ def makeSharedInstanceIMP() -> lldb.SBValue:
             static id {arg0}Instance;
             static dispatch_once_t {arg0}Token;
             _dispatch_once(&{arg0}Token, ^{{
-                {arg0}Instance = (UIView *)[[(Class)objc_getClass("{arg0}") alloc] init];
+                {arg0}Instance = (UIView *)[[(Class)objc_lookUpClass("{arg0}") alloc] init];
             }});
             
             return {arg0}Instance;
@@ -110,7 +110,7 @@ def makeShowHUDIMP() -> lldb.SBValue:
     command_script = '''
         UIView * (^IMPBlock)(id) = ^UIView *(id classSelf) {{
             
-            UIView *HUD = (UIView *)[(Class)objc_getClass("{arg0}") performSelector:@selector(sharedInstance)];
+            UIView *HUD = (UIView *)[(Class)objc_lookUpClass("{arg0}") performSelector:@selector(sharedInstance)];
             
             if ([HUD superview] == nil) {{
                 [[UIApplication sharedApplication].keyWindow addSubview:HUD];
@@ -137,7 +137,7 @@ def makeHideHUDIMP() -> lldb.SBValue:
     command_script = '''
         UIView * (^IMPBlock)(id) = ^UIView *(id classSelf) {{
             
-            UIView *HUD = (UIView *)[(Class)objc_getClass("{arg0}") performSelector:@selector(sharedInstance)];
+            UIView *HUD = (UIView *)[(Class)objc_lookUpClass("{arg0}") performSelector:@selector(sharedInstance)];
             [HUD removeFromSuperview];
             UIActivityIndicatorView *indicator = [HUD valueForKey:@"_indicator"];
             [indicator stopAnimating];
@@ -157,7 +157,7 @@ def makeSetTextIMP() -> lldb.SBValue:
     command_script = '''
         void (^IMPBlock)(id, NSString *) = ^(id classSelf, NSString *text) {{
             
-            UIView *HUD = (UIView *)[(Class)objc_getClass("{arg0}") performSelector:@selector(sharedInstance)];
+            UIView *HUD = (UIView *)[(Class)objc_lookUpClass("{arg0}") performSelector:@selector(sharedInstance)];
             UILabel *textLab = (UILabel *)[HUD valueForKey:@"_textLab"];
             [textLab setText:text];
             

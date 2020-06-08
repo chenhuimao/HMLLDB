@@ -35,13 +35,12 @@ def findClass(debugger, command, exe_ctx, result, internal_dict):
     HM.DPrint("Waiting...")
 
     if len(command) == 0:
-        addObjectScript = '[classNames appendString:name]; [classNames appendString:@"\\n"]; findCount += 1;'
+        addObjectScript = '[classNames appendFormat:@"%@\\n", name]; findCount += 1;'
     else:
         command = command.lower()
         addObjectScript = f'''
             if ([[name lowercaseString] containsString:@"{command}"]) {{
-                [classNames appendString:name];
-                [classNames appendString:@"\\n"];
+                [classNames appendFormat:@"%@\\n", name];
                 findCount += 1;
             }}
         '''
@@ -58,7 +57,7 @@ def findClass(debugger, command, exe_ctx, result, internal_dict):
         free(classList);
 
         if (findCount == 0) {{
-            [classNames insertString:@"No class found." atIndex:0];
+            [classNames insertString:@"No class found.\\n" atIndex:0];
         }} else {{
             [classNames insertString:[[NSString alloc] initWithFormat:@"Count: %u \\n", findCount] atIndex:0];
         }}
@@ -105,8 +104,7 @@ def findSubclass(debugger, command, exe_ctx, result, internal_dict):
         compareScript = '''
             if (class_getSuperclass(cls) == inputClass){
                 NSString *name = [[NSString alloc] initWithUTF8String:class_getName(cls)];
-                [result appendString:name];
-                [result appendString:@"\\n"];
+                [result appendFormat:@"%@\\n", name];
                 findCount += 1;
             }
         '''
@@ -116,8 +114,7 @@ def findSubclass(debugger, command, exe_ctx, result, internal_dict):
             for (Class superClass = class_getSuperclass(cls); superClass != nil; superClass = class_getSuperclass(superClass)) {
                 if (superClass == inputClass) {
                     NSString *name = [[NSString alloc] initWithUTF8String:class_getName(cls)];
-                    [result appendString:name];
-                    [result appendString:@"\\n"];
+                    [result appendFormat:@"%@\\n", name];
                     findCount += 1;
 
                     break;
@@ -130,7 +127,7 @@ def findSubclass(debugger, command, exe_ctx, result, internal_dict):
         NSMutableString *result = [[NSMutableString alloc] init];
 
         if (inputClass == nil) {{
-            [result appendString:@"Can't find {args[0]} class"];
+            [result appendString:@"Can't find {args[0]} class\\n"];
         }} else {{
             unsigned int classCount;
             unsigned int findCount = 0;
@@ -142,7 +139,7 @@ def findSubclass(debugger, command, exe_ctx, result, internal_dict):
             }}
 
             if (findCount == 0) {{
-                [result insertString:@"No subclass found." atIndex:0];
+                [result insertString:@"No subclass found.\\n" atIndex:0];
             }} else {{
                 [result insertString:[[NSString alloc] initWithFormat:@"Subclass count: %u \\n", findCount] atIndex:0];
             }}
