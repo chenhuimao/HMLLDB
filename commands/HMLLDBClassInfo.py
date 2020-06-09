@@ -47,7 +47,7 @@ def plldbClassInfo(debugger, command, exe_ctx, result, internal_dict):
         return
 
     if len(args) != 1:
-        HM.DPrint("Error input, plase input 'help plldbClassInfo' for more infomation")
+        HM.DPrint("Error input, plase enter 'help plldbClassInfo' for more infomation")
         return
 
     global gUnlimited

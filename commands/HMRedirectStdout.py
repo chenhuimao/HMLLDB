@@ -42,7 +42,7 @@ def redirect(debugger, command, exe_ctx, result, internal_dict):
 
     argsLen = len(args)
     if argsLen != 2:
-        HM.DPrint("Error input, plase input 'help redirect' for more infomation")
+        HM.DPrint("Error input, plase enter 'help redirect' for more infomation")
         return
 
     stream = args[0]
@@ -63,7 +63,7 @@ def redirect(debugger, command, exe_ctx, result, internal_dict):
         logRedirectResult(stderrValue, "stderr")
 
     else:
-        HM.DPrint("Error input, plase input 'help redirect' for more infomation")
+        HM.DPrint("Error input, plase enter 'help redirect' for more infomation")
 
 
 def logRedirectResult(val: lldb.SBValue, stream: str) -> None:

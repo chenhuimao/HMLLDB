@@ -55,7 +55,7 @@ def push(debugger, command, exe_ctx, result, internal_dict):
         return
 
     if len(args) == 0:
-        HM.DPrint("Error input, plase input 'help push' for more infomation")
+        HM.DPrint("Error input, plase enter 'help push' for more infomation")
         return
 
     HM.DPrint("Waiting...")

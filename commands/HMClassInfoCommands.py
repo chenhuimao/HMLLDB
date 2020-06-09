@@ -14,6 +14,7 @@ import HMLLDBClassInfo
 def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand('command script add -f HMClassInfoCommands.findClass fclass -h "Find the class containing the input name(Case insensitive)"')
     debugger.HandleCommand('command script add -f HMClassInfoCommands.findSubclass fsubclass -h "Find the subclass of the input"')
+    debugger.HandleCommand('command script add -f HMClassInfoCommands.findMethod fmethod -h "Find the method"')
 
 
 def findClass(debugger, command, exe_ctx, result, internal_dict):
@@ -154,6 +155,114 @@ def findSubclass(debugger, command, exe_ctx, result, internal_dict):
     HM.DPrint(classNames)
 
 
+def findMethod(debugger, command, exe_ctx, result, internal_dict):
+    """
+    Syntax:
+        fmethod <methodName>  (Case insensitive.)
+        fmethod [--class] <className>
+
+    Options:
+        --class/-c; Find all method in the class
+
+    Examples:
+        (lldb) fmethod viewdid
+        (lldb) fmethod viewDidLayoutSubviews
+        (lldb) fmethod -c UITableViewController
+
+    This command is implemented in HMClassInfoCommands.py
+    """
+
+    command_args = shlex.split(command)
+    parser = generate_findMethod_option_parser()
+    try:
+        # options: optparse.Values
+        # args: list
+        (options, args) = parser.parse_args(command_args)
+    except:
+        result.SetError(parser.usage)
+        return
+
+    if not options.cls:
+        if len(args) != 1:
+            HM.DPrint("Error input, Please enter \"help fmethod\" for help.")
+            return
+        elif len(args[0]) <= 5:
+            HM.DPrint("Argument length must be greater than 5.")
+            return
+
+
+    HM.DPrint("Waiting...")
+
+    if options.cls:
+        command_script = f'''
+            NSMutableString *result = [[NSMutableString alloc] init];
+            Class inputClass = objc_lookUpClass("{options.cls}");
+            if (inputClass == nil) {{
+                [result appendString:@"Can't find {options.cls} class\\n"];
+            }} else {{
+                unsigned int methodCount;
+                Method *methodList = class_copyMethodList(inputClass, &methodCount);
+                for (int j = 0; j < methodCount; ++j) {{
+                    Method method = methodList[j];
+                    SEL sel = method_getName(method);
+                    NSString *selName = [[NSString alloc] initWithUTF8String:sel_getName(sel)];
+                    [result appendFormat:@"%@\\n\\tType encoding:%s\\n", selName, method_getTypeEncoding(method)];
+                }}
+                free(methodList);
+                
+                if (methodCount == 0) {{
+                    [result insertString:@"No method found.\\n" atIndex:0];
+                }} else {{
+                    [result insertString:[[NSString alloc] initWithFormat:@"Methods count: %u \\n", methodCount] atIndex:0];
+                }}
+            }}
+            
+            result;
+        '''
+
+    else:
+        inputMethodName = args[0].lower()
+        command_script = f'''
+            NSString *inputMethodName = [[NSString alloc] initWithUTF8String:"{inputMethodName}"];
+            
+            NSMutableString *result = [[NSMutableString alloc] init];
+        
+            unsigned int classCount;
+            unsigned int findCount = 0;
+            Class *classList = objc_copyClassList(&classCount);
+        
+            for (int i = 0; i < classCount; ++i) {{
+                Class cls = classList[i];
+                unsigned int methodCount;
+                Method *methodList = class_copyMethodList(cls, &methodCount);
+        
+                for (int j = 0; j < methodCount; ++j) {{
+                    Method method = methodList[j];
+                    SEL sel = method_getName(method);
+                    NSString *selName = [[NSString alloc] initWithUTF8String:sel_getName(sel)];
+                    if ([[selName lowercaseString] containsString:inputMethodName]) {{
+                        NSString *clsName = [[NSString alloc] initWithUTF8String:class_getName(cls)];
+                        [result appendFormat:@"%@\\n\\tType encoding:%s\\n\\tClass:%@\\n", selName, method_getTypeEncoding(method), clsName];
+                        findCount += 1;
+                    }}
+                }}
+                free(methodList);
+            }}
+            if (findCount == 0) {{
+                [result insertString:@"No method found.\\n" atIndex:0];
+            }} else {{
+                [result insertString:[[NSString alloc] initWithFormat:@"Methods count: %u \\n", findCount] atIndex:0];
+            }}
+
+            free(classList);
+            result;
+        '''
+
+    result = HM.evaluateExpressionValue(command_script).GetObjectDescription()
+    HM.DPrint(result)
+
+
+
 def generate_findSubclass_option_parser() -> optparse.OptionParser:
     usage = "usage: fsubclass [-n] <className>"
     parser = optparse.OptionParser(usage=usage, prog="fsubclass")
@@ -162,5 +271,17 @@ def generate_findSubclass_option_parser() -> optparse.OptionParser:
                       default=False,
                       dest="nonrecursively",
                       help="Find subclass non-recursively")
+
+    return parser
+
+
+def generate_findMethod_option_parser() -> optparse.OptionParser:
+    usage = "usage: fmethod [-c] <className>"
+    parser = optparse.OptionParser(usage=usage, prog="fmethod")
+    parser.add_option("-c", "--class",
+                      action="store",
+                      default=None,
+                      dest="cls",
+                      help="Find all method in the class")
 
     return parser
