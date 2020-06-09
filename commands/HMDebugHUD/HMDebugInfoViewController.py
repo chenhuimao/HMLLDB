@@ -136,7 +136,7 @@ def addTableViewMethods() -> bool:
     numberOfRowsInSectionIMPValue = makeNumberOfRowsInSectionIMP()
     if not HM.judgeSBValueHasValue(numberOfRowsInSectionIMPValue):
         return False
-    HM.addInstanceMethod(gClassName, "tableView:numberOfRowsInSection:", numberOfRowsInSectionIMPValue.GetValue(), "l@:@l")
+    HM.addInstanceMethod(gClassName, "tableView:numberOfRowsInSection:", numberOfRowsInSectionIMPValue.GetValue(), "q@:@q")
 
     cellForRowAtIndexPathIMPValue = makeCellForRowAtIndexPathIMP()
     if not HM.judgeSBValueHasValue(cellForRowAtIndexPathIMPValue):
