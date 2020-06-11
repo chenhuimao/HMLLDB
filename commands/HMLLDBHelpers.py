@@ -89,71 +89,69 @@ def addOneShotBreakPointInIMP(imp: lldb.SBValue, callbackFunc: str, name: str) -
 
 
 def existClass(className: str) -> bool:
-    command_script = '''
-        Class cls = (Class)objc_lookUpClass("{arg}");
+    command_script = f'''
+        Class cls = (Class)objc_lookUpClass("{className}");
         BOOL exist = NO;
         if (cls) {{
             exist = YES;
         }}
         exist;
-    '''.format(arg=className)
+    '''
 
-    result = evaluateExpressionValue(command_script).GetValue()
-    if result == "True" or result == "true" or result == "YES":
-        return True
-    else:
-        return False
+    value = evaluateExpressionValue(command_script)
+    return boolOfSBValue(value)
 
 
 def allocateClass(className: str, superClassName: str) -> lldb.SBValue:
-    command_script = '''
-        Class newCls = (Class)objc_lookUpClass("{arg0}");
+    command_script = f'''
+        Class newCls = (Class)objc_lookUpClass("{className}");
         if (!newCls) {{
-            Class superCls = (Class)objc_lookUpClass("{arg1}");
-            newCls = (Class)objc_allocateClassPair(superCls, "{arg0}", 0);
+            Class superCls = (Class)objc_lookUpClass("{superClassName}");
+            newCls = (Class)objc_allocateClassPair(superCls, "{className}", 0);
         }}
         newCls;
-    '''.format(arg0=className, arg1=superClassName)
+    '''
 
     return evaluateExpressionValue(command_script)
 
 
 def registerClass(classAddress: str) -> None:
-    command_script = "(void)objc_registerClassPair(Class({arg}))".format(arg=classAddress)
+    command_script = f"(void)objc_registerClassPair(Class({classAddress}))"
     evaluateExpressionValue(command_script)
 
 
 def addIvar(classAddress: str, ivarName: str, types: str) -> bool:
-    command_script = '''
-        const char * types = @encode({arg2});
+    command_script = f'''
+        const char * types = @encode({types});
         NSUInteger size;
         NSUInteger alingment;
         NSGetSizeAndAlignment(types, &size, &alingment);
-        (BOOL)class_addIvar((Class){arg0}, "{arg1}", size, alingment, types);
-    '''.format(arg0=classAddress, arg1=ivarName, arg2=types)
+        (BOOL)class_addIvar((Class){classAddress}, "{ivarName}", size, alingment, types);
+    '''
 
-    return evaluateExpressionValue(command_script).GetValue()
+    value = evaluateExpressionValue(command_script)
+    return boolOfSBValue(value)
 
 
 def addClassMethod(className: str, selector: str, impAddress: str, types: str) -> None:
-    command_script = '''
-        Class metaCls = (Class)objc_getMetaClass("{arg0}");
+    command_script = f'''
+        Class metaCls = (Class)objc_getMetaClass("{className}");
         if (metaCls) {{
-            SEL selector = NSSelectorFromString([[NSString alloc] initWithUTF8String:"{arg1}"]);
-            (BOOL)class_addMethod(metaCls, selector, (void (*)()){arg2}, "{arg3}");
+            SEL selector = NSSelectorFromString([[NSString alloc] initWithUTF8String:"{selector}"]);
+            (BOOL)class_addMethod(metaCls, selector, (void (*)()){impAddress}, "{types}");
         }}
-    '''.format(arg0=className, arg1=selector, arg2=impAddress, arg3=types)
+    '''
 
     evaluateExpressionValue(command_script)
 
 
 def addInstanceMethod(className: str, selector: str, impAddress: str, types: str) -> None:
-    command_script = '''
-        Class cls = (Class)objc_lookUpClass("{arg0}");
+    command_script = f'''
+        Class cls = (Class)objc_lookUpClass("{className}");
         if (cls) {{
-            SEL selector = NSSelectorFromString([[NSString alloc] initWithUTF8String:"{arg1}"]);
-            (BOOL)class_addMethod(cls, selector, (void (*)()){arg2}, "{arg3}");
+            SEL selector = NSSelectorFromString([[NSString alloc] initWithUTF8String:"{selector}"]);
+            (BOOL)class_addMethod(cls, selector, (void (*)()){impAddress}, "{types}");
         }}
-    '''.format(arg0=className, arg1=selector, arg2=impAddress, arg3=types)
+    '''
 
     evaluateExpressionValue(command_script)

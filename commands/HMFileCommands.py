@@ -79,7 +79,7 @@ def pBundlePath(debugger, command, exe_ctx, result, internal_dict):
     HM.DPrint(path)
     if options.open:
         # Cannot open the bundle, so we open the directory where the bundle is located.
-        directoryValue = HM.evaluateExpressionValue('(NSString *)[(NSString *){path} stringByDeletingLastPathComponent]'.format(path=bundlePathValue.GetValue()))
+        directoryValue = HM.evaluateExpressionValue(f'(NSString *)[(NSString *){bundlePathValue.GetValue()} stringByDeletingLastPathComponent]')
         os.system('open ' + directoryValue.GetObjectDescription())
 
 
@@ -125,7 +125,7 @@ def deleteFile(debugger, command, exe_ctx, result, internal_dict):
         for i in range(subFileArrayValue.GetNumChildren()):
             subFileValue = subFileArrayValue.GetChildAtIndex(i)
             HM.DPrint("=============" + subFileValue.GetObjectDescription() + "=============")
-            subFilePathValue = HM.evaluateExpressionValue("[(NSString *)NSHomeDirectory() stringByAppendingPathComponent:(NSString *){arg}]".format(arg=subFileValue.GetValue()))
+            subFilePathValue = HM.evaluateExpressionValue(f"[(NSString *)NSHomeDirectory() stringByAppendingPathComponent:(NSString *){subFileValue.GetValue()}]")
             deleteAllFileInDirectory(subFilePathValue.GetObjectDescription())
 
     if options.documents:
@@ -151,7 +151,7 @@ def deleteFile(debugger, command, exe_ctx, result, internal_dict):
     if options.preferences:
         hasOption = True
         libraryDirectoryValue = HM.evaluateExpressionValue("(NSString *)[NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) firstObject]")
-        preferencesDirectoryValue = HM.evaluateExpressionValue("(NSString *)[(NSString *){arg} stringByAppendingPathComponent:@\"Preferences\"]".format(arg=libraryDirectoryValue.GetValue()))
+        preferencesDirectoryValue = HM.evaluateExpressionValue(f"(NSString *)[(NSString *){libraryDirectoryValue.GetValue()} stringByAppendingPathComponent:@\"Preferences\"]")
         deleteAllFileInDirectory(preferencesDirectoryValue.GetObjectDescription())
 
     if options.file:
@@ -163,45 +163,58 @@ def deleteFile(debugger, command, exe_ctx, result, internal_dict):
 
 
 def deleteAllFileInDirectory(directoryPath: str) -> None:
-    command_script = '''
-        NSString *directoryPath = @"{arg}";
+    command_script = f'''
+        NSString *directoryPath = @"{directoryPath}";
+        NSMutableString *result = [[NSMutableString alloc] init];
         NSFileManager *fileMgr = [NSFileManager defaultManager];
         if ([fileMgr fileExistsAtPath:directoryPath]) {{
             NSArray *subFileArray = [fileMgr contentsOfDirectoryAtPath:directoryPath error:nil];
             for (NSString *subFileName in subFileArray) {{
                 NSString *subFilePath = [directoryPath stringByAppendingPathComponent:subFileName];
                 if ([fileMgr removeItemAtPath:subFilePath error:nil]) {{
-                    printf("[HMLLDB] removed file:%s\\n", (const char *)[subFilePath UTF8String]);
+                    [result appendFormat:@"removed file: %@\\n", subFilePath];
                 }} else {{
-                    printf("[HMLLDB] failed to remove file:%s\\n", (const char *)[subFilePath UTF8String]);
+                    [result appendFormat:@"failed to remove file: %@\\n", subFilePath];
                 }}
             }}
         }} else {{
-            printf("[HMLLDB] failed to remove non-existing file:%s\\n", (const char *)[directoryPath UTF8String]);
+            [result appendFormat:@"failed to remove non-existing file: %@\\n", directoryPath];
         }}
-    '''.format(arg=directoryPath)
-    HM.evaluateExpressionValue(command_script)
+
+        if ([result length] == 0) {{
+            [result appendString:@"There are no files in this directory.\\n"];
+        }}
+    
+        result;
+    '''
+
+    result = HM.evaluateExpressionValue(command_script).GetObjectDescription()
+    HM.DPrint(result)
 
 
 def deleteFileOrDirectory(filePath: str) -> None:
-    command_script = '''
-        NSString *filePath = @"{arg}";
+    command_script = f'''
+        NSString *filePath = @"{filePath}";
+        NSMutableString *result = [[NSMutableString alloc] init];
         NSFileManager *fileMgr = [NSFileManager defaultManager];
         if ([fileMgr fileExistsAtPath:filePath]) {{
             if ([fileMgr removeItemAtPath:filePath error:nil]) {{
-                printf("[HMLLDB] removed file:%s\\n", (const char *)[filePath UTF8String]);
+                [result appendFormat:@"removed file: %@\\n", filePath];
             }} else {{
-                printf("[HMLLDB] failed to remove file:%s\\n", (const char *)[filePath UTF8String]);
+                [result appendFormat:@"failed to remove file: %@\\n", filePath];
             }}
         }} else {{
-            printf("[HMLLDB] failed to remove non-existing file:%s\\n", (const char *)[filePath UTF8String]);
+            [result appendFormat:@"failed to remove non-existing file: %@\\n", filePath];
         }}
-    '''.format(arg=filePath)
-    HM.evaluateExpressionValue(command_script)
+
+        result;
+    '''
+    result = HM.evaluateExpressionValue(command_script).GetObjectDescription()
+    HM.DPrint(result)
 
 
 def generate_option_parser(command: str) -> optparse.OptionParser:
-    usage = "usage: {arg} [--open]".format(arg=command)
+    usage = f"usage: {command} [--open]"
     parser = optparse.OptionParser(usage=usage, prog=command)
     parser.add_option("-o", "--open",
                       action="store_true",
