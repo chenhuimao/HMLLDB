@@ -6,9 +6,10 @@ An lldb Python script to push view controller.
 
 from typing import Optional, List
 import lldb
-import HMLLDBHelpers as HM
 import optparse
 import shlex
+import HMLLDBHelpers as HM
+import HMLLDBClassInfo
 
 
 def __lldb_init_module(debugger, internal_dict):
@@ -73,11 +74,11 @@ def push(debugger, command, exe_ctx, result, internal_dict):
         instanceExpr = instanceExpr.rstrip()
         VCObject = HM.evaluateExpressionValue(instanceExpr).GetValue()
     else:
-        makeVCExpression = "(UIViewController *)[[NSClassFromString(@\"{UIViewController}\") alloc] init]".format(UIViewController=command)
+        makeVCExpression = f"(UIViewController *)[[NSClassFromString(@\"{args[0]}\") alloc] init]"
         VCObject = HM.evaluateExpressionValue(makeVCExpression).GetValue()     # address
 
     if verifyObjIsKindOfClass(VCObject, "UIViewController"):
-        pushExpression = "(void)[{arg1} pushViewController:(id){arg2} animated:YES]".format(arg1=navigationVC, arg2=VCObject)
+        pushExpression = f"(void)[{navigationVC} pushViewController:(id){VCObject} animated:YES]"
         debugger.HandleCommand('expression -l objc -O -- ' + pushExpression)
         state = True
     elif not options.instance:
@@ -85,10 +86,14 @@ def push(debugger, command, exe_ctx, result, internal_dict):
         if len(gModulesName) == 0:
             gModulesName = getModulesName()
         for modlue in gModulesName:  # for Swift file
-            makeVCExpression = "(UIViewController *)[[NSClassFromString(@\"{prefix}.{UIViewController}\") alloc] init]".format(prefix=modlue, UIViewController=command)
+            className = f"{modlue}.{args[0]}"
+            if not HM.existClass(className):
+                continue
+
+            makeVCExpression = f"(UIViewController *)[[NSClassFromString(@\"{className}\") alloc] init]"
             VCObject = HM.evaluateExpressionValue(makeVCExpression).GetValue()  # address
             if verifyObjIsKindOfClass(VCObject, "UIViewController"):
-                pushExpression = "(void)[{arg1} pushViewController:(id){arg2} animated:YES]".format(arg1=navigationVC, arg2=VCObject)
+                pushExpression = f"(void)[{navigationVC} pushViewController:(id){VCObject} animated:YES]"
                 debugger.HandleCommand('expression -l objc -O -- ' + pushExpression)
                 state = True
                 break
@@ -98,15 +103,12 @@ def push(debugger, command, exe_ctx, result, internal_dict):
         HM.processContinue()
 
 
-def verifyObjIsKindOfClass(obj: str, className: str) -> bool:
-    if obj is None or len(obj) == 0:
+def verifyObjIsKindOfClass(objAddress: str, className: str) -> bool:
+    if objAddress is None or len(objAddress) == 0:
         return False
     
-    result = HM.evaluateExpressionValue("(BOOL)[(id){obj} isKindOfClass:[{objClass} class]]".format(obj=obj, objClass=className)).GetValue()
-    if result == "True" or result == "true" or result == "YES":
-        return True
-    else:
-        return False
+    resultValue = HM.evaluateExpressionValue(f"(BOOL)[(id){objAddress} isKindOfClass:[{className} class]]")
+    return HM.boolOfSBValue(resultValue)
 
 
 def getNavigationVC() -> Optional[str]:
@@ -114,7 +116,7 @@ def getNavigationVC() -> Optional[str]:
     if verifyObjIsKindOfClass(rootViewController, "UINavigationController"):
         return rootViewController
     elif verifyObjIsKindOfClass(rootViewController, "UITabBarController"):
-        selectedViewController = HM.evaluateExpressionValue("[(UITabBarController *){tabBarVC} selectedViewController]".format(tabBarVC=rootViewController)).GetValue()
+        selectedViewController = HM.evaluateExpressionValue(f"[(UITabBarController *){rootViewController} selectedViewController]").GetValue()
         if verifyObjIsKindOfClass(selectedViewController, "UINavigationController"):
             return selectedViewController
         else:
@@ -127,16 +129,19 @@ def getNavigationVC() -> Optional[str]:
 def getModulesName() -> List[str]:
     HM.DPrint("Getting module names when using this command for the first time")
     numOfModules = lldb.debugger.GetSelectedTarget().GetNumModules()
+    mainModuleDirectory = ''
     modulesName = []
     for i in range(numOfModules):
         module = lldb.debugger.GetSelectedTarget().GetModuleAtIndex(i)
         fileSpec = module.GetFileSpec()
         directory = fileSpec.GetDirectory()
         filename = fileSpec.GetFilename()
+        if i == 0:
+            mainModuleDirectory = directory
         if directory is None or filename is None:
             continue
 
-        if '.app' in directory and '.' not in filename:  # Filter out modules that may be user-written
+        if mainModuleDirectory in directory:  # Filter out modules that may be user-written
             modulesName.append(filename)
 
     # HM.DPrint(modulesName)
