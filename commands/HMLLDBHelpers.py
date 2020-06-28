@@ -5,12 +5,13 @@ lldb Python script helpers.
 """
 
 import lldb
-from typing import Any, List
+from typing import Any, List, Tuple
 
 
 gIsFirstCall = True
 
 gClassPrefixes: List[str] = []   # Class Prefixes that may be user-written
+gClassPrefixesValue: lldb.SBValue = lldb.SBValue()
 
 
 def processContinue() -> None:
@@ -90,10 +91,12 @@ def addOneShotBreakPointInIMP(imp: lldb.SBValue, callbackFunc: str, name: str) -
     bp.SetScriptCallbackFunction(callbackFunc)
 
 
-def getClassPrefixes() -> List[str]:
+def getClassPrefixes() -> Tuple[List[str], lldb.SBValue]:
     global gClassPrefixes
-    if len(gClassPrefixes) > 0:
-        return gClassPrefixes
+    global gClassPrefixesValue
+
+    if judgeSBValueHasValue(gClassPrefixesValue):
+        return gClassPrefixes, gClassPrefixesValue
 
     DPrint("Getting class prefixes when using this function for the first time")
 
@@ -115,12 +118,12 @@ def getClassPrefixes() -> List[str]:
         clsPrefixes;
     '''
 
-    clsPrefixesValue = evaluateExpressionValue(command_script)
-    for i in range(clsPrefixesValue.GetNumChildren()):
-        prefixValue = clsPrefixesValue.GetChildAtIndex(i)
+    gClassPrefixesValue = evaluateExpressionValue(command_script)
+    for i in range(gClassPrefixesValue.GetNumChildren()):
+        prefixValue = gClassPrefixesValue.GetChildAtIndex(i)
         gClassPrefixes.append(prefixValue.GetObjectDescription())
 
-    return gClassPrefixes
+    return gClassPrefixes, gClassPrefixesValue
 
 
 def existClass(className: str) -> bool:

@@ -123,10 +123,21 @@ def findSubclass(debugger, command, exe_ctx, result, internal_dict):
             }
         '''
 
+    clsPrefixesValue = HM.getClassPrefixes()[1]
     command_script = f'''
         Class inputClass = objc_lookUpClass("{args[0]}");
-        NSMutableString *result = [[NSMutableString alloc] init];
 
+        if (inputClass == nil) {{   //  Find prefixed class
+            for (NSString *prefix in (NSMutableArray *){clsPrefixesValue.GetValue()}) {{
+                NSString *clsName = [prefix stringByAppendingString:@".{args[0]}"];
+                inputClass = objc_lookUpClass((char *)[clsName UTF8String]);
+                if (inputClass) {{
+                    break;
+                }}
+            }}
+        }}
+
+        NSMutableString *result = [[NSMutableString alloc] init];
         if (inputClass == nil) {{
             [result appendString:@"Can't find {args[0]} class\\n"];
         }} else {{
@@ -194,9 +205,20 @@ def findMethod(debugger, command, exe_ctx, result, internal_dict):
     HM.DPrint("Waiting...")
 
     if options.cls:
+        clsPrefixesValue = HM.getClassPrefixes()[1]
         command_script = f'''
             NSMutableString *result = [[NSMutableString alloc] init];
             Class inputClass = objc_lookUpClass("{options.cls}");
+            if (inputClass == nil) {{   //  Find prefixed class
+                for (NSString *prefix in (NSMutableArray *){clsPrefixesValue.GetValue()}) {{
+                    NSString *clsName = [prefix stringByAppendingString:@".{options.cls}"];
+                    inputClass = objc_lookUpClass((char *)[clsName UTF8String]);
+                    if (inputClass) {{
+                        break;
+                    }}
+                }}
+            }}
+
             if (inputClass == nil) {{
                 [result appendString:@"Can't find {options.cls} class\\n"];
             }} else {{

@@ -79,7 +79,7 @@ def push(debugger, command, exe_ctx, result, internal_dict):
         debugger.HandleCommand('expression -l objc -O -- ' + pushExpression)
         state = True
     elif not options.instance:
-        classPrefixes = HM.getClassPrefixes()
+        classPrefixes = HM.getClassPrefixes()[0]
         for prefix in classPrefixes:  # for Swift file
             className = f"{prefix}.{args[0]}"
             if not HM.existClass(className):
