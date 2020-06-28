@@ -16,9 +16,6 @@ def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand('command script add -f HMPushViewController.push push -h "Find navigationController in keyWindow then push a viewController."')
 
 
-gModulesName: List[str] = []   # List of module names that may be user-written
-
-
 def push(debugger, command, exe_ctx, result, internal_dict):
     """
     Syntax:
@@ -82,11 +79,9 @@ def push(debugger, command, exe_ctx, result, internal_dict):
         debugger.HandleCommand('expression -l objc -O -- ' + pushExpression)
         state = True
     elif not options.instance:
-        global gModulesName
-        if len(gModulesName) == 0:
-            gModulesName = getModulesName()
-        for modlue in gModulesName:  # for Swift file
-            className = f"{modlue}.{args[0]}"
+        classPrefixes = HM.getClassPrefixes()
+        for prefix in classPrefixes:  # for Swift file
+            className = f"{prefix}.{args[0]}"
             if not HM.existClass(className):
                 continue
 
@@ -123,29 +118,6 @@ def getNavigationVC() -> Optional[str]:
             return None
     else:
         return None
-
-
-# Get list of module names that may be user-written
-def getModulesName() -> List[str]:
-    HM.DPrint("Getting module names when using this command for the first time")
-    numOfModules = lldb.debugger.GetSelectedTarget().GetNumModules()
-    mainModuleDirectory = ''
-    modulesName = []
-    for i in range(numOfModules):
-        module = lldb.debugger.GetSelectedTarget().GetModuleAtIndex(i)
-        fileSpec = module.GetFileSpec()
-        directory = fileSpec.GetDirectory()
-        filename = fileSpec.GetFilename()
-        if i == 0:
-            mainModuleDirectory = directory
-        if directory is None or filename is None:
-            continue
-
-        if mainModuleDirectory in directory:  # Filter out modules that may be user-written
-            modulesName.append(filename)
-
-    # HM.DPrint(modulesName)
-    return modulesName
 
 
 def generate_option_parser() -> optparse.OptionParser:

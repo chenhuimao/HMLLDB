@@ -5,10 +5,12 @@ lldb Python script helpers.
 """
 
 import lldb
-from typing import Any
+from typing import Any, List
 
 
 gIsFirstCall = True
+
+gClassPrefixes: List[str] = []   # Class Prefixes that may be user-written
 
 
 def processContinue() -> None:
@@ -86,6 +88,39 @@ def addOneShotBreakPointInIMP(imp: lldb.SBValue, callbackFunc: str, name: str) -
     bp.AddName(name)
     bp.SetOneShot(True)
     bp.SetScriptCallbackFunction(callbackFunc)
+
+
+def getClassPrefixes() -> List[str]:
+    global gClassPrefixes
+    if len(gClassPrefixes) > 0:
+        return gClassPrefixes
+
+    DPrint("Getting class prefixes when using this function for the first time")
+
+    command_script = '''
+        unsigned int classCount;
+        Class *classList = objc_copyClassList(&classCount);
+        NSMutableArray *clsPrefixes = [[NSMutableArray alloc] init];
+        for (int i = 0; i < classCount; i++) {
+            NSString *name = [[NSString alloc] initWithUTF8String:class_getName(classList[i])];
+            if ([name containsString:@"."]) {
+                NSRange range = [name rangeOfString:@"."];
+                NSString *prefix = [name substringToIndex:range.location];
+                if (![clsPrefixes containsObject:prefix]) {
+                    [clsPrefixes addObject:prefix];
+                }
+            }
+        }
+        free(classList);
+        clsPrefixes;
+    '''
+
+    clsPrefixesValue = evaluateExpressionValue(command_script)
+    for i in range(clsPrefixesValue.GetNumChildren()):
+        prefixValue = clsPrefixesValue.GetChildAtIndex(i)
+        gClassPrefixes.append(prefixValue.GetObjectDescription())
+
+    return gClassPrefixes
 
 
 def existClass(className: str) -> bool:
