@@ -19,17 +19,17 @@ def register() -> None:
         return
 
     # Register class
-    HMProgressHUD.show("Register {arg0}...".format(arg0=gClassName))
-    HM.DPrint("Register {arg0}...".format(arg0=gClassName))
+    HMProgressHUD.show(f"Register {gClassName}...")
+    HM.DPrint(f"Register {gClassName}...")
 
-    classValue = HM.allocateClass(gClassName, "UIViewController")
+    classValue = HM.allocateClass(gClassName, "HMDebugBaseViewController")
     HM.addIvar(classValue.GetValue(), "_tableView", "UITableView *")
     HM.addIvar(classValue.GetValue(), "_currentPath", "NSString *")
     HM.addIvar(classValue.GetValue(), "_childPaths", "NSMutableArray *")
     HM.registerClass(classValue.GetValue())
 
     # Add methods
-    HM.DPrint("Add methods to {arg0}...".format(arg0=gClassName))
+    HM.DPrint(f"Add methods to {gClassName}...")
     viewDidLoadIMPValue = makeViewDidLoadIMP()
     if not HM.judgeSBValueHasValue(viewDidLoadIMPValue):
         HMProgressHUD.hide()
@@ -62,13 +62,13 @@ def register() -> None:
 
 
     # Methods related to tableView.
-    HM.DPrint("Add methods to {arg0}......".format(arg0=gClassName))
+    HM.DPrint(f"Add methods to {gClassName}......")
     if not addTableViewMethods():
         HMProgressHUD.hide()
         return
 
 
-    HM.DPrint("Register {arg0} done!".format(arg0=gClassName))
+    HM.DPrint(f"Register {gClassName} done!")
     HMProgressHUD.hide()
 
 
@@ -102,6 +102,9 @@ def makeViewDidLoadIMP() -> lldb.SBValue:
             tv.tableFooterView = [[UIView alloc] init];
             tv.dataSource = vc;
             tv.delegate = vc;
+            if ([tv respondsToSelector:@selector(setContentInsetAdjustmentBehavior:)]) {
+                [tv setContentInsetAdjustmentBehavior:(UIScrollViewContentInsetAdjustmentBehavior)0];
+            }
             [vc.view addSubview:tv];            
         };
 

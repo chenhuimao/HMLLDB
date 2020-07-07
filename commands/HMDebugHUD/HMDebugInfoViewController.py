@@ -19,16 +19,16 @@ def register() -> None:
         return
 
     # Register class
-    HMProgressHUD.show("Register {arg0}...".format(arg0=gClassName))
-    HM.DPrint("Register {arg0}...".format(arg0=gClassName))
+    HMProgressHUD.show(f"Register {gClassName}...")
+    HM.DPrint(f"Register {gClassName}...")
 
-    classValue = HM.allocateClass(gClassName, "UIViewController")
+    classValue = HM.allocateClass(gClassName, "HMDebugBaseViewController")
     HM.addIvar(classValue.GetValue(), "_leftTextArray", "NSMutableArray *")
     HM.addIvar(classValue.GetValue(), "_rightTextArray", "NSMutableArray *")
     HM.registerClass(classValue.GetValue())
 
     # Add methods
-    HM.DPrint("Add methods to {arg0}...".format(arg0=gClassName))
+    HM.DPrint(f"Add methods to {gClassName}...")
     viewDidLoadIMPValue = makeViewDidLoadIMP()
     if not HM.judgeSBValueHasValue(viewDidLoadIMPValue):
         HMProgressHUD.hide()
@@ -36,19 +36,19 @@ def register() -> None:
     HM.addInstanceMethod(gClassName, "viewDidLoad", viewDidLoadIMPValue.GetValue(), "v@:")
 
     # Methods related to tableView.
-    HM.DPrint("Add methods to {arg0}......".format(arg0=gClassName))
+    HM.DPrint(f"Add methods to {gClassName}......")
 
     if not addTableViewMethods():
         HMProgressHUD.hide()
         return
 
-    HM.DPrint("Register {arg0} done!".format(arg0=gClassName))
+    HM.DPrint(f"Register {gClassName} done!")
     HMProgressHUD.hide()
 
 
 def makeViewDidLoadIMP() -> lldb.SBValue:
     lldbVersion = lldb.debugger.GetVersionString().replace('\n', '\\n')
-    command_script = '''
+    command_script = f'''
         void (^IMPBlock)(UIViewController *) = ^(UIViewController *vc) {{
             struct objc_super superInfo = {{
                 .receiver = vc,
@@ -107,7 +107,7 @@ def makeViewDidLoadIMP() -> lldb.SBValue:
             
             // 8
             [leftTextArray addObject:@"LLDB version"];
-            NSString *LLDBVersion = @"{arg0}";
+            NSString *LLDBVersion = @"{lldbVersion}";
             [rightTextArray addObject:LLDBVersion];
             
             // property initialize
@@ -121,11 +121,14 @@ def makeViewDidLoadIMP() -> lldb.SBValue:
             tv.estimatedRowHeight = 50;
             tv.rowHeight = UITableViewAutomaticDimension;
             tv.tableFooterView = [[UIView alloc] init];
+            if ([tv respondsToSelector:@selector(setContentInsetAdjustmentBehavior:)]) {{
+                [tv setContentInsetAdjustmentBehavior:(UIScrollViewContentInsetAdjustmentBehavior)0];
+            }}
             [vc.view addSubview:tv];
         }};
 
         (IMP)imp_implementationWithBlock(IMPBlock);    
-    '''.format(arg0=lldbVersion)
+    '''
 
     return HM.evaluateExpressionValue(command_script)
 

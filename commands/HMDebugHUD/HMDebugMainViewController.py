@@ -21,14 +21,14 @@ def register() -> None:
         return
 
     # Register class
-    HMProgressHUD.show("Register {arg0}...".format(arg0=gClassName))
-    HM.DPrint("Register {arg0}...".format(arg0=gClassName))
+    HMProgressHUD.show(f"Register {gClassName}...")
+    HM.DPrint(f"Register {gClassName}...")
 
-    classValue = HM.allocateClass(gClassName, "UIViewController")
+    classValue = HM.allocateClass(gClassName, "HMDebugBaseViewController")
     HM.registerClass(classValue.GetValue())
 
     # Add methods
-    HM.DPrint("Add methods to {arg0}...".format(arg0=gClassName))
+    HM.DPrint(f"Add methods to {gClassName}...")
     presentIMPValue = makePresentIMP()
     if not HM.judgeSBValueHasValue(presentIMPValue):
         HMProgressHUD.hide()
@@ -48,30 +48,27 @@ def register() -> None:
     HM.addInstanceMethod(gClassName, "dismissSelf", dismissSelfIMPValue.GetValue(), "v@:")
 
     # Methods related to tableView.
-    HM.DPrint("Add methods to {arg0}......".format(arg0=gClassName))
+    HM.DPrint(f"Add methods to {gClassName}......")
     if not addTableViewMethods():
         HMProgressHUD.hide()
         return
 
     # Methods related to features.
-    HM.DPrint("Add methods to {arg0}.........".format(arg0=gClassName))
+    HM.DPrint(f"Add methods to {gClassName}.........")
     if not addFeatureMethods():
         HMProgressHUD.hide()
         return
 
-    HM.DPrint("Register {arg0} done!".format(arg0=gClassName))
+    HM.DPrint(f"Register {gClassName} done!")
     HMProgressHUD.hide()
 
 
 def makePresentIMP() -> lldb.SBValue:
-    command_script = '''
+    command_script = f'''
         UIViewController * (^presentBlock)(id) = ^UIViewController *(id classSelf) {{
-            UIViewController *vc = (UIViewController *)[[NSClassFromString(@"{arg0}") alloc] init];
+            UIViewController *vc = (UIViewController *)[[NSClassFromString(@"{gClassName}") alloc] init];
             UINavigationController *nv = [[UINavigationController alloc] initWithRootViewController:vc];
             nv.modalPresentationStyle = (UIModalPresentationStyle)0;
-            if ([nv respondsToSelector:@selector(setOverrideUserInterfaceStyle:)]) {{
-                [nv setOverrideUserInterfaceStyle:UIUserInterfaceStyleLight];
-            }}
             [[UIApplication sharedApplication].keyWindow.rootViewController presentViewController:nv animated:YES completion:nil];
             
              return vc;
@@ -79,7 +76,7 @@ def makePresentIMP() -> lldb.SBValue:
 
          (IMP)imp_implementationWithBlock(presentBlock);
 
-     '''.format(arg0=gClassName)
+     '''
 
     return HM.evaluateExpressionValue(command_script)
 
@@ -106,6 +103,9 @@ def makeViewDidLoadIMP() -> lldb.SBValue:
             tv.dataSource = vc;
             tv.rowHeight = 50;
             tv.tableFooterView = [[UIView alloc] init];
+            if ([tv respondsToSelector:@selector(setContentInsetAdjustmentBehavior:)]) {
+                [tv setContentInsetAdjustmentBehavior:(UIScrollViewContentInsetAdjustmentBehavior)0];
+            }
             [vc.view addSubview:tv];
         };
         

@@ -7,6 +7,7 @@ An lldb Python script about HMDebugHUD.
 import lldb
 import HMLLDBHelpers as HM
 import HMLLDBClassInfo
+import HMDebugBaseViewController
 import HMDebugMainViewController
 import HMProgressHUD
 
@@ -584,6 +585,7 @@ def makeAttachToEdgeIMP() -> lldb.SBValue:
 
 
 def tapSelfBreakPointHandler(frame, bp_loc, internal_dict) -> bool:
+    HMDebugBaseViewController.register()
     HMDebugMainViewController.register()
     HM.processContinue()
     return True
