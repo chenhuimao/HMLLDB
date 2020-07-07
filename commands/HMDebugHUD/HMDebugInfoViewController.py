@@ -182,9 +182,9 @@ def makeCellForRowAtIndexPathIMP() -> lldb.SBValue:
                 
                 leftLab.translatesAutoresizingMaskIntoConstraints = NO;
                 [leftLab setContentCompressionResistancePriority:1000 forAxis:(UILayoutConstraintAxis)0];
-                [NSLayoutConstraint constraintWithItem:leftLab attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:cell.contentView attribute:NSLayoutAttributeTop multiplier:1.0 constant:marginY].active = YES;
-                [NSLayoutConstraint constraintWithItem:leftLab attribute:NSLayoutAttributeLeft relatedBy:NSLayoutRelationEqual toItem:cell.contentView attribute:NSLayoutAttributeLeft multiplier:1.0 constant:marginX].active = YES;
-                [NSLayoutConstraint constraintWithItem:leftLab attribute:NSLayoutAttributeBottom relatedBy:NSLayoutRelationLessThanOrEqual toItem:cell.contentView attribute:NSLayoutAttributeBottom multiplier:1.0 constant:-marginY].active = YES;
+                [[NSLayoutConstraint constraintWithItem:leftLab attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:cell.contentView attribute:NSLayoutAttributeTop multiplier:1.0 constant:marginY] setActive:YES];
+                [[NSLayoutConstraint constraintWithItem:leftLab attribute:NSLayoutAttributeLeft relatedBy:NSLayoutRelationEqual toItem:cell.contentView attribute:NSLayoutAttributeLeft multiplier:1.0 constant:marginX] setActive:YES];
+                [[NSLayoutConstraint constraintWithItem:leftLab attribute:NSLayoutAttributeBottom relatedBy:NSLayoutRelationLessThanOrEqual toItem:cell.contentView attribute:NSLayoutAttributeBottom multiplier:1.0 constant:-marginY] setActive:YES];
     
                 UILabel *rightLab = [[UILabel alloc] init];
                 rightLab.tag = 2222;
@@ -195,10 +195,10 @@ def makeCellForRowAtIndexPathIMP() -> lldb.SBValue:
                 [cell.contentView addSubview:rightLab];
                 
                 rightLab.translatesAutoresizingMaskIntoConstraints = NO;
-                [NSLayoutConstraint constraintWithItem:rightLab attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:cell.contentView attribute:NSLayoutAttributeTop multiplier:1.0 constant:marginY].active = YES;
-                [NSLayoutConstraint constraintWithItem:rightLab attribute:NSLayoutAttributeLeft relatedBy:NSLayoutRelationEqual toItem:leftLab attribute:NSLayoutAttributeRight multiplier:1.0 constant:20].active = YES;
-                [NSLayoutConstraint constraintWithItem:rightLab attribute:NSLayoutAttributeBottom relatedBy:NSLayoutRelationEqual toItem:cell.contentView attribute:NSLayoutAttributeBottom multiplier:1.0 constant:-marginY].active = YES;
-                [NSLayoutConstraint constraintWithItem:rightLab attribute:NSLayoutAttributeRight relatedBy:NSLayoutRelationEqual toItem:cell.contentView attribute:NSLayoutAttributeRight multiplier:1.0 constant:-marginX].active = YES;
+                [[NSLayoutConstraint constraintWithItem:rightLab attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:cell.contentView attribute:NSLayoutAttributeTop multiplier:1.0 constant:marginY] setActive:YES];
+                [[NSLayoutConstraint constraintWithItem:rightLab attribute:NSLayoutAttributeLeft relatedBy:NSLayoutRelationEqual toItem:leftLab attribute:NSLayoutAttributeRight multiplier:1.0 constant:20] setActive:YES];
+                [[NSLayoutConstraint constraintWithItem:rightLab attribute:NSLayoutAttributeBottom relatedBy:NSLayoutRelationEqual toItem:cell.contentView attribute:NSLayoutAttributeBottom multiplier:1.0 constant:-marginY] setActive:YES];
+                [[NSLayoutConstraint constraintWithItem:rightLab attribute:NSLayoutAttributeRight relatedBy:NSLayoutRelationEqual toItem:cell.contentView attribute:NSLayoutAttributeRight multiplier:1.0 constant:-marginX] setActive:YES];
             }
             
             NSArray *leftTextArray = [vc valueForKey:@"_leftTextArray"];

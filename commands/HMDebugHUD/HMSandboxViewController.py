@@ -424,10 +424,10 @@ def makeViewForHeaderInSectionIMP() -> lldb.SBValue:
                 [header.contentView addSubview:titleLab];
                 
                 titleLab.translatesAutoresizingMaskIntoConstraints = NO;
-                [NSLayoutConstraint constraintWithItem:titleLab attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:header.contentView attribute:NSLayoutAttributeTop multiplier:1.0 constant:8].active = YES;
-                [NSLayoutConstraint constraintWithItem:titleLab attribute:NSLayoutAttributeLeft relatedBy:NSLayoutRelationEqual toItem:header.contentView attribute:NSLayoutAttributeLeft multiplier:1.0 constant:16].active = YES;
-                [NSLayoutConstraint constraintWithItem:titleLab attribute:NSLayoutAttributeBottom relatedBy:NSLayoutRelationEqual toItem:header.contentView attribute:NSLayoutAttributeBottom multiplier:1.0 constant:-8].active = YES;
-                [NSLayoutConstraint constraintWithItem:titleLab attribute:NSLayoutAttributeRight relatedBy:NSLayoutRelationEqual toItem:header.contentView attribute:NSLayoutAttributeRight multiplier:1.0 constant:-16].active = YES;
+                [[NSLayoutConstraint constraintWithItem:titleLab attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:header.contentView attribute:NSLayoutAttributeTop multiplier:1.0 constant:8] setActive:YES];
+                [[NSLayoutConstraint constraintWithItem:titleLab attribute:NSLayoutAttributeLeft relatedBy:NSLayoutRelationEqual toItem:header.contentView attribute:NSLayoutAttributeLeft multiplier:1.0 constant:16] setActive:YES];
+                [[NSLayoutConstraint constraintWithItem:titleLab attribute:NSLayoutAttributeBottom relatedBy:NSLayoutRelationEqual toItem:header.contentView attribute:NSLayoutAttributeBottom multiplier:1.0 constant:-8] setActive:YES];
+                [[NSLayoutConstraint constraintWithItem:titleLab attribute:NSLayoutAttributeRight relatedBy:NSLayoutRelationEqual toItem:header.contentView attribute:NSLayoutAttributeRight multiplier:1.0 constant:-16] setActive:YES];
             }
             
             UILabel *titleLab = (UILabel *)[header.contentView viewWithTag:11111];
