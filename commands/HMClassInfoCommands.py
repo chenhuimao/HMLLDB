@@ -30,6 +30,7 @@ import HMLLDBClassInfo
 def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand('command script add -f HMClassInfoCommands.findClass fclass -h "Find the class containing the input name(Case insensitive)"')
     debugger.HandleCommand('command script add -f HMClassInfoCommands.findSubclass fsubclass -h "Find the subclass of the input"')
+    debugger.HandleCommand('command script add -f HMClassInfoCommands.findSuperClass fsuperclass -h "Find the superclass of the input"')
     debugger.HandleCommand('command script add -f HMClassInfoCommands.findMethod fmethod -h "Find the method"')
 
 
@@ -173,6 +174,53 @@ def findSubclass(debugger, command, exe_ctx, result, internal_dict):
             }}
             
             free(classList);
+        }}
+
+        result;
+    '''
+
+    classNames = HM.evaluateExpressionValue(command_script).GetObjectDescription()
+    HM.DPrint(classNames)
+
+
+def findSuperClass(debugger, command, exe_ctx, result, internal_dict):
+    """
+    Syntax:
+        fsuperclass <className>
+
+    Examples:
+        (lldb) fsuperclass UIButton
+
+    This command is implemented in HMClassInfoCommands.py
+    """
+
+    if len(command) == 0:
+        HM.DPrint("Requires a argument, Please enter \"help fsuperclass\" for help.")
+        return
+
+    clsPrefixesValue = HM.getClassPrefixes()[1]
+    command_script = f'''
+        Class inputClass = objc_lookUpClass("{command}");
+
+        if (inputClass == nil) {{   //  Find prefixed class
+            for (NSString *prefix in (NSMutableArray *){clsPrefixesValue.GetValue()}) {{
+                NSString *clsName = [prefix stringByAppendingString:@".{command}"];
+                inputClass = objc_lookUpClass((char *)[clsName UTF8String]);
+                if (inputClass) {{
+                    break;
+                }}
+            }}
+        }}
+
+        NSMutableString *result = [[NSMutableString alloc] init];
+        if (inputClass == nil) {{
+            [result appendString:@"Can't find {command} class\\n"];
+        }} else {{
+            [result appendString:[[NSString alloc] initWithUTF8String:class_getName(inputClass)]];
+            for (Class superClass = class_getSuperclass(inputClass); superClass != nil; superClass = class_getSuperclass(superClass)) {{
+                NSString *name = [[NSString alloc] initWithUTF8String:class_getName(superClass)];
+                [result appendFormat:@" : %@", name];
+            }}
         }}
 
         result;
