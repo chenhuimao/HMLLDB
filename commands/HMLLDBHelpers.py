@@ -125,7 +125,7 @@ def getClassPrefixes() -> Tuple[List[str], lldb.SBValue]:
             if ([name containsString:@"."]) {
                 NSRange range = [name rangeOfString:@"."];
                 NSString *prefix = [name substringToIndex:range.location];
-                if (![clsPrefixes containsObject:prefix]) {
+                if (![clsPrefixes containsObject:prefix] && ![prefix containsString:@"NSKVONotifying_"]) {
                     [clsPrefixes addObject:prefix];
                 }
             }
