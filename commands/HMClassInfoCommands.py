@@ -28,10 +28,127 @@ import HMLLDBClassInfo
 
 
 def __lldb_init_module(debugger, internal_dict):
+    debugger.HandleCommand('command script add -f HMClassInfoCommands.methods methods -h "Execute [inputClass _methodDescription] or [inputClass _shortMethodDescription]"')
+    debugger.HandleCommand('command script add -f HMClassInfoCommands.properties properties -h "Execute [inputClass _propertyDescription]"')
+
     debugger.HandleCommand('command script add -f HMClassInfoCommands.findClass fclass -h "Find the class containing the input name(Case insensitive)"')
     debugger.HandleCommand('command script add -f HMClassInfoCommands.findSubclass fsubclass -h "Find the subclass of the input"')
     debugger.HandleCommand('command script add -f HMClassInfoCommands.findSuperClass fsuperclass -h "Find the superclass of the input"')
     debugger.HandleCommand('command script add -f HMClassInfoCommands.findMethod fmethod -h "Find the method"')
+
+
+def methods(debugger, command, exe_ctx, result, internal_dict):
+    """
+    Syntax:
+        methods [--short] <className>
+
+    Examples:
+        (lldb) methods UIViewController
+        (lldb) methods -s UIViewController
+
+    Options:
+        --short/-s; Use [inputClass _shortMethodDescription] instead of [inputClass _methodDescription]
+
+    This command is implemented in HMClassInfoCommands.py
+    """
+
+    command_args = shlex.split(command)
+    parser = generate_methods_option_parser()
+    try:
+        # options: optparse.Values
+        # args: list
+        (options, args) = parser.parse_args(command_args)
+    except:
+        result.SetError(parser.usage)
+        return
+
+    if len(args) != 1:
+        HM.DPrint("Requires a argument, Please enter \"help methods\" for help.")
+        return
+
+    if options.short:
+        selName = "_shortMethodDescription"
+    else:
+        selName = "_methodDescription"
+    clsPrefixesValue = HM.getClassPrefixes()[1]
+
+    command_script = f'''
+        Class inputClass = objc_lookUpClass("{args[0]}");
+
+        if (inputClass == nil) {{   //  Find prefixed class
+            for (NSString *prefix in (NSMutableArray *){clsPrefixesValue.GetValue()}) {{
+                NSString *clsName = [prefix stringByAppendingString:@".{args[0]}"];
+                inputClass = objc_lookUpClass((char *)[clsName UTF8String]);
+                if (inputClass) {{
+                    break;
+                }}
+            }}
+        }}
+
+        NSMutableString *result = [[NSMutableString alloc] init];
+        if (inputClass == nil) {{
+            [result appendString:@"Can't find {args[0]} class\\n"];
+        }} else {{
+            if ((BOOL)[(Class)inputClass respondsToSelector:(SEL)NSSelectorFromString(@"{selName}")]) {{
+                [result appendString:(NSString *)[inputClass performSelector:NSSelectorFromString(@"{selName}")]];
+            }} else {{
+                [result appendString:@"{args[0]} is not a subclass of NSObject"];
+            }}
+        }}
+
+        result;
+    '''
+
+    result = HM.evaluateExpressionValue(command_script).GetObjectDescription()
+    HM.DPrint(result)
+
+
+def properties(debugger, command, exe_ctx, result, internal_dict):
+    """
+    Syntax:
+        properties <className>
+
+    Examples:
+        (lldb) properties UIViewController
+
+    This command is implemented in HMClassInfoCommands.py
+    """
+
+    if len(command) == 0:
+        HM.DPrint("Requires a argument, Please enter \"help properties\" for help.")
+        return
+
+    clsPrefixesValue = HM.getClassPrefixes()[1]
+
+    command_script = f'''
+        Class inputClass = objc_lookUpClass("{command}");
+
+        if (inputClass == nil) {{   //  Find prefixed class
+            for (NSString *prefix in (NSMutableArray *){clsPrefixesValue.GetValue()}) {{
+                NSString *clsName = [prefix stringByAppendingString:@".{command}"];
+                inputClass = objc_lookUpClass((char *)[clsName UTF8String]);
+                if (inputClass) {{
+                    break;
+                }}
+            }}
+        }}
+
+        NSMutableString *result = [[NSMutableString alloc] init];
+        if (inputClass == nil) {{
+            [result appendString:@"Can't find {command} class\\n"];
+        }} else {{
+            if ((BOOL)[(Class)inputClass respondsToSelector:(SEL)NSSelectorFromString(@"_propertyDescription")]) {{
+                [result appendString:(NSString *)[inputClass performSelector:NSSelectorFromString(@"_propertyDescription")]];
+            }} else {{
+                [result appendString:@"{command} is not a subclass of NSObject"];
+            }}
+        }}
+
+        result;
+    '''
+
+    result = HM.evaluateExpressionValue(command_script).GetObjectDescription()
+    HM.DPrint(result)
 
 
 def findClass(debugger, command, exe_ctx, result, internal_dict):
@@ -347,6 +464,17 @@ def findMethod(debugger, command, exe_ctx, result, internal_dict):
     result = HM.evaluateExpressionValue(command_script).GetObjectDescription()
     HM.DPrint(result)
 
+
+def generate_methods_option_parser() -> optparse.OptionParser:
+    usage = "usage: methods [-s] <className>"
+    parser = optparse.OptionParser(usage=usage, prog="fsubclass")
+    parser.add_option("-s", "--short",
+                      action="store_true",
+                      default=False,
+                      dest="short",
+                      help="Use [inputClass _shortMethodDescription] instead of [inputClass _methodDescription]")
+
+    return parser
 
 
 def generate_findSubclass_option_parser() -> optparse.OptionParser:
