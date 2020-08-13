@@ -62,7 +62,12 @@ def methods(debugger, command, exe_ctx, result, internal_dict):
         result.SetError(parser.usage)
         return
 
-    if len(args) != 1:
+    inputStr: str = ""
+    for string in args:
+        inputStr += string + " "
+    inputStr = inputStr.rstrip()
+
+    if len(inputStr) == 0:
         HM.DPrint("Requires a argument, Please enter \"help methods\" for help.")
         return
 
@@ -70,14 +75,19 @@ def methods(debugger, command, exe_ctx, result, internal_dict):
         selName = "_shortMethodDescription"
     else:
         selName = "_methodDescription"
-    clsPrefixesValue = HM.getClassPrefixes()[1]
 
+    value = HM.evaluateExpressionValue(f'(NSString *)[{inputStr} performSelector:NSSelectorFromString(@"{selName}")]', False)
+    if HM.successOfSBError(value.GetError()):
+        HM.DPrint(value.GetObjectDescription())
+        return
+
+    clsPrefixesValue = HM.getClassPrefixes()[1]
     command_script = f'''
-        Class inputClass = objc_lookUpClass("{args[0]}");
+        Class inputClass = objc_lookUpClass("{inputStr}");
 
         if (inputClass == nil) {{   //  Find prefixed class
             for (NSString *prefix in (NSMutableArray *){clsPrefixesValue.GetValue()}) {{
-                NSString *clsName = [prefix stringByAppendingString:@".{args[0]}"];
+                NSString *clsName = [prefix stringByAppendingString:@".{inputStr}"];
                 inputClass = objc_lookUpClass((char *)[clsName UTF8String]);
                 if (inputClass) {{
                     break;
@@ -87,12 +97,12 @@ def methods(debugger, command, exe_ctx, result, internal_dict):
 
         NSMutableString *result = [[NSMutableString alloc] init];
         if (inputClass == nil) {{
-            [result appendString:@"Can't find {args[0]} class\\n"];
+            [result appendString:@"Unable to resolve {inputStr} or find {inputStr} class\\n"];
         }} else {{
             if ((BOOL)[(Class)inputClass respondsToSelector:(SEL)NSSelectorFromString(@"{selName}")]) {{
                 [result appendString:(NSString *)[inputClass performSelector:NSSelectorFromString(@"{selName}")]];
             }} else {{
-                [result appendString:@"{args[0]} is not a subclass of NSObject"];
+                [result appendString:@"{inputStr} is not a subclass of NSObject"];
             }}
         }}
 
@@ -118,8 +128,12 @@ def properties(debugger, command, exe_ctx, result, internal_dict):
         HM.DPrint("Requires a argument, Please enter \"help properties\" for help.")
         return
 
-    clsPrefixesValue = HM.getClassPrefixes()[1]
+    value = HM.evaluateExpressionValue(f'(NSString *)[{command} performSelector:NSSelectorFromString(@"_propertyDescription")]', False)
+    if HM.successOfSBError(value.GetError()):
+        HM.DPrint(value.GetObjectDescription())
+        return
 
+    clsPrefixesValue = HM.getClassPrefixes()[1]
     command_script = f'''
         Class inputClass = objc_lookUpClass("{command}");
 
@@ -135,7 +149,7 @@ def properties(debugger, command, exe_ctx, result, internal_dict):
 
         NSMutableString *result = [[NSMutableString alloc] init];
         if (inputClass == nil) {{
-            [result appendString:@"Can't find {command} class\\n"];
+            [result appendString:@"Unable to resolve {command} or find {command} class\\n"];
         }} else {{
             if ((BOOL)[(Class)inputClass respondsToSelector:(SEL)NSSelectorFromString(@"_propertyDescription")]) {{
                 [result appendString:(NSString *)[inputClass performSelector:NSSelectorFromString(@"_propertyDescription")]];

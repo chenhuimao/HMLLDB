@@ -43,7 +43,7 @@ def DPrint(obj: Any) -> None:
     
 
 # Based on https://github.com/facebook/chisel/blob/master/fblldbbase.py
-def evaluateExpressionValue(expression: str) -> lldb.SBValue:
+def evaluateExpressionValue(expression: str, printErrors=True) -> lldb.SBValue:
     frame = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame()
 
     global gIsFirstCall
@@ -78,12 +78,16 @@ def evaluateExpressionValue(expression: str) -> lldb.SBValue:
     value = frame.EvaluateExpression(expression, options)
     error = value.GetError()
 
-    kNoResult = 0x1001  # 4097
-    isSuccess = error.success or error.value == kNoResult
-    if not isSuccess:
+    if printErrors and not successOfSBError(error):
         DPrint(error)
 
     return value
+
+
+def successOfSBError(err: lldb.SBError) -> bool:
+    kNoResult = 0x1001  # 4097
+    isSuccess = err.success or err.value == kNoResult
+    return isSuccess
 
 
 def judgeSBValueHasValue(val: lldb.SBValue) -> bool:
