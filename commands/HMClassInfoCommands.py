@@ -417,20 +417,33 @@ def findMethod(debugger, command, exe_ctx, result, internal_dict):
             if (inputClass == nil) {{
                 [result appendString:@"Can't find {options.cls} class\\n"];
             }} else {{
-                unsigned int methodCount;
-                Method *methodList = class_copyMethodList(inputClass, &methodCount);
-                for (int j = 0; j < methodCount; ++j) {{
-                    Method method = methodList[j];
+                unsigned int instanceMethodCount;
+                Method *instanceMethodList = class_copyMethodList(inputClass, &instanceMethodCount);
+                for (int j = 0; j < instanceMethodCount; ++j) {{
+                    Method method = instanceMethodList[j];
                     SEL sel = method_getName(method);
                     NSString *selName = [[NSString alloc] initWithUTF8String:sel_getName(sel)];
-                    [result appendFormat:@"%@\\n\\tType encoding:%s\\n", selName, method_getTypeEncoding(method)];
+                    [result appendFormat:@"(-) %@\\n\\tType encoding:%s\\n", selName, method_getTypeEncoding(method)];
                 }}
-                free(methodList);
+                free(instanceMethodList);
                 
-                if (methodCount == 0) {{
+                unsigned int classMethodCount = 0;
+                Class metaCls = object_getClass(inputClass);
+                if (class_isMetaClass(metaCls)) {{
+                    Method *classMethodList = class_copyMethodList(metaCls, &classMethodCount);
+                    for (int j = 0; j < classMethodCount; ++j) {{
+                        Method method = classMethodList[j];
+                        SEL sel = method_getName(method);
+                        NSString *selName = [[NSString alloc] initWithUTF8String:sel_getName(sel)];
+                        [result appendFormat:@"(+) %@\\n\\tType encoding:%s\\n", selName, method_getTypeEncoding(method)];
+                    }}
+                    free(classMethodList);
+                }}
+                
+                if (instanceMethodCount + classMethodCount == 0) {{
                     [result insertString:@"No method found.\\n" atIndex:0];
                 }} else {{
-                    [result insertString:[[NSString alloc] initWithFormat:@"Methods count: %u \\n", methodCount] atIndex:0];
+                    [result insertString:[[NSString alloc] initWithFormat:@"Instance methods count: %u. Class method count: %u.\\n", instanceMethodCount, classMethodCount] atIndex:0];
                 }}
             }}
             
@@ -450,20 +463,41 @@ def findMethod(debugger, command, exe_ctx, result, internal_dict):
         
             for (int i = 0; i < classCount; ++i) {{
                 Class cls = classList[i];
-                unsigned int methodCount;
-                Method *methodList = class_copyMethodList(cls, &methodCount);
+                // Instance Methods
+                unsigned int instanceMethodCount;
+                Method *instanceMethodList = class_copyMethodList(cls, &instanceMethodCount);
         
-                for (int j = 0; j < methodCount; ++j) {{
-                    Method method = methodList[j];
+                for (int j = 0; j < instanceMethodCount; ++j) {{
+                    Method method = instanceMethodList[j];
                     SEL sel = method_getName(method);
                     NSString *selName = [[NSString alloc] initWithUTF8String:sel_getName(sel)];
                     if ([[selName lowercaseString] containsString:inputMethodName]) {{
                         NSString *clsName = [[NSString alloc] initWithUTF8String:class_getName(cls)];
-                        [result appendFormat:@"%@\\n\\tType encoding:%s\\n\\tClass:%@\\n", selName, method_getTypeEncoding(method), clsName];
+                        [result appendFormat:@"(-) %@\\n\\tType encoding:%s\\n\\tClass:%@\\n", selName, method_getTypeEncoding(method), clsName];
                         findCount += 1;
                     }}
                 }}
-                free(methodList);
+                free(instanceMethodList);
+                
+                // Class Methods
+                Class metaCls = object_getClass(cls);
+                if (!class_isMetaClass(metaCls)) {{
+                    continue;
+                }}
+                unsigned int classMethodCount;
+                Method *classMethodList = class_copyMethodList(metaCls, &classMethodCount);
+        
+                for (int j = 0; j < classMethodCount; ++j) {{
+                    Method method = classMethodList[j];
+                    SEL sel = method_getName(method);
+                    NSString *selName = [[NSString alloc] initWithUTF8String:sel_getName(sel)];
+                    if ([[selName lowercaseString] containsString:inputMethodName]) {{
+                        NSString *clsName = [[NSString alloc] initWithUTF8String:class_getName(cls)];
+                        [result appendFormat:@"(+) %@\\n\\tType encoding:%s\\n\\tClass:%@\\n", selName, method_getTypeEncoding(method), clsName];
+                        findCount += 1;
+                    }}
+                }}
+                free(classMethodList);
             }}
             if (findCount == 0) {{
                 [result insertString:@"No method found.\\n" atIndex:0];
