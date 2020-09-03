@@ -42,7 +42,6 @@ def DPrint(obj: Any) -> None:
     print(obj)
     
 
-# Based on https://github.com/facebook/chisel/blob/master/fblldbbase.py
 def evaluateExpressionValue(expression: str, printErrors=True) -> lldb.SBValue:
     frame = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame()
 
@@ -57,23 +56,29 @@ def evaluateExpressionValue(expression: str, printErrors=True) -> lldb.SBValue:
             @import ObjectiveC;
         ''', op)
 
-
     options = lldb.SBExpressionOptions()
+    # options.SetCoerceResultToId(False)
+    # options.SetFetchDynamicValue(0)
+
+    # options.SetUnwindOnError(True)
+    options.SetIgnoreBreakpoints(True)  # default: False
+    # options.SetGenerateDebugInfo(False)
+
+    options.SetTimeoutInMicroSeconds(5000000)  # default: 500000
+    options.SetOneThreadTimeoutInMicroSeconds(4900000)  # default: 0
+    # options.SetTryAllThreads(True)
+    # options.SetStopOthers(True)
+
+    options.SetTrapExceptions(False)  # default: True
+    # options.SetPlaygroundTransformEnabled(False)
+    # options.SetREPLMode(False)
     options.SetLanguage(lldb.eLanguageTypeObjC_plus_plus)
+    options.SetSuppressPersistentResult(True)  # default: False
+    # options.SetPrefix(None)
+    # options.SetAutoApplyFixIts(True)
 
-    # Allow evaluation that contains a @throw/@catch.
-    #   By default, ObjC @throw will cause evaluation to be aborted. At the time
-    #   of a @throw, it's not known if the exception will be handled by a @catch.
-    #   An exception that's caught, should not cause evaluation to fail.
-    options.SetTrapExceptions(False)
-
-    # Give evaluation more time.
-    options.SetTimeoutInMicroSeconds(5000000)  # 5s
-
-    # Most commands are not multithreaded.
-    options.SetTryAllThreads(False)
-
-    options.SetSuppressPersistentResult(True)
+    # options.SetTopLevel(False)
+    # options.SetAllowJIT(True)
 
     value = frame.EvaluateExpression(expression, options)
     error = value.GetError()
@@ -84,6 +89,7 @@ def evaluateExpressionValue(expression: str, printErrors=True) -> lldb.SBValue:
     return value
 
 
+# Based on https://github.com/facebook/chisel/blob/master/fblldbbase.py
 def successOfSBError(err: lldb.SBError) -> bool:
     kNoResult = 0x1001  # 4097
     isSuccess = err.success or err.value == kNoResult
