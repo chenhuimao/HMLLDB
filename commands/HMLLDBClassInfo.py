@@ -113,6 +113,8 @@ def plldbClassInfo(debugger, command, exe_ctx, result, internal_dict):
         pSBAddress(None)
     if compareName("SBBreakpoint"):
         pSBBreakpoint(None)
+    if compareName("pSBBreakpointLocation"):
+        pSBBreakpointLocation(None)
     if compareName("SBError"):
         pSBError(None)
 
@@ -755,6 +757,31 @@ def pSBBreakpoint(obj: Optional[lldb.SBBreakpoint]) -> None:
     printFormat("IsHardware", bp.IsHardware())
 
     printTraversal(bp, "GetNumLocations", "GetLocationAtIndex")  # [SBBreakpointLocation]
+
+
+def pSBBreakpointLocation(obj: Optional[lldb.SBBreakpointLocation]) -> None:
+    if obj:
+        bpLocation = obj
+    else:
+        bpLocation = lldb.debugger.GetSelectedTarget().GetBreakpointAtIndex(0).GetLocationAtIndex(0)
+
+    printClassName("SBBreakpointLocation")
+    printFormat("SBBreakpointLocation", bpLocation)
+    printFormat("GetID", bpLocation.GetID())
+    printFormat("IsValid", bpLocation.IsValid())
+    printFormat("GetAddress", bpLocation.GetAddress())  # SBAddress
+    printFormat("GetLoadAddress", bpLocation.GetLoadAddress())
+    printFormat("IsEnabled", bpLocation.IsEnabled())
+    printFormat("GetHitCount", bpLocation.GetHitCount())
+    printFormat("GetIgnoreCount", bpLocation.GetIgnoreCount())
+    printFormat("GetCondition", bpLocation.GetCondition())
+    printFormat("GetAutoContinue", bpLocation.GetAutoContinue())
+    printFormat("GetThreadID", bpLocation.GetThreadID())
+    printFormat("GetThreadIndex", bpLocation.GetThreadIndex())
+    printFormat("GetThreadName", bpLocation.GetThreadName())
+    printFormat("GetQueueName", bpLocation.GetQueueName())
+    printFormat("IsResolved", bpLocation.IsResolved())
+    printFormat("GetBreakpoint", bpLocation.GetBreakpoint())  # SBBreakpoint
 
 
 def pSBError(obj: Optional[lldb.SBError]) -> None:
