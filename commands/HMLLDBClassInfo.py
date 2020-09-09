@@ -180,6 +180,14 @@ def printTraversal(obj: object, getsize: str, getelem: str) -> None:
         print(elem(i))
 
 
+def getStringFromSBStringList(stringList: lldb.SBStringList) -> str:
+    size = stringList.GetSize()
+    result = ""
+    for i in range(size):
+        result += "\n" + stringList.GetStringAtIndex(i)
+    return result
+
+
 def generate_option_parser() -> optparse.OptionParser:
     usage = "usage: plldbClassInfo [--entire] <className/all>"
     parser = optparse.OptionParser(usage=usage, prog="plldbClassInfo")
@@ -285,6 +293,9 @@ def pSBTarget(obj: Optional[lldb.SBTarget]) -> None:
     printFormat("FindGlobalVariables", target.FindGlobalVariables("shared", 2))  # SBValueList
     printFormat("FindGlobalFunctions.first", target.FindGlobalFunctions("viewDidLoad", 1, 0)[0])  # SBSymbolContext
     printFormat("GetNumBreakpoints", target.GetNumBreakpoints())
+    stringList = lldb.SBStringList()
+    target.GetBreakpointNames(stringList)
+    printFormat("GetBreakpointNames", getStringFromSBStringList(stringList))
     printFormat("GetNumWatchpoints", target.GetNumWatchpoints())
     printFormat("GetBroadcaster", target.GetBroadcaster())  # SBBroadcaster
     printFormat("FindSymbols", target.FindSymbols("UIAlertAction"))  # SBSymbolContextList
@@ -753,6 +764,13 @@ def pSBBreakpoint(obj: Optional[lldb.SBBreakpoint]) -> None:
     printFormat("GetThreadIndex", bp.GetThreadIndex())
     printFormat("GetThreadName", bp.GetThreadName())
     printFormat("GetQueueName", bp.GetQueueName())
+    stringList = lldb.SBStringList()
+    bp.GetCommandLineCommands(stringList)
+    printFormat("GetCommandLineCommands", getStringFromSBStringList(stringList))
+    stringList.Clear()
+    bp.GetNames(stringList)
+    printFormat("GetNames", getStringFromSBStringList(stringList))
+    printFormat("GetNumResolvedLocations", bp.GetNumResolvedLocations())
     printFormat("GetNumLocations", bp.GetNumLocations())
     printFormat("IsHardware", bp.IsHardware())
 
@@ -776,6 +794,9 @@ def pSBBreakpointLocation(obj: Optional[lldb.SBBreakpointLocation]) -> None:
     printFormat("GetIgnoreCount", bpLocation.GetIgnoreCount())
     printFormat("GetCondition", bpLocation.GetCondition())
     printFormat("GetAutoContinue", bpLocation.GetAutoContinue())
+    stringList = lldb.SBStringList()
+    bpLocation.GetCommandLineCommands(stringList)
+    printFormat("GetCommandLineCommands", getStringFromSBStringList(stringList))
     printFormat("GetThreadID", bpLocation.GetThreadID())
     printFormat("GetThreadIndex", bpLocation.GetThreadIndex())
     printFormat("GetThreadName", bpLocation.GetThreadName())
@@ -968,6 +989,9 @@ def pSBStructuredData(obj: Optional[lldb.SBStructuredData]) -> None:
     printFormat("IsValid", sd.IsValid())
     printFormat("GetType", sd.GetType())  # StructuredDataType int
     printFormat("GetSize", sd.GetSize())
+    stringList = lldb.SBStringList()
+    sd.GetKeys(stringList)
+    printFormat("GetKeys", getStringFromSBStringList(stringList))
     printFormat("GetIntegerValue", sd.GetIntegerValue())
     printFormat("GetFloatValue", sd.GetFloatValue())
     printFormat("GetBooleanValue", sd.GetBooleanValue())
