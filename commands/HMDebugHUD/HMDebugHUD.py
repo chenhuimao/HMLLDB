@@ -29,8 +29,8 @@ import HMProgressHUD
 
 
 def __lldb_init_module(debugger, internal_dict):
-    debugger.HandleCommand('command script add -f HMDebugHUD.showDebugHUD showhud -h "Show debug HUD on key window.({arg})"'.format(arg=gClassName))
-    debugger.HandleCommand('command script add -f HMDebugHUD.removeDebugHUD removehud -h "Remove debug HUD from key window.({arg})"'.format(arg=gClassName))
+    debugger.HandleCommand(f'command script add -f HMDebugHUD.showDebugHUD showhud -h "Show debug HUD on key window.({gClassName})"')
+    debugger.HandleCommand(f'command script add -f HMDebugHUD.removeDebugHUD removehud -h "Remove debug HUD from key window.({gClassName})"')
 
 
 gClassName = "HMDebugHUD"
@@ -56,7 +56,8 @@ def showDebugHUD(debugger, command, exe_ctx, result, internal_dict):
 
     global gClassName
     if isDisplayingHUD():
-        HM.DPrint("{arg} is already on display".format(arg=gClassName))
+        HM.DPrint(f"{gClassName} is already on display")
+        HM.processContinue()
         return
     elif HM.existClass(gClassName):
         showHUDFunc()
@@ -64,8 +65,8 @@ def showDebugHUD(debugger, command, exe_ctx, result, internal_dict):
         return
 
     # Register class
-    HMProgressHUD.show("Register {arg}...".format(arg=gClassName))
-    HM.DPrint("Register {arg}...".format(arg=gClassName))
+    HMProgressHUD.show(f"Register {gClassName}...")
+    HM.DPrint(f"Register {gClassName}...")
 
     classValue = HM.allocateClass(gClassName, "UIView")
     HM.addIvar(classValue.GetValue(), "_link", "CADisplayLink *")
@@ -79,7 +80,7 @@ def showDebugHUD(debugger, command, exe_ctx, result, internal_dict):
     HM.registerClass(classValue.GetValue())
 
     # Add methods
-    HM.DPrint("Add methods to {arg}...".format(arg=gClassName))
+    HM.DPrint(f"Add methods to {gClassName}...")
 
     addToKeyWindowIMPValue = makeAddToKeyWindowIMP()
     if not HM.judgeSBValueHasValue(addToKeyWindowIMPValue):
@@ -99,7 +100,7 @@ def showDebugHUD(debugger, command, exe_ctx, result, internal_dict):
         return
 
     # Add methods(move)
-    HM.DPrint("Add methods to {arg}......".format(arg=gClassName))
+    HM.DPrint(f"Add methods to {gClassName}......")
     if not addMoveMethods():
         HMProgressHUD.hide()
         return
@@ -108,7 +109,7 @@ def showDebugHUD(debugger, command, exe_ctx, result, internal_dict):
     HM.DPrint("Add breakpoint to hook method...")
     HM.addOneShotBreakPointInIMP(tapSelfIMPValue, "HMDebugHUD.tapSelfBreakPointHandler", "HMDebugHUD_TapSelf_Breakpoint")
 
-    HM.DPrint("Register {arg} done!".format(arg=gClassName))
+    HM.DPrint(f"Register {gClassName} done!")
 
     # Show HUD command
     showHUDFunc()
@@ -131,12 +132,12 @@ def removeDebugHUD(debugger, command, exe_ctx, result, internal_dict) -> None:
 
     global gClassName
     if not HM.existClass(gClassName):
-        HM.DPrint("{arg} does not exist.".format(arg=gClassName))
+        HM.DPrint(f"{gClassName} does not exist.")
         return
 
-    command_script = '''
+    command_script = f'''
         UIView *keyWindow = [UIApplication sharedApplication].keyWindow;
-        Class HUDClass = (Class)objc_lookUpClass("{arg0}");
+        Class HUDClass = (Class)objc_lookUpClass("{gClassName}");
         UIView *objView = nil;
         for (UIView *subView in keyWindow.subviews) {{
             if ([subView isKindOfClass:HUDClass]) {{
@@ -146,24 +147,24 @@ def removeDebugHUD(debugger, command, exe_ctx, result, internal_dict) -> None:
         }}
         [objView removeFromSuperview];
         objView;
-    '''.format(arg0=gClassName)
+    '''
 
     val = HM.evaluateExpressionValue(command_script)
     if HM.judgeSBValueHasValue(val):
         HM.DPrint("remove done!")
     else:
-        HM.DPrint("{arg} does not exist.".format(arg=gClassName))
+        HM.DPrint(f"{gClassName} does not exist.")
 
 
 def isDisplayingHUD() -> bool:
     if not HM.existClass(gClassName):
         return False
 
-    command_script = '''
+    command_script = f'''
         BOOL isDisplaying = NO;
         UIView *keyWindow = [UIApplication sharedApplication].keyWindow;
         UIView *HUD = nil;
-        Class HUDClass = (Class)objc_lookUpClass("{arg0}");
+        Class HUDClass = (Class)objc_lookUpClass("{gClassName}");
         for (UIView *subView in keyWindow.subviews) {{
             if ([subView isKindOfClass:HUDClass]) {{
                 isDisplaying = YES;
@@ -175,17 +176,17 @@ def isDisplayingHUD() -> bool:
             [keyWindow bringSubviewToFront:HUD];
         }}
         isDisplaying;
-    '''.format(arg0=gClassName)
+    '''
 
     val = HM.evaluateExpressionValue(command_script)
     return HM.boolOfSBValue(val)
 
 
 def showHUDFunc() -> None:
-    addToKeyWindowCommand = '''
-        Class HUD = NSClassFromString(@"{arg0}");
+    addToKeyWindowCommand = f'''
+        Class HUD = NSClassFromString(@"{gClassName}");
         (UIView *)[HUD performSelector:@selector(addToKeyWindow)];
-    '''.format(arg0=gClassName)
+    '''
     HM.evaluateExpressionValue(addToKeyWindowCommand)
 
 
@@ -225,10 +226,10 @@ def addUpdateMethods() -> bool:
 
 
 def makeAddToKeyWindowIMP() -> lldb.SBValue:
-    command_script = '''
+    command_script = f'''
 
         UIView * (^addToKeyWindowBlock)(id) = ^UIView *(id classSelf) {{
-            UIView *HUD = (UIView *)[[NSClassFromString(@"{arg0}") alloc] init];
+            UIView *HUD = (UIView *)[[NSClassFromString(@"{gClassName}") alloc] init];
             (void)[HUD setFrame:(CGRect){{60, [UIApplication sharedApplication].statusBarFrame.size.height, 42, 42}}];
             (void)[HUD setBackgroundColor:[UIColor colorWithWhite:0.6 alpha:0.8]];
 
@@ -263,7 +264,7 @@ def makeAddToKeyWindowIMP() -> lldb.SBValue:
 
         (IMP)imp_implementationWithBlock(addToKeyWindowBlock);
 
-    '''.format(arg0=gClassName)
+    '''
 
     return HM.evaluateExpressionValue(command_script)
 
@@ -313,7 +314,7 @@ def makeDebugHUDtickIMP() -> lldb.SBValue:
 
 def makeUpdateMemoryFootprintIMP() -> lldb.SBValue:
 
-    command_script = '''
+    command_script = f'''
     
         void (^updateMemoryFootprintBlock)(UIView *) = ^(UIView *HUD) {{
             
@@ -321,7 +322,7 @@ def makeUpdateMemoryFootprintIMP() -> lldb.SBValue:
             vmInfo.phys_footprint = 0;
             mach_msg_type_number_t count = ((mach_msg_type_number_t) (sizeof(task_vm_info_data_t) / sizeof(natural_t)));
             unsigned int task_vm_info = 22;
-            unsigned int task = {arg0};
+            unsigned int task = {currentTask().GetValue()};
             kern_return_t result = (kern_return_t)task_info((unsigned int)task, (unsigned int)task_vm_info, (task_info_t)&vmInfo, &count);
             
             int kern_success = 0;
@@ -345,13 +346,13 @@ def makeUpdateMemoryFootprintIMP() -> lldb.SBValue:
 
         (IMP)imp_implementationWithBlock(updateMemoryFootprintBlock);
         
-    '''.format(arg0=currentTask().GetValue())
+    '''
 
     return HM.evaluateExpressionValue(command_script)
 
 
 def makeUpdateCPUUtilizationIMP() -> lldb.SBValue:
-    command_script = '''
+    command_script = f'''
 
         void (^updateCPUUtilizationBlock)(UIView *) = ^(UIView *HUD) {{
             double totalUsageRatio = 0;
@@ -367,7 +368,7 @@ def makeUpdateCPUUtilizationIMP() -> lldb.SBValue:
             int thread_basic_info = 3;
             int th_flags_idle = 2;
             double th_usage_scale = 1000.0;
-            if ((kern_return_t)(task_threads({arg0}, &threads, &count)) == kern_success) {{
+            if ((kern_return_t)(task_threads({currentTask().GetValue()}, &threads, &count)) == kern_success) {{
                 for (int idx = 0; idx < count; idx++) {{
                     if ((kern_return_t)(thread_info(threads[idx], thread_basic_info, (thread_info_t)thinfo, &thread_info_count)) == kern_success) {{
                         basic_info_t = (thread_basic_info_t)thinfo;
@@ -382,7 +383,7 @@ def makeUpdateCPUUtilizationIMP() -> lldb.SBValue:
                     }}
                 }}
         
-                if ((kern_return_t)(vm_deallocate({arg0}, (vm_address_t)threads, count * sizeof(thread_t))) != kern_success) {{
+                if ((kern_return_t)(vm_deallocate({currentTask().GetValue()}, (vm_address_t)threads, count * sizeof(thread_t))) != kern_success) {{
                     printf("[HMLLDB] vm_deallocate failed\\n");
                 }}
             }}
@@ -408,7 +409,7 @@ def makeUpdateCPUUtilizationIMP() -> lldb.SBValue:
 
         (IMP)imp_implementationWithBlock(updateCPUUtilizationBlock);
 
-    '''.format(arg0=currentTask().GetValue())
+    '''
 
     return HM.evaluateExpressionValue(command_script)
 
