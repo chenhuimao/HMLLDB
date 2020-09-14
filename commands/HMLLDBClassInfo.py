@@ -113,7 +113,7 @@ def plldbClassInfo(debugger, command, exe_ctx, result, internal_dict):
         pSBAddress(None)
     if compareName("SBBreakpoint"):
         pSBBreakpoint(None)
-    if compareName("pSBBreakpointLocation"):
+    if compareName("SBBreakpointLocation"):
         pSBBreakpointLocation(None)
     if compareName("SBError"):
         pSBError(None)
@@ -125,16 +125,19 @@ def plldbClassInfo(debugger, command, exe_ctx, result, internal_dict):
     if compareName("SBTypeCategory"):
         pSBTypeCategory(None)
 
-    if compareName("SBPlatform"):
-        pSBPlatform(None)
     if compareName("SBBroadcaster"):
         pSBBroadcaster(None)
     if compareName("SBListener"):
         pSBListener(None)
-    if compareName("SBSourceManager"):
-        pSBSourceManager(None)
+    if compareName("SBEvent"):
+        pSBEvent(None)
     if compareName("SBStructuredData"):
         pSBStructuredData(None)
+
+    if compareName("SBPlatform"):
+        pSBPlatform(None)
+    if compareName("SBSourceManager"):
+        pSBSourceManager(None)
     if compareName("SBUnixSignals"):
         pSBUnixSignals(None)
     if compareName("SBLaunchInfo"):
@@ -328,6 +331,7 @@ def pSBProcess(obj: Optional[lldb.SBProcess]) -> None:
     printFormat("GetSelectedThread", process.GetSelectedThread())  # SBThread
     printFormat("GetNumQueues", process.GetNumQueues())
     printFormat("GetState", process.GetState())  # StateType int
+    printFormat("SBDebugger.StateAsCString", lldb.SBDebugger.StateAsCString(process.GetState()))
     printFormat("GetExitStatus", process.GetExitStatus())
     printFormat("GetExitDescription", process.GetExitDescription())
     printFormat("GetProcessID", process.GetProcessID())
@@ -917,29 +921,6 @@ def pSBTypeCategory(obj: Optional[lldb.SBTypeCategory]) -> None:
     printTraversal(category, "GetNumSynthetics", "GetSyntheticAtIndex")  # [SBTypeSynthetic]
 
 
-def pSBPlatform(obj: Optional[lldb.SBPlatform]) -> None:
-    if obj:
-        platform = obj
-    else:
-        platform = lldb.debugger.GetSelectedPlatform()
-        # platform = lldb.debugger.GetSelectedTarget().GetPlatform()
-
-    printClassName("SBPlatform")
-    printFormat("SBPlatform", platform)
-    printFormat("IsValid", platform.IsValid())
-    printFormat("GetWorkingDirectory", platform.GetWorkingDirectory())
-    printFormat("GetName", platform.GetName())
-    printFormat("IsConnected", platform.IsConnected())
-    printFormat("GetTriple", platform.GetTriple())
-    printFormat("GetHostname", platform.GetHostname())
-    printFormat("GetOSBuild", platform.GetOSBuild())
-    printFormat("GetOSDescription", platform.GetOSDescription())
-    printFormat("GetOSMajorVersion", platform.GetOSMajorVersion())
-    printFormat("GetOSMinorVersion", platform.GetOSMinorVersion())
-    printFormat("GetOSUpdateVersion", platform.GetOSUpdateVersion())
-    printFormat("GetUnixSignals", platform.GetUnixSignals())  # SBUnixSignals
-
-
 def pSBBroadcaster(obj: Optional[lldb.SBBroadcaster]) -> None:
     if obj:
         broadcaster = obj
@@ -966,15 +947,178 @@ def pSBListener(obj: Optional[lldb.SBListener]) -> None:
     printFormat("IsValid", listener.IsValid())
 
 
-def pSBSourceManager(obj: Optional[lldb.SBSourceManager]) -> None:
+def pSBEvent(obj: Optional[lldb.SBEvent]) -> None:
     if obj:
-        manager = obj
+        event = obj
     else:
-        manager = lldb.debugger.GetSourceManager()
-        # manager = lldb.debugger.GetSelectedTarget().GetSourceManager()
+        event = lldb.SBEvent()
 
-    printClassName("SBSourceManager")
-    printFormat("SBSourceManager", manager)
+    printClassName("SBEvent")
+    printFormat("IsValid", event.IsValid())
+    printFormat("GetDataFlavor", event.GetDataFlavor())
+    eventType = event.GetType()
+    printFormat("GetType", eventType)
+    printFormat("GetBroadcaster", event.GetBroadcaster())  # SBBroadcaster
+    printFormat("GetBroadcasterClass", event.GetBroadcasterClass())
+    printFormat("GetCStringFromEvent", lldb.SBEvent.GetCStringFromEvent(event))
+
+
+    isProcessEvent = lldb.SBProcess.EventIsProcessEvent(event)
+    printFormat("SBProcess.EventIsProcessEvent", isProcessEvent)
+    if isProcessEvent:
+        printFormat("SBProcess.GetProcessFromEvent", lldb.SBProcess.GetProcessFromEvent(event))  # SBProcess
+        printFormat("SBProcess.GetRestartedFromEvent", lldb.SBProcess.GetRestartedFromEvent(event))
+        printFormat("SBProcess.GetNumRestartedReasonsFromEvent", lldb.SBProcess.GetNumRestartedReasonsFromEvent(event))
+        printFormat("SBProcess.GetInterruptedFromEvent", lldb.SBProcess.GetInterruptedFromEvent(event))
+
+        # StateType https://github.com/llvm/llvm-project/blob/master/lldb/include/lldb/lldb-enumerations.h
+        state = lldb.SBProcess.GetStateFromEvent(event)  # lldb::StateType int
+        stateString = lldb.SBDebugger.StateAsCString(state)
+        printFormat("SBProcess.GetStateFromEvent(raw)", state)
+        printFormat("SBProcess.GetStateFromEvent(resolved)", stateString)
+
+        eventTypeString = 'unknown'
+        if eventType == lldb.SBProcess.eBroadcastBitStateChanged:
+            eventTypeString = 'eBroadcastBitStateChanged'
+        elif eventType == lldb.SBProcess.eBroadcastBitInterrupt:
+            eventTypeString = 'eBroadcastBitInterrupt'
+        elif eventType == lldb.SBProcess.eBroadcastBitSTDOUT:
+            eventTypeString = 'eBroadcastBitSTDOUT'
+        elif eventType == lldb.SBProcess.eBroadcastBitSTDERR:
+            eventTypeString = 'eBroadcastBitSTDERR'
+        elif eventType == lldb.SBProcess.eBroadcastBitProfileData:
+            eventTypeString = 'eBroadcastBitProfileData'
+        elif eventType == lldb.SBProcess.eBroadcastBitStructuredData:
+            eventTypeString = 'eBroadcastBitStructuredData'
+        printFormat("GetType(resolved)", eventTypeString)
+
+    isStructuredDataEvent = lldb.SBProcess.EventIsStructuredDataEvent(event)
+    printFormat("SBProcess.EventIsStructuredDataEvent", isStructuredDataEvent)
+    if isStructuredDataEvent:
+        sd = lldb.SBProcess.GetStructuredDataFromEvent(event)  # SBStructuredData
+        printFormat("SBProcess.GetStructuredDataFromEvent", sd)
+
+
+    isTargetEvent = lldb.SBTarget.EventIsTargetEvent(event)
+    printFormat("SBTarget.EventIsTargetEvent", isTargetEvent)
+    if isTargetEvent:
+        printFormat("SBTarget.GetTargetFromEvent", lldb.SBTarget.GetTargetFromEvent(event))  # SBTarget
+        printFormat("SBTarget.GetNumModulesFromEvent", lldb.SBTarget.GetNumModulesFromEvent(event))
+        eventTypeString = 'unknown'
+        if eventType == lldb.SBTarget.eBroadcastBitBreakpointChanged:
+            eventTypeString = 'eBroadcastBitBreakpointChanged'
+        elif eventType == lldb.SBTarget.eBroadcastBitModulesLoaded:
+            eventTypeString = 'eBroadcastBitModulesLoaded'
+        elif eventType == lldb.SBTarget.eBroadcastBitModulesUnloaded:
+            eventTypeString = 'eBroadcastBitModulesUnloaded'
+        elif eventType == lldb.SBTarget.eBroadcastBitWatchpointChanged:
+            eventTypeString = 'eBroadcastBitWatchpointChanged'
+        elif eventType == lldb.SBTarget.eBroadcastBitSymbolsLoaded:
+            eventTypeString = 'eBroadcastBitSymbolsLoaded'
+        printFormat("GetType(resolved)", eventTypeString)
+
+
+    isBreakpointEvent = lldb.SBBreakpoint.EventIsBreakpointEvent(event)
+    printFormat("SBBreakpoint.EventIsBreakpointEvent", isBreakpointEvent)
+    if isBreakpointEvent:
+        printFormat("SBBreakpoint.GetBreakpointFromEvent", lldb.SBBreakpoint.GetBreakpointFromEvent(event))  # SBBreakpoint
+        printFormat("SBBreakpoint.GetNumBreakpointLocationsFromEvent", lldb.SBBreakpoint.GetNumBreakpointLocationsFromEvent(event))
+        bpEventType = lldb.SBBreakpoint.GetBreakpointEventTypeFromEvent(event)  # lldb::BreakpointEventType
+        bpEventTypeString = 'unknown'
+        if bpEventType == lldb.eBreakpointEventTypeInvalidType:
+            bpEventTypeString = 'eBreakpointEventTypeInvalidType'
+        elif bpEventType == lldb.eBreakpointEventTypeAdded:
+            bpEventTypeString = 'eBreakpointEventTypeAdded'
+        elif bpEventType == lldb.eBreakpointEventTypeRemoved:
+            bpEventTypeString = 'eBreakpointEventTypeRemoved'
+        elif bpEventType == lldb.eBreakpointEventTypeLocationsAdded:
+            bpEventTypeString = 'eBreakpointEventTypeLocationsAdded'
+        elif bpEventType == lldb.eBreakpointEventTypeLocationsRemoved:
+            bpEventTypeString = 'eBreakpointEventTypeLocationsRemoved'
+        elif bpEventType == lldb.eBreakpointEventTypeLocationsResolved:
+            bpEventTypeString = 'eBreakpointEventTypeLocationsResolved'
+        elif bpEventType == lldb.eBreakpointEventTypeEnabled:
+            bpEventTypeString = 'eBreakpointEventTypeEnabled'
+        elif bpEventType == lldb.eBreakpointEventTypeDisabled:
+            bpEventTypeString = 'eBreakpointEventTypeDisabled'
+        elif bpEventType == lldb.eBreakpointEventTypeCommandChanged:
+            bpEventTypeString = 'eBreakpointEventTypeCommandChanged'
+        elif bpEventType == lldb.eBreakpointEventTypeConditionChanged:
+            bpEventTypeString = 'eBreakpointEventTypeConditionChanged'
+        elif bpEventType == lldb.eBreakpointEventTypeIgnoreChanged:
+            bpEventTypeString = 'eBreakpointEventTypeIgnoreChanged'
+        elif bpEventType == lldb.eBreakpointEventTypeThreadChanged:
+            bpEventTypeString = 'eBreakpointEventTypeThreadChanged'
+        elif bpEventType == lldb.eBreakpointEventTypeAutoContinueChanged:
+            bpEventTypeString = 'eBreakpointEventTypeAutoContinueChanged'
+        printFormat("SBBreakpoint.GetBreakpointEventTypeFromEvent(raw)", bpEventType)
+        printFormat("SBBreakpoint.GetBreakpointEventTypeFromEvent(resolved)", bpEventTypeString)
+
+
+    isCommandInterpreterEvent = lldb.SBCommandInterpreter.EventIsCommandInterpreterEvent(event)
+    printFormat("SBCommandInterpreter.EventIsCommandInterpreterEvent", isCommandInterpreterEvent)
+    if isCommandInterpreterEvent:
+        eventTypeString = 'unknown'
+        if eventType == lldb.SBCommandInterpreter.eBroadcastBitThreadShouldExit:
+            eventTypeString = 'eBroadcastBitThreadShouldExit'
+        elif eventType == lldb.SBCommandInterpreter.eBroadcastBitResetPrompt:
+            eventTypeString = 'eBroadcastBitResetPrompt'
+        elif eventType == lldb.SBCommandInterpreter.eBroadcastBitQuitCommandReceived:
+            eventTypeString = 'eBroadcastBitQuitCommandReceived'
+        elif eventType == lldb.SBCommandInterpreter.eBroadcastBitAsynchronousOutputData:
+            eventTypeString = 'eBroadcastBitAsynchronousOutputData'
+        elif eventType == lldb.SBCommandInterpreter.eBroadcastBitAsynchronousErrorData:
+            eventTypeString = 'eBroadcastBitAsynchronousErrorData'
+        printFormat("GetType(resolved)", eventTypeString)
+
+
+    isThreadEvent = lldb.SBThread.EventIsThreadEvent(event)
+    printFormat("SBThread.EventIsThreadEvent", isThreadEvent)
+    if isThreadEvent:
+        printFormat("SBThread.GetThreadFromEvent", lldb.SBThread.GetThreadFromEvent(event))  # SBThread
+        printFormat("SBThread.GetStackFrameFromEvent", lldb.SBThread.GetStackFrameFromEvent(event))  # SBFrame
+        eventTypeString = 'unknown'
+        if eventType == lldb.SBThread.eBroadcastBitStackChanged:
+            eventTypeString = 'eBroadcastBitStackChanged'
+        elif eventType == lldb.SBThread.eBroadcastBitThreadSuspended:
+            eventTypeString = 'eBroadcastBitThreadSuspended'
+        elif eventType == lldb.SBThread.eBroadcastBitThreadResumed:
+            eventTypeString = 'eBroadcastBitThreadResumed'
+        elif eventType == lldb.SBThread.eBroadcastBitSelectedFrameChanged:
+            eventTypeString = 'eBroadcastBitSelectedFrameChanged'
+        elif eventType == lldb.SBThread.eBroadcastBitThreadSelected:
+            eventTypeString = 'eBroadcastBitThreadSelected'
+        printFormat("GetType(resolved)", eventTypeString)
+
+
+    isWatchpointEvent = lldb.SBWatchpoint.EventIsWatchpointEvent(event)
+    printFormat("SBWatchpoint.EventIsWatchpointEvent", isWatchpointEvent)
+    if isWatchpointEvent:
+        printFormat("SBWatchpoint.GetWatchpointFromEvent", lldb.SBWatchpoint.GetWatchpointFromEvent(event))  # SBWatchpoint
+        wpEventType = lldb.SBWatchpoint.GetWatchpointEventTypeFromEvent(event)  # lldb::WatchpointEventType
+        wpEventTypeString = 'unknown'
+        if wpEventType == lldb.eWatchpointEventTypeInvalidType:
+            wpEventTypeString = 'eWatchpointEventTypeInvalidType'
+        elif wpEventType == lldb.eWatchpointEventTypeAdded:
+            wpEventTypeString = 'eWatchpointEventTypeAdded'
+        elif wpEventType == lldb.eWatchpointEventTypeRemoved:
+            wpEventTypeString = 'eWatchpointEventTypeRemoved'
+        elif wpEventType == lldb.eWatchpointEventTypeEnabled:
+            wpEventTypeString = 'eWatchpointEventTypeEnabled'
+        elif wpEventType == lldb.eWatchpointEventTypeDisabled:
+            wpEventTypeString = 'eWatchpointEventTypeDisabled'
+        elif wpEventType == lldb.eWatchpointEventTypeCommandChanged:
+            wpEventTypeString = 'eWatchpointEventTypeCommandChanged'
+        elif wpEventType == lldb.eWatchpointEventTypeConditionChanged:
+            wpEventTypeString = 'eWatchpointEventTypeConditionChanged'
+        elif wpEventType == lldb.eWatchpointEventTypeIgnoreChanged:
+            wpEventTypeString = 'eWatchpointEventTypeIgnoreChanged'
+        elif wpEventType == lldb.eWatchpointEventTypeThreadChanged:
+            wpEventTypeString = 'eWatchpointEventTypeThreadChanged'
+        elif wpEventType == lldb.eWatchpointEventTypeTypeChanged:
+            wpEventTypeString = 'eWatchpointEventTypeTypeChanged'
+        printFormat("SBWatchpoint.GetWatchpointEventTypeFromEvent(raw)", wpEventType)
+        printFormat("SBWatchpoint.GetWatchpointEventTypeFromEvent(resolved)", wpEventTypeString)
 
 
 def pSBStructuredData(obj: Optional[lldb.SBStructuredData]) -> None:
@@ -998,6 +1142,40 @@ def pSBStructuredData(obj: Optional[lldb.SBStructuredData]) -> None:
     stream = lldb.SBStream()
     sd.GetAsJSON(stream)
     printFormat("GetAsJSON", stream.GetData())
+
+
+def pSBPlatform(obj: Optional[lldb.SBPlatform]) -> None:
+    if obj:
+        platform = obj
+    else:
+        platform = lldb.debugger.GetSelectedPlatform()
+        # platform = lldb.debugger.GetSelectedTarget().GetPlatform()
+
+    printClassName("SBPlatform")
+    printFormat("SBPlatform", platform)
+    printFormat("IsValid", platform.IsValid())
+    printFormat("GetWorkingDirectory", platform.GetWorkingDirectory())
+    printFormat("GetName", platform.GetName())
+    printFormat("IsConnected", platform.IsConnected())
+    printFormat("GetTriple", platform.GetTriple())
+    printFormat("GetHostname", platform.GetHostname())
+    printFormat("GetOSBuild", platform.GetOSBuild())
+    printFormat("GetOSDescription", platform.GetOSDescription())
+    printFormat("GetOSMajorVersion", platform.GetOSMajorVersion())
+    printFormat("GetOSMinorVersion", platform.GetOSMinorVersion())
+    printFormat("GetOSUpdateVersion", platform.GetOSUpdateVersion())
+    printFormat("GetUnixSignals", platform.GetUnixSignals())  # SBUnixSignals
+
+
+def pSBSourceManager(obj: Optional[lldb.SBSourceManager]) -> None:
+    if obj:
+        manager = obj
+    else:
+        manager = lldb.debugger.GetSourceManager()
+        # manager = lldb.debugger.GetSelectedTarget().GetSourceManager()
+
+    printClassName("SBSourceManager")
+    printFormat("SBSourceManager", manager)
 
 
 def pSBUnixSignals(obj: Optional[lldb.SBUnixSignals]) -> None:
