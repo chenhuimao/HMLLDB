@@ -45,7 +45,7 @@ def plldbClassInfo(debugger, command, exe_ctx, result, internal_dict):
 
     Examples:
         (lldb) plldbClassInfo all
-        (lldb) plldbClassInfo SBValue
+        (lldb) plldbClassInfo SBDebugger
         (lldb) plldbClassInfo SBTarget
         (lldb) plldbClassInfo -e SBTarget
 
@@ -160,6 +160,19 @@ def compareName(className: str) -> bool:
         return False
 
 
+def generate_option_parser() -> optparse.OptionParser:
+    usage = "usage: plldbClassInfo [--entire] <className/all>"
+    parser = optparse.OptionParser(usage=usage, prog="plldbClassInfo")
+
+    parser.add_option("-e", "--entire",
+                      action="store_true",
+                      default=False,
+                      dest="entire",
+                      help="Print all elements of the list, otherwise only 100")
+
+    return parser
+
+
 def printFormat(desc: str, value: object) -> None:
     print("[{arg1}]: {arg2}\n\ttype: {arg3}".format(arg1=desc, arg2=value, arg3=type(value)))
 
@@ -191,17 +204,17 @@ def getStringFromSBStringList(stringList: lldb.SBStringList) -> str:
     return result
 
 
-def generate_option_parser() -> optparse.OptionParser:
-    usage = "usage: plldbClassInfo [--entire] <className/all>"
-    parser = optparse.OptionParser(usage=usage, prog="plldbClassInfo")
-
-    parser.add_option("-e", "--entire",
-                      action="store_true",
-                      default=False,
-                      dest="entire",
-                      help="Print all elements of the list, otherwise only 100")
-
-    return parser
+def getStringFromByteOrder(order: int) -> str:
+    result = 'unknown'
+    if order == lldb.eByteOrderInvalid:
+        result = 'eByteOrderInvalid'
+    elif order == lldb.eByteOrderBig:
+        result = 'eByteOrderBig'
+    elif order == lldb.eByteOrderPDP:
+        result = 'eByteOrderPDP'
+    elif order == lldb.eByteOrderLittle:
+        result = 'eByteOrderLittle'
+    return result
 
 
 def pSBHostOS(obj: Optional[lldb.SBHostOS]) -> None:
@@ -237,15 +250,18 @@ def pSBDebugger(obj: Optional[lldb.SBDebugger]) -> None:
     printFormat("SBDebugger", debugger)
     printFormat("IsValid", debugger.IsValid())
     printFormat("GetAsync", debugger.GetAsync())
-    printFormat("GetInputFileHandle", debugger.GetInputFileHandle())  # FILE
-    printFormat("GetOutputFileHandle", debugger.GetOutputFileHandle())  # FILE
-    printFormat("GetErrorFileHandle", debugger.GetErrorFileHandle())  # FILE
+    # printFormat("GetInputFileHandle", debugger.GetInputFileHandle())  # FileSP
+    # printFormat("GetOutputFileHandle", debugger.GetOutputFileHandle())  # FileSP
+    # printFormat("GetErrorFileHandle", debugger.GetErrorFileHandle())  # FileSP
+    printFormat("GetInputFile", debugger.GetInputFile())  # SBFile
+    printFormat("GetOutputFile", debugger.GetOutputFile())  # SBFile
+    printFormat("GetErrorFile", debugger.GetErrorFile())  # SBFile
     printFormat("GetCommandInterpreter", debugger.GetCommandInterpreter())  # SBCommandInterpreter
     printFormat("GetListener", debugger.GetListener())  # SBListener
     printFormat("GetDummyTarget", debugger.GetDummyTarget())  # SBTarget
     printFormat("GetNumTargets", debugger.GetNumTargets())
     printFormat("GetSelectedTarget", debugger.GetSelectedTarget())  # SBTarget
-    printFormat("GetSelectedPlatform", debugger.GetSelectedPlatform())  # GetSelectedPlatform
+    printFormat("GetSelectedPlatform", debugger.GetSelectedPlatform())  # SBPlatform
     printFormat("GetNumPlatforms", debugger.GetNumPlatforms())
     printFormat("GetNumAvailablePlatforms", debugger.GetNumAvailablePlatforms())
     printFormat("GetSourceManager", debugger.GetSourceManager())  # SBSourceManager
@@ -283,14 +299,16 @@ def pSBTarget(obj: Optional[lldb.SBTarget]) -> None:
     printFormat("GetExecutable", target.GetExecutable())  # SBFileSpec
     printFormat("GetNumModules", target.GetNumModules())
     printFormat("GetDebugger", target.GetDebugger())  # SBDebugger
-    printFormat("GetByteOrder", target.GetByteOrder())  # ByteOrder int
+    byteOrder = target.GetByteOrder()  # ByteOrder int
+    printFormat("GetByteOrder(raw)", byteOrder)
+    printFormat("GetByteOrder(resolved)", getStringFromByteOrder(byteOrder))
     printFormat("GetAddressByteSize", target.GetAddressByteSize())
     printFormat("GetTriple", target.GetTriple())
     printFormat("GetDataByteSize", target.GetDataByteSize())
     printFormat("GetCodeByteSize", target.GetCodeByteSize())
     printFormat("FindFunctions.first", target.FindFunctions("viewDidLoad")[0])  # SBSymbolContext
-    printFormat("FindFirstType", target.FindFirstType("UIAlertAction"))  # SBType
-    printFormat("FindTypes", target.FindTypes("UIAlertAction"))  # SBTypeList
+    printFormat("FindFirstType", target.FindFirstType("UIResponder"))  # SBType
+    printFormat("FindTypes", target.FindTypes("UIView"))  # SBTypeList
     printFormat("GetSourceManager", target.GetSourceManager())  # SBSourceManager
     printFormat("FindFirstGlobalVariable", target.FindFirstGlobalVariable("shared"))  # SBValue
     printFormat("FindGlobalVariables", target.FindGlobalVariables("shared", 2))  # SBValueList
@@ -301,7 +319,7 @@ def pSBTarget(obj: Optional[lldb.SBTarget]) -> None:
     printFormat("GetBreakpointNames", getStringFromSBStringList(stringList))
     printFormat("GetNumWatchpoints", target.GetNumWatchpoints())
     printFormat("GetBroadcaster", target.GetBroadcaster())  # SBBroadcaster
-    printFormat("FindSymbols", target.FindSymbols("UIAlertAction"))  # SBSymbolContextList
+    printFormat("FindSymbols", target.FindSymbols("UIView"))  # SBSymbolContextList
     printFormat("GetStackRedZoneSize", target.GetStackRedZoneSize())
     printFormat("GetLaunchInfo", target.GetLaunchInfo())  # SBLaunchInfo
     printFormat("GetCollectingStats", target.GetCollectingStats())
@@ -326,7 +344,9 @@ def pSBProcess(obj: Optional[lldb.SBProcess]) -> None:
     printFormat("GetShortPluginName", process.GetShortPluginName())
     printFormat("IsValid", process.IsValid())
     printFormat("GetTarget", process.GetTarget())  # SBTarget
-    printFormat("GetByteOrder", process.GetByteOrder())  # ByteOrder int
+    byteOrder = process.GetByteOrder()  # ByteOrder int
+    printFormat("GetByteOrder(raw)", byteOrder)
+    printFormat("GetByteOrder(resolved)", getStringFromByteOrder(byteOrder))
     printFormat("GetNumThreads", process.GetNumThreads())
     printFormat("GetSelectedThread", process.GetSelectedThread())  # SBThread
     printFormat("GetNumQueues", process.GetNumQueues())
@@ -479,7 +499,6 @@ def pSBValue(obj: Optional[lldb.SBValue]) -> None:
     printFormat("GetValueDidChange", value.GetValueDidChange())
     printFormat("GetSummary", value.GetSummary())
     printFormat("GetObjectDescription", value.GetObjectDescription())
-    printFormat("GetTypeValidatorResult", value.GetTypeValidatorResult())
     printFormat("GetStaticValue", value.GetStaticValue())  # SBValue
     printFormat("GetNonSyntheticValue", value.GetNonSyntheticValue())  # SBValue
     printFormat("GetPreferDynamicValue", value.GetPreferDynamicValue())  # DynamicValueType int
@@ -554,7 +573,9 @@ def pSBModule(obj: Optional[lldb.SBModule]) -> None:
     printFormat("FindSymbols", module.FindSymbols("CGRectMake"))  # SBSymbolContextList
     printFormat("GetNumSections", module.GetNumSections())
     printFormat("GetTypes", module.GetTypes())  # SBTypeList
-    printFormat("GetByteOrder", module.GetByteOrder())  # ByteOrder int
+    byteOrder = module.GetByteOrder()  # ByteOrder int
+    printFormat("GetByteOrder(raw)", byteOrder)
+    printFormat("GetByteOrder(resolved)", getStringFromByteOrder(byteOrder))
     printFormat("GetAddressByteSize", module.GetAddressByteSize())
     printFormat("GetTriple", module.GetTriple())
     printFormat("GetVersion", module.GetVersion())
@@ -966,7 +987,7 @@ def pSBEvent(obj: Optional[lldb.SBEvent]) -> None:
     isProcessEvent = lldb.SBProcess.EventIsProcessEvent(event)
     printFormat("SBProcess.EventIsProcessEvent", isProcessEvent)
     if isProcessEvent:
-        printFormat("SBProcess.GetProcessFromEvent", lldb.SBProcess.GetProcessFromEvent(event))  # SBProcess
+        # printFormat("SBProcess.GetProcessFromEvent", lldb.SBProcess.GetProcessFromEvent(event))  # SBProcess
         printFormat("SBProcess.GetRestartedFromEvent", lldb.SBProcess.GetRestartedFromEvent(event))
         printFormat("SBProcess.GetNumRestartedReasonsFromEvent", lldb.SBProcess.GetNumRestartedReasonsFromEvent(event))
         printFormat("SBProcess.GetInterruptedFromEvent", lldb.SBProcess.GetInterruptedFromEvent(event))
