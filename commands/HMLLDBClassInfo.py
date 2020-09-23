@@ -107,6 +107,8 @@ def plldbClassInfo(debugger, command, exe_ctx, result, internal_dict):
     if compareName("SBLineEntry"):
         pSBLineEntry(None)
 
+    if compareName("SBFile"):
+        pSBFile(None)
     if compareName("SBFileSpec"):
         pSBFileSpec(None)
     if compareName("SBAddress"):
@@ -359,6 +361,7 @@ def pSBProcess(obj: Optional[lldb.SBProcess]) -> None:
     printFormat("GetAddressByteSize", process.GetAddressByteSize())
     printFormat("GetUnixSignals", process.GetUnixSignals())  # SBUnixSignals
     printFormat("GetBroadcaster", process.GetBroadcaster())  # SBBroadcaster
+    printFormat("GetExtendedCrashInformation", process.GetExtendedCrashInformation())  # SBStructuredData
     printFormat("GetNumExtendedBacktraceTypes", process.GetNumExtendedBacktraceTypes())
     printFormat("GetMemoryRegions", process.GetMemoryRegions())  # SBMemoryRegionInfoList
     printFormat("GetProcessInfo", process.GetProcessInfo())  # SBProcessInfo
@@ -721,6 +724,20 @@ def pSBLineEntry(obj: Optional[lldb.SBLineEntry]) -> None:
     printFormat("GetFileSpec", le.GetFileSpec())  # SBFileSpec
     printFormat("GetLine", le.GetLine())
     printFormat("GetColumn", le.GetColumn())
+
+
+def pSBFile(obj: Optional[lldb.SBFile]) -> None:
+    if obj:
+        file = obj
+    else:
+        file = lldb.debugger.GetInputFile()
+        # file = lldb.debugger.GetOutputFile()
+        # file = lldb.debugger.GetErrorFile()
+
+    printClassName("SBFile")
+    printFormat("SBFile", file)
+    printFormat("IsValid", file.IsValid())
+    # printFormat("GetFile", file.GetFile())  # FileSP
 
 
 def pSBFileSpec(obj: Optional[lldb.SBFileSpec]) -> None:

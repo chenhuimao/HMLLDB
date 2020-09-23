@@ -66,9 +66,14 @@ def delay(debugger, command, exe_ctx, result, internal_dict):
         HM.DPrint("Requires two arguments(second and lldb command), Please enter \"help delay\" for help.")
         return
 
+    secondString = args[0]
+    if not isNumber(secondString):
+        HM.DPrint(f"\"{secondString}\" cannot be converted to seconds, Please enter \"help delay\" for help.")
+        return
+
     debugger.SetAsync(True)
     debugger.HandleCommand("process continue")
-    seconds = float(args[0])
+    seconds = float(secondString)
     specifiedCommand: str = ""
     for i, item in enumerate(args):
         if i == 0:
@@ -87,6 +92,14 @@ def runDelayed(command: str, isContinue: bool) -> None:
 
     if isContinue:
         lldb.debugger.HandleCommand("process continue")
+
+
+def isNumber(s: str) -> bool:
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
 
 
 def generate_option_parser() -> optparse.OptionParser:

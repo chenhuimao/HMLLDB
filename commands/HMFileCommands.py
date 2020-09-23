@@ -214,7 +214,9 @@ def deleteFileOrDirectory(filePath: str) -> None:
         NSMutableString *result = [[NSMutableString alloc] init];
         NSFileManager *fileMgr = [NSFileManager defaultManager];
         if ([fileMgr fileExistsAtPath:filePath]) {{
-            if ([fileMgr removeItemAtPath:filePath error:nil]) {{
+            if (![filePath containsString:(NSString *)NSHomeDirectory()]) {{
+                [result appendString:@"The file path must be in the sandbox\\n"];
+            }} else if ([fileMgr removeItemAtPath:filePath error:nil]) {{
                 [result appendFormat:@"removed file: %@\\n", filePath];
             }} else {{
                 [result appendFormat:@"failed to remove file: %@\\n", filePath];

@@ -40,11 +40,16 @@ def __lldb_init_module(debugger, internal_dict):
 def methods(debugger, command, exe_ctx, result, internal_dict):
     """
     Syntax:
-        methods [--short] <className>
+        methods [--short] <className/classInstance>
 
     Examples:
         (lldb) methods UIViewController
         (lldb) methods -s UIViewController
+        (lldb) methods [UIView new]
+
+        (lldb) expression -l objc -O -- [NSObject new]
+        <NSObject: 0x60000375f9a0>
+        (lldb) methods 0x60000375f9a0
 
     Options:
         --short/-s; Use [inputClass _shortMethodDescription] instead of [inputClass _methodDescription]
@@ -116,10 +121,15 @@ def methods(debugger, command, exe_ctx, result, internal_dict):
 def properties(debugger, command, exe_ctx, result, internal_dict):
     """
     Syntax:
-        properties <className>
+        properties <className/classInstance>
 
     Examples:
         (lldb) properties UIViewController
+        (lldb) properties [NSObject new]
+
+        (lldb) expression -l objc -O -- [NSObject new]
+        <NSObject: 0x60000372f760>
+        (lldb) properties 0x60000372f760
 
     This command is implemented in HMClassInfoCommands.py
     """

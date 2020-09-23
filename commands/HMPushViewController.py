@@ -45,7 +45,8 @@ def push(debugger, command, exe_ctx, result, internal_dict):
         (lldb) push PersonalViewController
         (lldb) push -i [[PersonalViewController alloc] init]
 
-        (lldb) expression -l objc -O -- [PersonalViewController new] (<PersonalViewController: 0x7fed30c5a070>)
+        (lldb) expression -l objc -O -- [PersonalViewController new]
+        <PersonalViewController: 0x7fed30c5a070>
         (lldb) push -i 0x7fed30c5a070
 
 
