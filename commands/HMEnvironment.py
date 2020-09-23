@@ -21,6 +21,7 @@
 # SOFTWARE.
 
 import lldb
+import sys
 import HMLLDBHelpers as HM
 
 
@@ -39,16 +40,18 @@ def environment(debugger, command, exe_ctx, result, internal_dict):
     This command is implemented in HMEnvironment.py
     """
 
+    # Python version
+    # LLDB version
+    # Target triple
+    # Optimized
+    # Xcode version
+    # Xcode build version
+    # Model identifier
+    # System version
 
-    # 1.LLDB version
-    # 2.Target triple
-    # 3.Optimized
-    # 4.Xcode version
-    # 5.Xcode build version
-    # 6.Model identifier
-    # 7.System version
+    HM.DPrint('[Python version] ' + sys.version.replace('\n', '\n\t'))
 
-    HM.DPrint('[LLDB version] ' + debugger.GetVersionString())
+    HM.DPrint('[LLDB version] ' + debugger.GetVersionString().replace('\n', '\n\t'))
 
     HM.DPrint('[Target triple] ' + debugger.GetSelectedTarget().GetTriple())
 
