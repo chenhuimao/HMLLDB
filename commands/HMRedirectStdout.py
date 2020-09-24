@@ -69,24 +69,24 @@ def redirect(debugger, command, exe_ctx, result, internal_dict):
         mode = "a+"
 
     if stream == "stdout" or stream == "stderr":
-        redirectValue = HM.evaluateExpressionValue("freopen(\"{path}\", \"{mode}\", {stream})".format(path=path, mode=mode, stream=stream))
+        redirectValue = HM.evaluateExpressionValue(f"freopen(\"{path}\", \"{mode}\", {stream})")
         logRedirectResult(redirectValue, stream)
 
     elif stream == "both":
-        stdoutValue = HM.evaluateExpressionValue("freopen(\"{path}\", \"{mode}\", stdout)".format(path=path, mode=mode))
+        stdoutValue = HM.evaluateExpressionValue(f"freopen(\"{path}\", \"{mode}\", stdout)")
         logRedirectResult(stdoutValue, "stdout")
-        stderrValue = HM.evaluateExpressionValue("freopen(\"{path}\", \"{mode}\", stderr)".format(path=path, mode=mode))
+        stderrValue = HM.evaluateExpressionValue(f"freopen(\"{path}\", \"{mode}\", stderr)")
         logRedirectResult(stderrValue, "stderr")
 
     else:
-        HM.DPrint("Error input, plase enter 'help redirect' for more infomation")
+        HM.DPrint(f"Error input(\"{stream}\"), plase enter \"help redirect\" for more infomation")
 
 
 def logRedirectResult(val: lldb.SBValue, stream: str) -> None:
     if val.GetValueAsSigned() == 0:
-        HM.DPrint("redirect {stream} failed".format(stream=stream))
+        HM.DPrint(f"redirect {stream} failed")
     else:
-        HM.DPrint("redirect {stream} successful".format(stream=stream))
+        HM.DPrint(f"redirect {stream} successful")
 
 
 def generate_option_parser() -> optparse.OptionParser:

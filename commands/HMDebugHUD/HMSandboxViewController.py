@@ -116,15 +116,15 @@ def makeViewDidLoadIMP() -> lldb.SBValue:
             tv.rowHeight = 56;
             tv.estimatedSectionHeaderHeight = 40;
             tv.tableFooterView = [[UIView alloc] init];
-            tv.dataSource = vc;
-            tv.delegate = vc;
+            tv.dataSource = (id)vc;
+            tv.delegate = (id)vc;
             if ([tv respondsToSelector:@selector(setContentInsetAdjustmentBehavior:)]) {
                 [tv setContentInsetAdjustmentBehavior:(UIScrollViewContentInsetAdjustmentBehavior)0];
             }
             [vc.view addSubview:tv];            
         };
 
-        (IMP)imp_implementationWithBlock(IMPBlock);
+        imp_implementationWithBlock(IMPBlock);
 
      '''
     return HM.evaluateExpressionValue(command_script)
@@ -156,7 +156,7 @@ def makeLoadPathIMP() -> lldb.SBValue:
             [tableView reloadData];
         };
         
-        (IMP)imp_implementationWithBlock(IMPBlock);
+        imp_implementationWithBlock(IMPBlock);
 
      '''
     return HM.evaluateExpressionValue(command_script)
@@ -174,7 +174,7 @@ def makeClickBackItemIMP() -> lldb.SBValue:
             }
         };
 
-        (IMP)imp_implementationWithBlock(IMPBlock);
+        imp_implementationWithBlock(IMPBlock);
 
      '''
     return HM.evaluateExpressionValue(command_script)
@@ -185,7 +185,7 @@ def makeClickPopItemIMP() -> lldb.SBValue:
         void (^IMPBlock)(UIViewController *) = ^(UIViewController *vc) {
             [vc.navigationController popViewControllerAnimated:YES];
         };
-        (IMP)imp_implementationWithBlock(IMPBlock);
+        imp_implementationWithBlock(IMPBlock);
 
      '''
     return HM.evaluateExpressionValue(command_script)
@@ -208,7 +208,7 @@ def makeDeleteFileOrDirIMP() -> lldb.SBValue:
             
             [vc presentViewController:alertController animated:YES completion:nil];
         };
-        (IMP)imp_implementationWithBlock(IMPBlock);
+        imp_implementationWithBlock(IMPBlock);
 
      '''
     return HM.evaluateExpressionValue(command_script)
@@ -263,7 +263,7 @@ def makeNumberOfRowsInSectionIMP() -> lldb.SBValue:
             NSMutableArray *childPaths = (NSMutableArray *)[vc valueForKey:@"childPaths"];
             return [childPaths count];
         };
-        (IMP)imp_implementationWithBlock(IMPBlock);
+        imp_implementationWithBlock(IMPBlock);
      '''
     return HM.evaluateExpressionValue(command_script)
 
@@ -294,7 +294,7 @@ def makeCellForRowAtIndexPathIMP() -> lldb.SBValue:
                 rightLab.tag = 3333;
                 rightLab.font = [UIFont systemFontOfSize:15];
                 rightLab.textColor = [UIColor grayColor];
-                rightLab.textAlignment = NSTextAlignmentRight;
+                ((void (*)(id, SEL, long)) objc_msgSend)((id)rightLab, @selector(setTextAlignment:), 2); // NSTextAlignmentRight
                 rightLab.numberOfLines = 0;
                 [cell.contentView addSubview:rightLab];
             }
@@ -347,7 +347,7 @@ def makeCellForRowAtIndexPathIMP() -> lldb.SBValue:
             return cell;
         };
         
-        (IMP)imp_implementationWithBlock(IMPBlock);
+        imp_implementationWithBlock(IMPBlock);
      '''
     return HM.evaluateExpressionValue(command_script)
 
@@ -357,7 +357,7 @@ def makeCanEditRowAtIndexPathIMP() -> lldb.SBValue:
         BOOL (^IMPBlock)(UIViewController *, UITableView *, NSIndexPath *) = ^BOOL(UIViewController *vc, UITableView *tv, NSIndexPath * indexPath) {
             return YES;
         };
-        (IMP)imp_implementationWithBlock(IMPBlock);
+        imp_implementationWithBlock(IMPBlock);
      '''
     return HM.evaluateExpressionValue(command_script)
 
@@ -371,7 +371,7 @@ def makeCommitEditingStyleForRowAtIndexPathIMP() -> lldb.SBValue:
                 (void)[vc performSelector:@selector(deleteFileOrDir:) withObject:path];
             }
         };
-        (IMP)imp_implementationWithBlock(IMPBlock);
+        imp_implementationWithBlock(IMPBlock);
      '''
     return HM.evaluateExpressionValue(command_script)
 
@@ -417,7 +417,7 @@ def makeDidSelectRowAtIndexPathIMP() -> lldb.SBValue:
                 [vc presentViewController:alertController animated:YES completion:nil];
             }
         };
-        (IMP)imp_implementationWithBlock(IMPBlock);
+        imp_implementationWithBlock(IMPBlock);
      '''
     return HM.evaluateExpressionValue(command_script)
 
@@ -452,7 +452,7 @@ def makeViewForHeaderInSectionIMP() -> lldb.SBValue:
     
             return header;
         };
-        (IMP)imp_implementationWithBlock(IMPBlock);
+        imp_implementationWithBlock(IMPBlock);
      '''
     return HM.evaluateExpressionValue(command_script)
 
@@ -462,6 +462,6 @@ def makeEditingStyleForRowAtIndexPathIMP() -> lldb.SBValue:
         UITableViewCellEditingStyle (^IMPBlock)(UIViewController *, UITableView *, NSIndexPath *) = ^UITableViewCellEditingStyle(UIViewController *vc, UITableView *tv, NSIndexPath *indexPath) {
             return UITableViewCellEditingStyleDelete;
         };
-        (IMP)imp_implementationWithBlock(IMPBlock);
+        imp_implementationWithBlock(IMPBlock);
      '''
     return HM.evaluateExpressionValue(command_script)

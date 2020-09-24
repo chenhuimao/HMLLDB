@@ -84,13 +84,13 @@ def makePresentIMP() -> lldb.SBValue:
         UIViewController * (^presentBlock)(id) = ^UIViewController *(id classSelf) {{
             UIViewController *vc = (UIViewController *)[[NSClassFromString(@"{gClassName}") alloc] init];
             UINavigationController *nv = [[UINavigationController alloc] initWithRootViewController:vc];
-            nv.modalPresentationStyle = (UIModalPresentationStyle)0;
+            ((void (*)(id, SEL, long)) objc_msgSend)((id)nv, @selector(setModalPresentationStyle:), 0); // UIModalPresentationFullScreen
             [[UIApplication sharedApplication].keyWindow.rootViewController presentViewController:nv animated:YES completion:nil];
             
              return vc;
          }};
 
-         (IMP)imp_implementationWithBlock(presentBlock);
+         imp_implementationWithBlock(presentBlock);
 
      '''
 
@@ -115,8 +115,8 @@ def makeViewDidLoadIMP() -> lldb.SBValue:
             // tableView
             UITableView *tv = [[UITableView alloc] init];
             tv.frame = vc.view.bounds;
-            tv.delegate = vc;
-            tv.dataSource = vc;
+            tv.delegate = (id)vc;
+            tv.dataSource = (id)vc;
             tv.rowHeight = 50;
             tv.tableFooterView = [[UIView alloc] init];
             if ([tv respondsToSelector:@selector(setContentInsetAdjustmentBehavior:)]) {
@@ -125,7 +125,7 @@ def makeViewDidLoadIMP() -> lldb.SBValue:
             [vc.view addSubview:tv];
         };
         
-        (IMP)imp_implementationWithBlock(IMPBlock);
+        imp_implementationWithBlock(IMPBlock);
 
      '''
     return HM.evaluateExpressionValue(command_script)
@@ -137,7 +137,7 @@ def makeDismissSelfIMP() -> lldb.SBValue:
             [vc.navigationController dismissViewControllerAnimated:NO completion:nil];
         };
         
-        (IMP)imp_implementationWithBlock(dismissSelfBlock);
+        imp_implementationWithBlock(dismissSelfBlock);
 
      '''
     return HM.evaluateExpressionValue(command_script)
@@ -169,7 +169,7 @@ def makeNumberOfRowsInSectionIMP() -> lldb.SBValue:
         long (^IMPBlock)(UIViewController *, UITableView *, long) = ^long(UIViewController *vc, UITableView *tv, long section) {
             return 2;
         };
-        (IMP)imp_implementationWithBlock(IMPBlock);    
+        imp_implementationWithBlock(IMPBlock);    
     '''
 
     return HM.evaluateExpressionValue(command_script)
@@ -195,7 +195,7 @@ def makeCellForRowAtIndexPathIMP() -> lldb.SBValue:
             return cell;
         };
         
-        (IMP)imp_implementationWithBlock(IMPBlock);    
+        imp_implementationWithBlock(IMPBlock);    
     '''
 
     return HM.evaluateExpressionValue(command_script)
@@ -212,7 +212,7 @@ def makeDidSelectRowAtIndexPathIMP() -> lldb.SBValue:
             }
         };
 
-        (IMP)imp_implementationWithBlock(IMPBlock);    
+        imp_implementationWithBlock(IMPBlock);    
     '''
 
     return HM.evaluateExpressionValue(command_script)
@@ -246,7 +246,7 @@ def makeSelectedAPPInfoIMP() -> lldb.SBValue:
             [vc.navigationController pushViewController:objVC animated:YES];
         };
 
-        (IMP)imp_implementationWithBlock(IMPBlock);    
+        imp_implementationWithBlock(IMPBlock);    
     '''
 
     return HM.evaluateExpressionValue(command_script)
@@ -260,7 +260,7 @@ def makeSelectedSandboxIMP() -> lldb.SBValue:
             [vc.navigationController pushViewController:objVC animated:YES];
         };
 
-        (IMP)imp_implementationWithBlock(IMPBlock);    
+        imp_implementationWithBlock(IMPBlock);    
     '''
 
     return HM.evaluateExpressionValue(command_script)

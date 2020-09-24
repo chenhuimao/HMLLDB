@@ -71,7 +71,7 @@ def makeViewDidLoadIMP() -> lldb.SBValue:
             }}
         }};
 
-        (IMP)imp_implementationWithBlock(IMPBlock);
+        imp_implementationWithBlock(IMPBlock);
 
      '''
 

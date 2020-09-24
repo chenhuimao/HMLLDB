@@ -35,7 +35,7 @@ def register() -> None:
         return
 
     # Register class
-    HM.DPrint("Register {arg0}...".format(arg0=gClassName))
+    HM.DPrint(f"Register {gClassName}...")
     classValue = HM.allocateClass(gClassName, "UIView")
     HM.addIvar(classValue.GetValue(), "_contentView", "UIView *")
     HM.addIvar(classValue.GetValue(), "_indicator", "UIActivityIndicatorView *")
@@ -43,7 +43,7 @@ def register() -> None:
     HM.registerClass(classValue.GetValue())
 
     # Add Class methods
-    HM.DPrint("Add methods to {arg0}...".format(arg0=gClassName))
+    HM.DPrint(f"Add methods to {gClassName}...")
     sharedInstanceIMPValue = makeSharedInstanceIMP()
     if not HM.judgeSBValueHasValue(sharedInstanceIMPValue):
         return
@@ -65,7 +65,7 @@ def register() -> None:
     HM.addClassMethod(gClassName, "setText:", setTextIMPValue.GetValue(), "v@:@")
 
     # Add Instance methods
-    HM.DPrint("Add methods to {arg0}......".format(arg0=gClassName))
+    HM.DPrint(f"Add methods to {gClassName}......")
     initWithFrameIMPValue = makeInitWithFrameIMP()
     if not HM.judgeSBValueHasValue(initWithFrameIMPValue):
         return
@@ -76,57 +76,57 @@ def register() -> None:
         return
     HM.addInstanceMethod(gClassName, "layoutSubviews", layoutSubviewsIMPValue.GetValue(), "v@:")
 
-    HM.DPrint("Register {arg0} done!".format(arg0=gClassName))
+    HM.DPrint(f"Register {gClassName} done!")
 
 
 def show(text: Optional[str]) -> None:
 
     register()
 
-    command_script = '''
-        Class progressHUDCls = (Class)objc_lookUpClass("{arg0}");
+    command_script = f'''
+        Class progressHUDCls = (Class)objc_lookUpClass("{gClassName}");
         (UIView *)[progressHUDCls performSelector:@selector(showHUD)];
-    '''.format(arg0=gClassName)
+    '''
 
     if len(text) > 0:
-        command_script += '(void)[progressHUDCls performSelector:@selector(setText:) withObject:@"{arg1}"];'.format(arg1=text)
+        command_script += f'(void)[progressHUDCls performSelector:@selector(setText:) withObject:@"{text}"];'
 
     command_script += "(void)[CATransaction flush];"
     HM.evaluateExpressionValue(command_script)
 
 
 def hide() -> None:
-    command_script = '''
-        Class progressHUDCls = (Class)objc_lookUpClass("{arg0}");
+    command_script = f'''
+        Class progressHUDCls = (Class)objc_lookUpClass("{gClassName}");
         (UIView *)[progressHUDCls performSelector:@selector(hideHUD)];
         (void)[CATransaction flush];
-    '''.format(arg0=gClassName)
+    '''
     HM.evaluateExpressionValue(command_script)
 
 
 def makeSharedInstanceIMP() -> lldb.SBValue:
-    command_script = '''
+    command_script = f'''
         UIView * (^IMPBlock)(id) = ^UIView *(id classSelf) {{
-            static id {arg0}Instance;
-            static dispatch_once_t {arg0}Token;
-            _dispatch_once(&{arg0}Token, ^{{
-                {arg0}Instance = (UIView *)[[(Class)objc_lookUpClass("{arg0}") alloc] init];
+            static id {gClassName}Instance;
+            static dispatch_once_t {gClassName}Token;
+            _dispatch_once(&{gClassName}Token, ^{{
+                {gClassName}Instance = (UIView *)[[(Class)objc_lookUpClass("{gClassName}") alloc] init];
             }});
             
-            return {arg0}Instance;
+            return {gClassName}Instance;
         }};
 
-        (IMP)imp_implementationWithBlock(IMPBlock);    
-    '''.format(arg0=gClassName)
+        imp_implementationWithBlock(IMPBlock);    
+    '''
 
     return HM.evaluateExpressionValue(command_script)
 
 
 def makeShowHUDIMP() -> lldb.SBValue:
-    command_script = '''
+    command_script = f'''
         UIView * (^IMPBlock)(id) = ^UIView *(id classSelf) {{
             
-            UIView *HUD = (UIView *)[(Class)objc_lookUpClass("{arg0}") performSelector:@selector(sharedInstance)];
+            UIView *HUD = (UIView *)[(Class)objc_lookUpClass("{gClassName}") performSelector:@selector(sharedInstance)];
             
             if ([HUD superview] == nil) {{
                 [[UIApplication sharedApplication].keyWindow addSubview:HUD];
@@ -143,17 +143,17 @@ def makeShowHUDIMP() -> lldb.SBValue:
             return HUD;
         }};
 
-        (IMP)imp_implementationWithBlock(IMPBlock);    
-    '''.format(arg0=gClassName)
+        imp_implementationWithBlock(IMPBlock);    
+    '''
 
     return HM.evaluateExpressionValue(command_script)
 
 
 def makeHideHUDIMP() -> lldb.SBValue:
-    command_script = '''
+    command_script = f'''
         UIView * (^IMPBlock)(id) = ^UIView *(id classSelf) {{
             
-            UIView *HUD = (UIView *)[(Class)objc_lookUpClass("{arg0}") performSelector:@selector(sharedInstance)];
+            UIView *HUD = (UIView *)[(Class)objc_lookUpClass("{gClassName}") performSelector:@selector(sharedInstance)];
             [HUD removeFromSuperview];
             UIActivityIndicatorView *indicator = [HUD valueForKey:@"_indicator"];
             [indicator stopAnimating];
@@ -163,17 +163,17 @@ def makeHideHUDIMP() -> lldb.SBValue:
             return HUD;
         }};
 
-        (IMP)imp_implementationWithBlock(IMPBlock);    
-    '''.format(arg0=gClassName)
+        imp_implementationWithBlock(IMPBlock);    
+    '''
 
     return HM.evaluateExpressionValue(command_script)
 
 
 def makeSetTextIMP() -> lldb.SBValue:
-    command_script = '''
+    command_script = f'''
         void (^IMPBlock)(id, NSString *) = ^(id classSelf, NSString *text) {{
             
-            UIView *HUD = (UIView *)[(Class)objc_lookUpClass("{arg0}") performSelector:@selector(sharedInstance)];
+            UIView *HUD = (UIView *)[(Class)objc_lookUpClass("{gClassName}") performSelector:@selector(sharedInstance)];
             UILabel *textLab = (UILabel *)[HUD valueForKey:@"_textLab"];
             [textLab setText:text];
             
@@ -181,8 +181,8 @@ def makeSetTextIMP() -> lldb.SBValue:
             [HUD layoutIfNeeded];
         }};
 
-        (IMP)imp_implementationWithBlock(IMPBlock);    
-    '''.format(arg0=gClassName)
+        imp_implementationWithBlock(IMPBlock);    
+    '''
 
     return HM.evaluateExpressionValue(command_script)
 
@@ -224,7 +224,7 @@ def makeInitWithFrameIMP() -> lldb.SBValue:
             return HUD;
         };
 
-        (IMP)imp_implementationWithBlock(IMPBlock);    
+        imp_implementationWithBlock(IMPBlock);    
     '''
 
     return HM.evaluateExpressionValue(command_script)
@@ -274,7 +274,7 @@ def makeLayoutSubviewsIMP() -> lldb.SBValue:
             }
         };
 
-        (IMP)imp_implementationWithBlock(IMPBlock);    
+        imp_implementationWithBlock(IMPBlock);    
     '''
 
     return HM.evaluateExpressionValue(command_script)

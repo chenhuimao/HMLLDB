@@ -133,7 +133,7 @@ def makeViewDidLoadIMP() -> lldb.SBValue:
             // tableView
             UITableView *tv = [[UITableView alloc] init];
             tv.frame = vc.view.bounds;
-            tv.dataSource = vc;
+            tv.dataSource = (id)vc;
             tv.estimatedRowHeight = 50;
             tv.rowHeight = UITableViewAutomaticDimension;
             tv.tableFooterView = [[UIView alloc] init];
@@ -143,7 +143,7 @@ def makeViewDidLoadIMP() -> lldb.SBValue:
             [vc.view addSubview:tv];
         }};
 
-        (IMP)imp_implementationWithBlock(IMPBlock);    
+        imp_implementationWithBlock(IMPBlock);    
     '''
 
     return HM.evaluateExpressionValue(command_script)
@@ -172,7 +172,7 @@ def makeNumberOfRowsInSectionIMP() -> lldb.SBValue:
             return [leftTextArray count];
         };
         
-        (IMP)imp_implementationWithBlock(IMPBlock);    
+        imp_implementationWithBlock(IMPBlock);    
     '''
 
     return HM.evaluateExpressionValue(command_script)
@@ -228,7 +228,7 @@ def makeCellForRowAtIndexPathIMP() -> lldb.SBValue:
             return cell;
         };
 
-        (IMP)imp_implementationWithBlock(IMPBlock);    
+        imp_implementationWithBlock(IMPBlock);    
     '''
 
     return HM.evaluateExpressionValue(command_script)

@@ -262,7 +262,7 @@ def makeAddToKeyWindowIMP() -> lldb.SBValue:
             return HUD;
         }};
 
-        (IMP)imp_implementationWithBlock(addToKeyWindowBlock);
+        imp_implementationWithBlock(addToKeyWindowBlock);
 
     '''
 
@@ -276,7 +276,7 @@ def makeTapSelfIMP() -> lldb.SBValue:
             (id)[cls performSelector:@selector(present)];
         };
 
-        (IMP)imp_implementationWithBlock(tapSelfBlock);
+        imp_implementationWithBlock(tapSelfBlock);
 
     '''
     return HM.evaluateExpressionValue(command_script)
@@ -306,7 +306,7 @@ def makeDebugHUDtickIMP() -> lldb.SBValue:
             (void)[HUD updateFPS:fps];
         };
 
-        (IMP)imp_implementationWithBlock(debugHUDtickBlock);
+        imp_implementationWithBlock(debugHUDtickBlock);
 
     '''
     return HM.evaluateExpressionValue(command_script)
@@ -344,7 +344,7 @@ def makeUpdateMemoryFootprintIMP() -> lldb.SBValue:
             memoryLab.attributedText = valueText;
         }};
 
-        (IMP)imp_implementationWithBlock(updateMemoryFootprintBlock);
+        imp_implementationWithBlock(updateMemoryFootprintBlock);
         
     '''
 
@@ -407,7 +407,7 @@ def makeUpdateCPUUtilizationIMP() -> lldb.SBValue:
             cpuUtilizationLab.attributedText = valueText;
         }};
 
-        (IMP)imp_implementationWithBlock(updateCPUUtilizationBlock);
+        imp_implementationWithBlock(updateCPUUtilizationBlock);
 
     '''
 
@@ -436,7 +436,7 @@ def makeUpdateFPSIMP() -> lldb.SBValue:
             fpsLab.attributedText = valueText;
         };
 
-        (IMP)imp_implementationWithBlock(updateFPSBlock);
+        imp_implementationWithBlock(updateFPSBlock);
 
     '''
     return HM.evaluateExpressionValue(command_script)
@@ -504,7 +504,7 @@ def makeTouchesMovedWithEventIMP() -> lldb.SBValue:
             HUD.center = targetCenter;
         };
 
-        (IMP)imp_implementationWithBlock(touchesMovedWithEventBlock);
+        imp_implementationWithBlock(touchesMovedWithEventBlock);
 
     '''
     return HM.evaluateExpressionValue(command_script)
@@ -524,7 +524,7 @@ def makeTouchesEndedWithEventIMP() -> lldb.SBValue:
             (void)[HUD attachToEdge];
         };
 
-        (IMP)imp_implementationWithBlock(touchesEndedWithEventBlock);
+        imp_implementationWithBlock(touchesEndedWithEventBlock);
 
     '''
     return HM.evaluateExpressionValue(command_script)
@@ -544,7 +544,7 @@ def makeTouchesCancelledWithEventIMP() -> lldb.SBValue:
             (void)[HUD attachToEdge];
         };
 
-        (IMP)imp_implementationWithBlock(touchesCancelledWithEventBlock);
+        imp_implementationWithBlock(touchesCancelledWithEventBlock);
 
     '''
     return HM.evaluateExpressionValue(command_script)
@@ -595,7 +595,7 @@ def makeAttachToEdgeIMP() -> lldb.SBValue:
             
         };
 
-        (IMP)imp_implementationWithBlock(attachToEdgeBlock);
+        imp_implementationWithBlock(attachToEdgeBlock);
 
     '''
     return HM.evaluateExpressionValue(command_script)

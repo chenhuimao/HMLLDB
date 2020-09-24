@@ -176,11 +176,11 @@ def generate_option_parser() -> optparse.OptionParser:
 
 
 def printFormat(desc: str, value: object) -> None:
-    print("[{arg1}]: {arg2}\n\ttype: {arg3}".format(arg1=desc, arg2=value, arg3=type(value)))
+    print(f"[{desc}]: {value}\n\ttype: {type(value)}")
 
 
 def printClassName(title: str) -> None:
-    print("\n\n====={arg1}================================".format(arg1=title))
+    print(f"\n\n====={title}================================")
 
 
 def printTraversal(obj: object, getsize: str, getelem: str) -> None:
@@ -188,7 +188,7 @@ def printTraversal(obj: object, getsize: str, getelem: str) -> None:
     elem = getattr(obj, getelem)
     global gUnlimited
 
-    print("\n##### [{arg1}]({arg2}) #####".format(arg1=getelem, arg2=size()))
+    print(f"\n##### [{getelem}]({size()}) #####")
 
     for i in range(size()):
         if i == 100 and not gUnlimited:

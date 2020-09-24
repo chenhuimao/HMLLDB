@@ -22,6 +22,7 @@
 
 import lldb
 import HMLLDBHelpers as HM
+import HMLLDBClassInfo
 
 
 def __lldb_init_module(debugger, internal_dict):
@@ -57,9 +58,13 @@ def showFPS(debugger, command, exe_ctx, result, internal_dict):
     HM.registerClass(FPSLabelClassValue.GetValue())
 
     addToKeyWindowIMPValue = makeAddToKeyWindowIMP()
+    if not HM.judgeSBValueHasValue(addToKeyWindowIMPValue):
+        return
     HM.addClassMethod(FPSClassName, "addToKeyWindow", addToKeyWindowIMPValue.GetValue(), "@@:")
 
     tickIMPValue = makeTickIMP()
+    if not HM.judgeSBValueHasValue(tickIMPValue):
+        return
     HM.addInstanceMethod(FPSClassName, "tick:", tickIMPValue.GetValue(), "v@:@")
 
     # Show fps command
@@ -95,8 +100,7 @@ def makeAddToKeyWindowIMP() -> lldb.SBValue:
             
             return fpsLabel;
         };
-        
-        (IMP)imp_implementationWithBlock(addToKeyWindowBlock);
+        imp_implementationWithBlock(addToKeyWindowBlock);
         
     '''
 
@@ -136,8 +140,7 @@ def makeTickIMP() -> lldb.SBValue:
             
             fpsLabel.attributedText = text;
         };
-        
-        (IMP)imp_implementationWithBlock(tickBlock);
+        imp_implementationWithBlock(tickBlock);
 
     '''
 

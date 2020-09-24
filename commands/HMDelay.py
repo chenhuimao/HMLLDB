@@ -81,7 +81,7 @@ def delay(debugger, command, exe_ctx, result, internal_dict):
         specifiedCommand += item + " "
     specifiedCommand = specifiedCommand.rstrip()
 
-    HM.DPrint("Execute lldb command after {second} seconds: {command}".format(second=seconds, command=specifiedCommand))
+    HM.DPrint(f"Execute lldb command after {seconds} seconds: {specifiedCommand}")
     t = Timer(seconds, lambda: runDelayed(specifiedCommand, options.isContinue))
     t.start()
 
@@ -104,7 +104,7 @@ def isNumber(s: str) -> bool:
 
 def generate_option_parser() -> optparse.OptionParser:
     command = "delay"
-    usage = "usage: {arg} [--continue] <second> <lldb command>".format(arg=command)
+    usage = f"usage: {command} [--continue] <second> <lldb command>"
     parser = optparse.OptionParser(usage=usage, prog=command)
     parser.add_option("-c", "--continue",
                       action="store_true",
