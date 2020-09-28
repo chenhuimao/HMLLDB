@@ -219,6 +219,70 @@ def getStringFromByteOrder(order: int) -> str:
     return result
 
 
+def getStringFromSymbolType(symbolType: int) -> str:
+    if symbolType == lldb.eSymbolTypeInvalid:
+        return "eSymbolTypeInvalid"
+    elif symbolType == lldb.eSymbolTypeAbsolute:
+        return "eSymbolTypeAbsolute"
+    elif symbolType == lldb.eSymbolTypeCode:
+        return "eSymbolTypeCode"
+    elif symbolType == lldb.eSymbolTypeResolver:
+        return "eSymbolTypeResolver"
+    elif symbolType == lldb.eSymbolTypeData:
+        return "eSymbolTypeData"
+    elif symbolType == lldb.eSymbolTypeTrampoline:
+        return "eSymbolTypeTrampoline"
+    elif symbolType == lldb.eSymbolTypeRuntime:
+        return "eSymbolTypeRuntime"
+    elif symbolType == lldb.eSymbolTypeException:
+        return "eSymbolTypeException"
+    elif symbolType == lldb.eSymbolTypeSourceFile:
+        return "eSymbolTypeSourceFile"
+    elif symbolType == lldb.eSymbolTypeHeaderFile:
+        return "eSymbolTypeHeaderFile"
+    elif symbolType == lldb.eSymbolTypeObjectFile:
+        return "eSymbolTypeObjectFile"
+    elif symbolType == lldb.eSymbolTypeCommonBlock:
+        return "eSymbolTypeCommonBlock"
+    elif symbolType == lldb.eSymbolTypeBlock:
+        return "eSymbolTypeBlock"
+    elif symbolType == lldb.eSymbolTypeLocal:
+        return "eSymbolTypeLocal"
+    elif symbolType == lldb.eSymbolTypeParam:
+        return "eSymbolTypeParam"
+    elif symbolType == lldb.eSymbolTypeVariable:
+        return "eSymbolTypeVariable"
+    elif symbolType == lldb.eSymbolTypeVariableType:
+        return "eSymbolTypeVariableType"
+    elif symbolType == lldb.eSymbolTypeLineEntry:
+        return "eSymbolTypeLineEntry"
+    elif symbolType == lldb.eSymbolTypeLineHeader:
+        return "eSymbolTypeLineHeader"
+    elif symbolType == lldb.eSymbolTypeScopeBegin:
+        return "eSymbolTypeScopeBegin"
+    elif symbolType == lldb.eSymbolTypeScopeEnd:
+        return "eSymbolTypeScopeEnd"
+    elif symbolType == lldb.eSymbolTypeAdditional:
+        return "eSymbolTypeAdditional"
+    elif symbolType == lldb.eSymbolTypeCompiler:
+        return "eSymbolTypeCompiler"
+    elif symbolType == lldb.eSymbolTypeInstrumentation:
+        return "eSymbolTypeInstrumentation"
+    elif symbolType == lldb.eSymbolTypeUndefined:
+        return "eSymbolTypeUndefined"
+    elif symbolType == lldb.eSymbolTypeObjCClass:
+        return "eSymbolTypeObjCClass"
+    elif symbolType == lldb.eSymbolTypeObjCMetaClass:
+        return "eSymbolTypeObjCMetaClass"
+    elif symbolType == lldb.eSymbolTypeObjCIVar:
+        return "eSymbolTypeObjCIVar"
+    elif symbolType == lldb.eSymbolTypeReExported:
+        return "eSymbolTypeReExported"
+    elif symbolType == lldb.eSymbolTypeASTFile:
+        return "eSymbolTypeASTFile"
+    return "unknown"
+
+
 def pSBHostOS(obj: Optional[lldb.SBHostOS]) -> None:
     if obj:
         hostOS = obj
@@ -607,7 +671,8 @@ def pSBSymbol(obj: Optional[lldb.SBSymbol]) -> None:
     printFormat("GetStartAddress", symbol.GetStartAddress())  # SBAddress
     printFormat("GetEndAddress", symbol.GetEndAddress())  # SBAddress
     printFormat("GetPrologueByteSize", symbol.GetPrologueByteSize())
-    printFormat("GetType", symbol.GetType())  # SymbolType int
+    printFormat("GetType(raw)", symbol.GetType())  # SymbolType int
+    printFormat("GetType(resolved)", getStringFromSymbolType(symbol.GetType()))
     printFormat("IsExternal", symbol.IsExternal())
     printFormat("IsSynthetic", symbol.IsSynthetic())
     printFormat("GetInstructions", symbol.GetInstructions(lldb.debugger.GetSelectedTarget()))  # SBInstructionList

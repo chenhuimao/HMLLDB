@@ -524,7 +524,7 @@ def findMethod(debugger, command, exe_ctx, result, internal_dict):
 
 
 def generate_methods_option_parser() -> optparse.OptionParser:
-    usage = "usage: methods [-s] <className>"
+    usage = "usage: methods [-s] <className/classInstance>"
     parser = optparse.OptionParser(usage=usage, prog="fsubclass")
     parser.add_option("-s", "--short",
                       action="store_true",
