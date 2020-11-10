@@ -602,7 +602,6 @@ def makeAttachToEdgeIMP() -> lldb.SBValue:
 
 
 def tapSelfBreakPointHandler(frame, bp_loc, internal_dict) -> bool:
-    HMDebugBaseViewController.register()
     HMDebugMainViewController.register()
     HM.processContinue()
     return True

@@ -24,8 +24,10 @@ import lldb
 import HMLLDBHelpers as HM
 import HMLLDBClassInfo
 import HMProgressHUD
+import HMDebugBaseViewController
 import HMDebugInfoViewController
 import HMSandboxViewController
+import HMInspectViewController
 
 
 gClassName = "HMDebugMainViewController"
@@ -36,11 +38,13 @@ def register() -> None:
     if HM.existClass(gClassName):
         return
 
+    HMDebugBaseViewController.register()
+
     # Register class
     HMProgressHUD.show(f"Register {gClassName}...")
     HM.DPrint(f"Register {gClassName}...")
 
-    classValue = HM.allocateClass(gClassName, "HMDebugBaseViewController")
+    classValue = HM.allocateClass(gClassName, HMDebugBaseViewController.gClassName)
     HM.registerClass(classValue.GetValue())
 
     # Add methods
@@ -167,7 +171,7 @@ def addTableViewMethods() -> bool:
 def makeNumberOfRowsInSectionIMP() -> lldb.SBValue:
     command_script = '''
         long (^IMPBlock)(UIViewController *, UITableView *, long) = ^long(UIViewController *vc, UITableView *tv, long section) {
-            return 2;
+            return 3;
         };
         imp_implementationWithBlock(IMPBlock);    
     '''
@@ -191,6 +195,8 @@ def makeCellForRowAtIndexPathIMP() -> lldb.SBValue:
                 cell.textLabel.text = @"App and system information";
             } else if (row == 1) {
                 cell.textLabel.text = @"Sandbox";
+            } else if (row == 2) {
+                cell.textLabel.text = @"Inspect view";
             }
             return cell;
         };
@@ -209,6 +215,8 @@ def makeDidSelectRowAtIndexPathIMP() -> lldb.SBValue:
                 (void)[vc performSelector:@selector(selectedAPPInfo)];
             } else if (row == 1) {
                 (void)[vc performSelector:@selector(selectedSandbox)];
+            } else if (row == 2) {
+                (void)[vc performSelector:@selector(selectedInspectView)];
             }
         };
 
@@ -231,9 +239,15 @@ def addFeatureMethods() -> bool:
         return False
     HM.addInstanceMethod(gClassName, "selectedSandbox", selectedSandboxIMPValue.GetValue(), "v@:")
 
+    selectedInspectViewIMPValue = makeSelectedInspectViewIMP()
+    if not HM.judgeSBValueHasValue(selectedInspectViewIMPValue):
+        return False
+    HM.addInstanceMethod(gClassName, "selectedInspectView", selectedInspectViewIMPValue.GetValue(), "v@:")
+
     HM.DPrint("Add breakpoints to hook method...")
     HM.addOneShotBreakPointInIMP(selectedAPPInfoIMPValue, "HMDebugMainViewController.selectedAPPInfoBreakPointHandler", "HMDebugMainViewController_selectedAPPInfo_Breakpoint")
     HM.addOneShotBreakPointInIMP(selectedSandboxIMPValue, "HMDebugMainViewController.selectedSandboxBreakPointHandler", "HMDebugMainViewController_selectedSandbox_Breakpoint")
+    HM.addOneShotBreakPointInIMP(selectedInspectViewIMPValue, "HMDebugMainViewController.selectedInspectViewBreakPointHandler", "HMDebugMainViewController_selectedInspectView_Breakpoint")
 
     return True
 
@@ -266,6 +280,23 @@ def makeSelectedSandboxIMP() -> lldb.SBValue:
     return HM.evaluateExpressionValue(command_script)
 
 
+def makeSelectedInspectViewIMP() -> lldb.SBValue:
+    command_script = '''
+        void (^IMPBlock)(UIViewController *) = ^(UIViewController *vc) {
+            [vc.navigationController dismissViewControllerAnimated:NO completion:nil];
+            
+            Class objClass = (Class)objc_lookUpClass("HMInspectViewController");
+            if ((BOOL)[(Class)objClass respondsToSelector:@selector(start)]) {
+                (void)[objClass performSelector:@selector(start)];
+            }
+        };
+
+        imp_implementationWithBlock(IMPBlock);    
+    '''
+
+    return HM.evaluateExpressionValue(command_script)
+
+
 def selectedAPPInfoBreakPointHandler(frame, bp_loc, internal_dict) -> bool:
     HMDebugInfoViewController.register()
     HM.processContinue()
@@ -274,5 +305,11 @@ def selectedAPPInfoBreakPointHandler(frame, bp_loc, internal_dict) -> bool:
 
 def selectedSandboxBreakPointHandler(frame, bp_loc, internal_dict) -> bool:
     HMSandboxViewController.register()
+    HM.processContinue()
+    return True
+
+
+def selectedInspectViewBreakPointHandler(frame, bp_loc, internal_dict) -> bool:
+    HMInspectViewController.register()
     HM.processContinue()
     return True
