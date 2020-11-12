@@ -22,6 +22,7 @@
 
 import lldb
 import sys
+import os
 import HMLLDBHelpers as HM
 
 
@@ -43,17 +44,24 @@ def environment(debugger, command, exe_ctx, result, internal_dict):
     # Python version
     # LLDB version
     # Target triple
+    # Git commit hash
     # Optimized
     # Xcode version
     # Xcode build version
     # Model identifier
     # System version
 
-    HM.DPrint('[Python version] ' + sys.version.replace('\n', '\n\t'))
+    HM.DPrint('[Python version] ' + sys.version.replace('\n', '\n\t\t'))
 
-    HM.DPrint('[LLDB version] ' + debugger.GetVersionString().replace('\n', '\n\t'))
+    HM.DPrint('[LLDB version] ' + debugger.GetVersionString().replace('\n', '\n\t\t'))
 
     HM.DPrint('[Target triple] ' + debugger.GetSelectedTarget().GetTriple())
+
+    file_path = os.path.realpath(__file__)  # Absolute path
+    dir_name = os.path.dirname(file_path)
+    gitCommit = os.popen(f"git -C {dir_name} log --pretty=format:'%H'").readline()
+    gitCommit = gitCommit.replace('\n', '')
+    HM.DPrint('[Git commit hash] ' + gitCommit)
 
     optimizedFalseCount = 0
     optimizedTrueCount = 0
