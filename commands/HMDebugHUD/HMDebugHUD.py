@@ -473,20 +473,21 @@ def addMoveMethods() -> bool:
 
 
 def makeTouchesMovedWithEventIMP() -> lldb.SBValue:
-    command_script = '''
+    command_script = f'''
 
-        void (^touchesMovedWithEventBlock)(UIView *, NSSet *, UIEvent *) = ^(UIView *HUD, NSSet * touches, UIEvent *event) {
-            struct objc_super superInfo = {
+        void (^touchesMovedWithEventBlock)(UIView *, NSSet *, UIEvent *) = ^(UIView *HUD, NSSet * touches, UIEvent *event) {{
+            Class cls = objc_lookUpClass("{gClassName}");
+            struct objc_super superInfo = {{
                 .receiver = HUD,
-                .super_class = (Class)class_getSuperclass((Class)[HUD class])
-            };
+                .super_class = (Class)class_getSuperclass((Class)cls)
+            }};
 
             ((void (*)(struct objc_super *, SEL, id, id))objc_msgSendSuper)(&superInfo, @selector(touchesMoved:withEvent:), touches, event);
         
             UIView *superView = HUD.superview;
-            if (!superView) {
+            if (!superView) {{
                 return;
-            }
+            }}
         
             UITouch *touch = [touches anyObject];
             CGPoint previousPoint = [touch previousLocationInView:HUD];
@@ -495,14 +496,14 @@ def makeTouchesMovedWithEventIMP() -> lldb.SBValue:
             CGFloat offsetX = currentPoint.x - previousPoint.x;
             CGFloat offsetY = currentPoint.y - previousPoint.y;
         
-            if ((offsetX * offsetX < 1) && (offsetY * offsetY < 1)) {
+            if ((offsetX * offsetX < 1) && (offsetY * offsetY < 1)) {{
                 return;
-            }
+            }}
             targetCenter.x = ceil(HUD.center.x + offsetX);
             targetCenter.y = ceil(HUD.center.y + offsetY);
         
             HUD.center = targetCenter;
-        };
+        }};
 
         imp_implementationWithBlock(touchesMovedWithEventBlock);
 
@@ -511,18 +512,19 @@ def makeTouchesMovedWithEventIMP() -> lldb.SBValue:
 
 
 def makeTouchesEndedWithEventIMP() -> lldb.SBValue:
-    command_script = '''
+    command_script = f'''
 
-        void (^touchesEndedWithEventBlock)(UIView *, NSSet *, UIEvent *) = ^(UIView *HUD, NSSet * touches, UIEvent *event) {
-            struct objc_super superInfo = {
+        void (^touchesEndedWithEventBlock)(UIView *, NSSet *, UIEvent *) = ^(UIView *HUD, NSSet * touches, UIEvent *event) {{
+            Class cls = objc_lookUpClass("{gClassName}");
+            struct objc_super superInfo = {{
                 .receiver = HUD,
-                .super_class = (Class)class_getSuperclass((Class)[HUD class])
-            };
+                .super_class = (Class)class_getSuperclass((Class)cls)
+            }};
 
             ((void (*)(struct objc_super *, SEL, id, id))objc_msgSendSuper)(&superInfo, @selector(touchesEnded:withEvent:), touches, event);
 
             (void)[HUD attachToEdge];
-        };
+        }};
 
         imp_implementationWithBlock(touchesEndedWithEventBlock);
 
@@ -531,18 +533,19 @@ def makeTouchesEndedWithEventIMP() -> lldb.SBValue:
 
 
 def makeTouchesCancelledWithEventIMP() -> lldb.SBValue:
-    command_script = '''
+    command_script = f'''
 
-        void (^touchesCancelledWithEventBlock)(UIView *, NSSet *, UIEvent *) = ^(UIView *HUD, NSSet * touches, UIEvent *event) {
-            struct objc_super superInfo = {
+        void (^touchesCancelledWithEventBlock)(UIView *, NSSet *, UIEvent *) = ^(UIView *HUD, NSSet * touches, UIEvent *event) {{
+            Class cls = objc_lookUpClass("{gClassName}");
+            struct objc_super superInfo = {{
                 .receiver = HUD,
-                .super_class = (Class)class_getSuperclass((Class)[HUD class])
-            };
+                .super_class = (Class)class_getSuperclass((Class)cls)
+            }};
 
             ((void (*)(struct objc_super *, SEL, id, id))objc_msgSendSuper)(&superInfo, @selector(touchesCancelled:withEvent:), touches, event);
 
             (void)[HUD attachToEdge];
-        };
+        }};
 
         imp_implementationWithBlock(touchesCancelledWithEventBlock);
 

@@ -89,12 +89,13 @@ def register() -> None:
 
 
 def makeViewDidLoadIMP() -> lldb.SBValue:
-    command_script = '''
-        void (^IMPBlock)(UIViewController *) = ^(UIViewController *vc) {
-            struct objc_super superInfo = {
+    command_script = f'''
+        void (^IMPBlock)(UIViewController *) = ^(UIViewController *vc) {{
+            Class cls = objc_lookUpClass("{gClassName}");
+            struct objc_super superInfo = {{
                 .receiver = vc,
-                .super_class = (Class)class_getSuperclass((Class)[vc class])
-            };
+                .super_class = (Class)class_getSuperclass((Class)cls)
+            }};
 
             ((void (*)(struct objc_super *, SEL))objc_msgSendSuper)(&superInfo, @selector(viewDidLoad));
 
@@ -118,11 +119,11 @@ def makeViewDidLoadIMP() -> lldb.SBValue:
             tv.tableFooterView = [[UIView alloc] init];
             tv.dataSource = (id)vc;
             tv.delegate = (id)vc;
-            if ([tv respondsToSelector:@selector(setContentInsetAdjustmentBehavior:)]) {
+            if ([tv respondsToSelector:@selector(setContentInsetAdjustmentBehavior:)]) {{
                 [tv setContentInsetAdjustmentBehavior:(UIScrollViewContentInsetAdjustmentBehavior)0];
-            }
+            }}
             [vc.view addSubview:tv];            
-        };
+        }};
 
         imp_implementationWithBlock(IMPBlock);
 

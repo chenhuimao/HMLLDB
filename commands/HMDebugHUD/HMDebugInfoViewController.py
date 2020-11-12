@@ -66,9 +66,10 @@ def makeViewDidLoadIMP() -> lldb.SBValue:
     lldbVersion = lldb.debugger.GetVersionString().replace('\n', '\\n')
     command_script = f'''
         void (^IMPBlock)(UIViewController *) = ^(UIViewController *vc) {{
+            Class cls = objc_lookUpClass("{gClassName}");
             struct objc_super superInfo = {{
                 .receiver = vc,
-                .super_class = (Class)class_getSuperclass((Class)[vc class])
+                .super_class = (Class)class_getSuperclass((Class)cls)
             }};
     
             ((void (*)(struct objc_super *, SEL))objc_msgSendSuper)(&superInfo, @selector(viewDidLoad));

@@ -188,18 +188,18 @@ def makeSetTextIMP() -> lldb.SBValue:
 
 
 def makeInitWithFrameIMP() -> lldb.SBValue:
-    command_script = '''
-        UIView * (^IMPBlock)(UIView *, CGRect) = ^UIView *(UIView *HUD, CGRect frame) {
-            
-            struct objc_super superInfo = {
+    command_script = f'''
+        UIView * (^IMPBlock)(UIView *, CGRect) = ^UIView *(UIView *HUD, CGRect frame) {{
+            Class cls = objc_lookUpClass("{gClassName}");
+            struct objc_super superInfo = {{
                 .receiver = HUD,
-                .super_class = (Class)class_getSuperclass((Class)[HUD class])
-            };
+                .super_class = (Class)class_getSuperclass((Class)cls)
+            }};
     
             CGRect screenFrame = [UIScreen mainScreen].bounds;
             HUD = ((UIView * (*)(struct objc_super *, SEL, CGRect))objc_msgSendSuper)(&superInfo, @selector(initWithFrame:), screenFrame);
             
-            if (HUD != nil) {
+            if (HUD != nil) {{
                 UIColor *color = [[UIColor alloc] initWithRed:0.24 green:0.24 blue:0.24 alpha:1];
                 
                 UIView *contentView = [[UIView alloc] init];
@@ -219,10 +219,10 @@ def makeInitWithFrameIMP() -> lldb.SBValue:
                 textLab.textColor = color;
                 textLab.textAlignment = (NSTextAlignment)1;
                 [contentView addSubview:textLab];
-            }
+            }}
             
             return HUD;
-        };
+        }};
 
         imp_implementationWithBlock(IMPBlock);    
     '''
@@ -231,13 +231,13 @@ def makeInitWithFrameIMP() -> lldb.SBValue:
 
 
 def makeLayoutSubviewsIMP() -> lldb.SBValue:
-    command_script = '''
-        void (^IMPBlock)(UIView *) = ^(UIView *HUD) {
-            
-            struct objc_super superInfo = {
+    command_script = f'''
+        void (^IMPBlock)(UIView *) = ^(UIView *HUD) {{
+            Class cls = objc_lookUpClass("{gClassName}");
+            struct objc_super superInfo = {{
                 .receiver = HUD,
-                .super_class = (Class)class_getSuperclass((Class)[HUD class])
-            };
+                .super_class = (Class)class_getSuperclass((Class)cls)
+            }};
             ((void * (*)(struct objc_super *, SEL))objc_msgSendSuper)(&superInfo, @selector(layoutSubviews));
             
             
@@ -245,34 +245,34 @@ def makeLayoutSubviewsIMP() -> lldb.SBValue:
             
             UIView *contentView = [HUD valueForKey:@"_contentView"];
             CGFloat contentViewHeight = 80;
-            if ([textLab.text length] > 0) {
+            if ([textLab.text length] > 0) {{
                 contentViewHeight = 100;
-            }
+            }}
             CGFloat contentViewWidth = 80;
-            if (textLab.intrinsicContentSize.width + 30 > contentViewWidth) {
+            if (textLab.intrinsicContentSize.width + 30 > contentViewWidth) {{
                 contentViewWidth = textLab.intrinsicContentSize.width + 30;
-            }
-            if (contentViewWidth > HUD.bounds.size.width) {
+            }}
+            if (contentViewWidth > HUD.bounds.size.width) {{
                 contentViewWidth = HUD.bounds.size.width;
-            }
+            }}
                     
-            (void)[contentView setBounds:(CGRect){0, 0, contentViewWidth, contentViewHeight}];
-            (void)[contentView setCenter:(CGPoint){HUD.bounds.size.width / 2, HUD.bounds.size.height / 2}];
+            (void)[contentView setBounds:(CGRect){{0, 0, contentViewWidth, contentViewHeight}}];
+            (void)[contentView setCenter:(CGPoint){{HUD.bounds.size.width / 2, HUD.bounds.size.height / 2}}];
             
             UIActivityIndicatorView *indicator = [HUD valueForKey:@"_indicator"];
             CGFloat indicatorWidth = indicator.intrinsicContentSize.width;
             CGFloat indicatorHeight = indicator.intrinsicContentSize.height;
-            if ([textLab.text length] > 0) {
-                (void)[indicator setFrame:(CGRect){(contentViewWidth - indicatorWidth) / 2, 20, indicatorWidth, indicatorHeight}];
-            } else {
-                (void)[indicator setFrame:(CGRect){(contentViewWidth - indicatorWidth) / 2, (contentViewHeight - indicatorHeight) / 2, indicatorWidth, indicatorHeight}];
-            }
+            if ([textLab.text length] > 0) {{
+                (void)[indicator setFrame:(CGRect){{(contentViewWidth - indicatorWidth) / 2, 20, indicatorWidth, indicatorHeight}}];
+            }} else {{
+                (void)[indicator setFrame:(CGRect){{(contentViewWidth - indicatorWidth) / 2, (contentViewHeight - indicatorHeight) / 2, indicatorWidth, indicatorHeight}}];
+            }}
             
-            if ([textLab.text length] > 0) {
+            if ([textLab.text length] > 0) {{
                 CGFloat textLabHeight = textLab.intrinsicContentSize.height;
-                (void)[textLab setFrame:(CGRect){0, contentViewHeight - 15 - textLabHeight, contentViewWidth, textLabHeight}];
-            }
-        };
+                (void)[textLab setFrame:(CGRect){{0, contentViewHeight - 15 - textLabHeight, contentViewWidth, textLabHeight}}];
+            }}
+        }};
 
         imp_implementationWithBlock(IMPBlock);    
     '''
