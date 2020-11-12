@@ -21,9 +21,11 @@
 # SOFTWARE.
 
 import lldb
+import sys
 import HMLLDBHelpers as HM
 import HMLLDBClassInfo
 import HMProgressHUD
+import HMEnvironment
 
 
 gClassName = "HMDebugInfoViewController"
@@ -64,6 +66,11 @@ def register() -> None:
 
 def makeViewDidLoadIMP() -> lldb.SBValue:
     lldbVersion = lldb.debugger.GetVersionString().replace('\n', '\\n')
+    targetTriple = lldb.debugger.GetSelectedTarget().GetTriple()
+    pythonVersion = sys.version.replace('\n', '\\n')
+    commitHash = HMEnvironment.getGitCommitHash()
+    optimizedStr = HMEnvironment.getOptimizedStr()
+
     command_script = f'''
         void (^IMPBlock)(UIViewController *) = ^(UIViewController *vc) {{
             Class cls = objc_lookUpClass("{gClassName}");
@@ -80,52 +87,68 @@ def makeViewDidLoadIMP() -> lldb.SBValue:
             NSMutableArray *rightTextArray = [[NSMutableArray alloc] init];
             [vc setValue:rightTextArray forKey:@"_rightTextArray"];
             
-            // 0
+            // Model identifier
+            // Target triple
+            // System version
+            // Bundle identifier
+            // Bundle short version
+            // Bundle version
+            // Xcode version
+            // Xcode Build version
+            // LLDB version
+            // Python version
+            // (HM)commit hash
+            // Optimized
+
             [leftTextArray addObject:@"Model identifier"];
             struct utsname systemInfo;
             (int)uname(&systemInfo);
             NSString *modelIdentifier = [NSString stringWithCString:systemInfo.machine encoding:(NSStringEncoding)4];
             [rightTextArray addObject:modelIdentifier];
     
-            //  1
+            [leftTextArray addObject:@"Target triple"];
+            NSString *targetTriple = @"{targetTriple}";
+            [rightTextArray addObject:targetTriple];
+
             [leftTextArray addObject:@"System version"];
             NSString *systemVersion = [[NSString alloc] initWithFormat:@"%@ %@", [[UIDevice currentDevice] systemName], [[UIDevice currentDevice] systemVersion]];
             [rightTextArray addObject:systemVersion];
             
-            // 2
-            [leftTextArray addObject:@"Identifier for vendor"];
-            NSString *idfv = [[[UIDevice currentDevice] identifierForVendor] UUIDString] ?: @"-";
-            [rightTextArray addObject:idfv];
-            
-            // 3
             [leftTextArray addObject:@"Bundle identifier"];
             NSString *bundleID = [NSBundle mainBundle].infoDictionary[@"CFBundleIdentifier"] ?: @"-";
             [rightTextArray addObject:bundleID];
             
-            // 4
             [leftTextArray addObject:@"Bundle short version"];
             NSString *bundleShortVersion = [NSBundle mainBundle].infoDictionary[@"CFBundleShortVersionString"] ?: @"-";
             [rightTextArray addObject:bundleShortVersion];
             
-            // 5
             [leftTextArray addObject:@"Bundle version"];
             NSString *bundleVersion = [NSBundle mainBundle].infoDictionary[@"CFBundleVersion"] ?: @"-";
             [rightTextArray addObject:bundleVersion];
             
-            // 6
             [leftTextArray addObject:@"Xcode version"];
             NSString *XcodeVersion = [NSBundle mainBundle].infoDictionary[@"DTXcode"] ?: @"-";
             [rightTextArray addObject:XcodeVersion];
             
-            // 7
             [leftTextArray addObject:@"Xcode Build version"];
             NSString *XcodeBuildVersion = [NSBundle mainBundle].infoDictionary[@"DTXcodeBuild"] ?: @"-";
             [rightTextArray addObject:XcodeBuildVersion];
             
-            // 8
             [leftTextArray addObject:@"LLDB version"];
             NSString *LLDBVersion = @"{lldbVersion}";
             [rightTextArray addObject:LLDBVersion];
+
+            [leftTextArray addObject:@"Python version"];
+            NSString *pythonVersion = @"{pythonVersion}";
+            [rightTextArray addObject:pythonVersion];
+            
+            [leftTextArray addObject:@"(HM)Commit hash"];
+            NSString *commitHash = @"{commitHash}";
+            [rightTextArray addObject:commitHash];
+            
+            [leftTextArray addObject:@"Optimized"];
+            NSString *optimized = @"{optimizedStr}";
+            [rightTextArray addObject:optimized];
             
             // property initialize
             (void)[vc.view setBackgroundColor:[UIColor whiteColor]];
@@ -139,7 +162,8 @@ def makeViewDidLoadIMP() -> lldb.SBValue:
             tv.rowHeight = UITableViewAutomaticDimension;
             tv.tableFooterView = [[UIView alloc] init];
             if ([tv respondsToSelector:@selector(setContentInsetAdjustmentBehavior:)]) {{
-                [tv setContentInsetAdjustmentBehavior:(UIScrollViewContentInsetAdjustmentBehavior)0];
+                // UIScrollViewContentInsetAdjustmentAutomatic
+                ((void (*)(id, SEL, long)) objc_msgSend)((id)tv, @selector(setContentInsetAdjustmentBehavior:), 0);
             }}
             [vc.view addSubview:tv];
         }};

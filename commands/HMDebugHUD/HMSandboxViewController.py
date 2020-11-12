@@ -120,7 +120,8 @@ def makeViewDidLoadIMP() -> lldb.SBValue:
             tv.dataSource = (id)vc;
             tv.delegate = (id)vc;
             if ([tv respondsToSelector:@selector(setContentInsetAdjustmentBehavior:)]) {{
-                [tv setContentInsetAdjustmentBehavior:(UIScrollViewContentInsetAdjustmentBehavior)0];
+                // UIScrollViewContentInsetAdjustmentAutomatic
+                ((void (*)(id, SEL, long)) objc_msgSend)((id)tv, @selector(setContentInsetAdjustmentBehavior:), 0);
             }}
             [vc.view addSubview:tv];            
         }};

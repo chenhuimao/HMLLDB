@@ -125,7 +125,8 @@ def makeViewDidLoadIMP() -> lldb.SBValue:
             tv.rowHeight = 50;
             tv.tableFooterView = [[UIView alloc] init];
             if ([tv respondsToSelector:@selector(setContentInsetAdjustmentBehavior:)]) {{
-                [tv setContentInsetAdjustmentBehavior:(UIScrollViewContentInsetAdjustmentBehavior)0];
+                // UIScrollViewContentInsetAdjustmentAutomatic
+                ((void (*)(id, SEL, long)) objc_msgSend)((id)tv, @selector(setContentInsetAdjustmentBehavior:), 0);
             }}
             [vc.view addSubview:tv];
         }};

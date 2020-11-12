@@ -57,17 +57,35 @@ def environment(debugger, command, exe_ctx, result, internal_dict):
 
     HM.DPrint('[Target triple] ' + debugger.GetSelectedTarget().GetTriple())
 
+    HM.DPrint('[Git commit hash] ' + getGitCommitHash())
+
+    HM.DPrint('[Optimized] ' + getOptimizedStr())
+
+    XcodeVersionValue = HM.evaluateExpressionValue('(NSString *)([NSBundle mainBundle].infoDictionary[@"DTXcode"] ?: @"-")')
+    HM.DPrint('[Xcode version] ' + XcodeVersionValue.GetObjectDescription())
+
+    XcodeBuildVersionValue = HM.evaluateExpressionValue('(NSString *)([NSBundle mainBundle].infoDictionary[@"DTXcodeBuild"] ?: @"-")')
+    HM.DPrint('[Xcode build version] ' + XcodeBuildVersionValue.GetObjectDescription())
+
+    HM.DPrint('[Model identifier] ' + getModelIdentifier())
+
+    SystemVersionValue = HM.evaluateExpressionValue('(NSString *)[[NSString alloc] initWithFormat:@"%@ %@", [[UIDevice currentDevice] systemName], [[UIDevice currentDevice] systemVersion]]')
+    HM.DPrint('[System version] ' + SystemVersionValue.GetObjectDescription())
+
+
+def getGitCommitHash() -> str:
     file_path = os.path.realpath(__file__)  # Absolute path
     dir_name = os.path.dirname(file_path)
     gitCommit = os.popen(f"git -C {dir_name} log --pretty=format:'%H'").readline()
-    gitCommit = gitCommit.replace('\n', '')
-    HM.DPrint('[Git commit hash] ' + gitCommit)
+    return gitCommit.replace('\n', '')
 
+
+def getOptimizedStr() -> str:
     optimizedFalseCount = 0
     optimizedTrueCount = 0
     symbolContextList = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")
     for i in range(symbolContextList.GetSize()):
-        if i == 1000:
+        if i == 800:
             break
         ctx = symbolContextList.GetContextAtIndex(i)
         if ctx.GetFunction().IsValid():
@@ -76,14 +94,10 @@ def environment(debugger, command, exe_ctx, result, internal_dict):
             else:
                 optimizedFalseCount += 1
 
-    HM.DPrint('[Optimized] ' + f'False: {optimizedFalseCount}  True: {optimizedTrueCount}')
+    return f'False: {optimizedFalseCount}  True: {optimizedTrueCount}'
 
-    XcodeVersionValue = HM.evaluateExpressionValue('(NSString *)([NSBundle mainBundle].infoDictionary[@"DTXcode"] ?: @"-")')
-    HM.DPrint('[Xcode version] ' + XcodeVersionValue.GetObjectDescription())
 
-    XcodeBuildVersionValue = HM.evaluateExpressionValue('(NSString *)([NSBundle mainBundle].infoDictionary[@"DTXcodeBuild"] ?: @"-")')
-    HM.DPrint('[Xcode build version] ' + XcodeBuildVersionValue.GetObjectDescription())
-
+def getModelIdentifier() -> str:
     command_script = '''
         struct utsname systemInfo;
         (int)uname(&systemInfo);
@@ -91,8 +105,4 @@ def environment(debugger, command, exe_ctx, result, internal_dict):
         modelIdentifier;
     '''
     modelIDValue = HM.evaluateExpressionValue(command_script)
-    HM.DPrint('[Model identifier] ' + modelIDValue.GetObjectDescription())
-
-    SystemVersionValue = HM.evaluateExpressionValue('(NSString *)[[NSString alloc] initWithFormat:@"%@ %@", [[UIDevice currentDevice] systemName], [[UIDevice currentDevice] systemVersion]]')
-    HM.DPrint('[System version] ' + SystemVersionValue.GetObjectDescription())
-
+    return modelIDValue.GetObjectDescription()
