@@ -48,6 +48,7 @@ def register() -> None:
     HM.addIvar(classValue.GetValue(), "_targetView", "UIView *")
     HM.addIvar(classValue.GetValue(), "_exitBtn", "UIButton *")
     HM.addIvar(classValue.GetValue(), "_infoView", "UIView *")
+    HM.addIvar(classValue.GetValue(), "_actionView", "UIButton *")
     HM.registerClass(classValue.GetValue())
 
     HM.DPrint(f"Add methods to {gClassName}...")
@@ -77,6 +78,12 @@ def register() -> None:
         return
     HM.addInstanceMethod(gClassName, "clickExitBtn", clickExitBtnIMPValue.GetValue(), "v@:")
 
+    clickCloseBtnIMPValue = makeClickCloseBtnIMP()
+    if not HM.judgeSBValueHasValue(clickCloseBtnIMPValue):
+        HMProgressHUD.hide()
+        return
+    HM.addInstanceMethod(gClassName, "clickCloseBtn", clickCloseBtnIMPValue.GetValue(), "v@:")
+
     handleTapRecognizerIMPValue = makeHandleTapRecognizerIMP()
     if not HM.judgeSBValueHasValue(handleTapRecognizerIMPValue):
         HMProgressHUD.hide()
@@ -88,6 +95,12 @@ def register() -> None:
         HMProgressHUD.hide()
         return
     HM.addInstanceMethod(gClassName, "refreshTargetView:", refreshTargetViewIMPValue.GetValue(), "v@:@")
+
+    clickMoveBtnIMPValue = makeClickMoveBtnIMP()
+    if not HM.judgeSBValueHasValue(clickMoveBtnIMPValue):
+        HMProgressHUD.hide()
+        return
+    HM.addInstanceMethod(gClassName, "clickMoveBtn:", clickMoveBtnIMPValue.GetValue(), "v@:@")
 
     HM.DPrint(f"Register {gClassName} done!")
     HMProgressHUD.hide()
@@ -143,11 +156,110 @@ def makeViewDidLoadIMP() -> lldb.SBValue:
             (void)[[_infoView layer] setCornerRadius:5];
             [vc.view addSubview:_infoView];
     
+            // actionView
+            CGFloat actionViewHeight = 120;
+            CGFloat actionViewWidth = vc.view.bounds.size.width - 10;
+            UIButton *_actionView = [[UIButton alloc] init];
+            (void)[_actionView setFrame:(CGRect){{(vc.view.bounds.size.width - actionViewWidth) / 2, 0, actionViewWidth, actionViewHeight}}];
+            [vc setValue:_actionView forKey:@"_actionView"];
+            _actionView.hidden = YES;
+            (void)[_actionView setBackgroundColor:[[UIColor whiteColor] colorWithAlphaComponent:.9]];
+            (void)[[_actionView layer] setBorderColor:[[UIColor lightGrayColor] CGColor]];
+            (void)[[_actionView layer] setBorderWidth:0.5];
+            (void)[[_actionView layer] setCornerRadius:5];
+            [vc.view addSubview:_actionView];
+            
+            // actionView-moveBtn
+            UIButton *(^makeMoveBtnBlock)(NSInteger, NSString *) = ^UIButton *(NSInteger tag, NSString *text) {{
+                UIButton *moveBtn = [[UIButton alloc] init];
+                moveBtn.tag = tag;
+                (void)[moveBtn setBackgroundColor:[[UIColor grayColor] colorWithAlphaComponent:0.2]];
+                moveBtn.layer.cornerRadius = 18;
+                ((void (*)(id, SEL, id, long)) objc_msgSend)((id)moveBtn, @selector(setTitle:forState:), (id)text, 0); // UIControlStateNormal
+                ((void (*)(id, SEL, id, long)) objc_msgSend)((id)moveBtn, @selector(setTitleColor:forState:), (id)[UIColor blackColor], 0); // UIControlStateNormal
+                ((void (*)(id, SEL, id, SEL, long)) objc_msgSend)((id)moveBtn, @selector(addTarget:action:forControlEvents:), (id)vc, @selector(clickMoveBtn:), 64); // UIControlEventTouchUpInside
+                moveBtn.titleLabel.font = [UIFont systemFontOfSize:18 weight:(UIFontWeight)UIFontWeightBold];
+                return moveBtn;
+            }};
+
+            CGFloat moveBtnSideLength = 36;
+            UIButton *moveTopBtn = makeMoveBtnBlock(1, @"↑");
+            (void)[moveTopBtn setFrame:(CGRect){{32, 6, moveBtnSideLength, moveBtnSideLength}}];
+            [_actionView addSubview:moveTopBtn];
+
+            UIButton *moveLeftBtn = makeMoveBtnBlock(2, @"←");
+            (void)[moveLeftBtn setFrame:(CGRect){{4, CGRectGetMaxY(moveTopBtn.frame), moveBtnSideLength, moveBtnSideLength}}];
+            [_actionView addSubview:moveLeftBtn];
+
+            UIButton *moveRightBtn = makeMoveBtnBlock(4, @"→");
+            (void)[moveRightBtn setFrame:(CGRect){{CGRectGetMaxX(moveLeftBtn.frame) + 20, moveLeftBtn.frame.origin.y, moveBtnSideLength, moveBtnSideLength}}];
+            [_actionView addSubview:moveRightBtn];
+
+            UIButton *moveBottomBtn = makeMoveBtnBlock(3, @"↓");
+            (void)[moveBottomBtn setFrame:(CGRect){{moveTopBtn.frame.origin.x, CGRectGetMaxY(moveLeftBtn.frame), moveBtnSideLength, moveBtnSideLength}}];
+            [_actionView addSubview:moveBottomBtn];
+
+            // actionView-other btns
+            // 1. ivars   properties  methods
+            // 2. superview  subviews.first
+            // 3. next sibling  close
+            UIButton *(^makeBtnBlock)(NSString *) = ^UIButton *(NSString *text) {{
+                UIButton *btn = [[UIButton alloc] init];
+                (void)[btn setBackgroundColor:[[UIColor grayColor] colorWithAlphaComponent:0.2]];
+                btn.layer.cornerRadius = 3;
+                ((void (*)(id, SEL, id, long)) objc_msgSend)((id)btn, @selector(setTitle:forState:), (id)text, 0); // UIControlStateNormal
+                ((void (*)(id, SEL, id, long)) objc_msgSend)((id)btn, @selector(setTitleColor:forState:), (id)[UIColor blackColor], 0); // UIControlStateNormal
+                btn.titleLabel.font = [UIFont systemFontOfSize:13 weight:(UIFontWeight)UIFontWeightBold];
+                return btn;
+            }};
+
+            CGFloat beginX = CGRectGetMaxX(moveRightBtn.frame);
+            CGFloat btnHeight = 30;
+            CGFloat btnWidth1 = 80;
+            CGFloat btnWidth2 = 100;
+            CGFloat marginX = 8;
+            CGFloat offsetY = 6;
+            CGFloat offsetX = (actionViewWidth - beginX - marginX * 2 - btnWidth1 * 3) / 2;
+            UIButton *ivarsBtn = makeBtnBlock(@"ivars");
+            (void)[ivarsBtn setFrame:(CGRect){{beginX + marginX, 8, btnWidth1, btnHeight}}];
+            [_actionView addSubview:ivarsBtn];
+
+            UIButton *propertiesBtn = makeBtnBlock(@"properties");
+            (void)[propertiesBtn setFrame:(CGRect){{CGRectGetMaxX(ivarsBtn.frame) + offsetX, ivarsBtn.frame.origin.y, btnWidth1, btnHeight}}];
+            [_actionView addSubview:propertiesBtn];
+
+            UIButton *methodsBtn = makeBtnBlock(@"methods");
+            (void)[methodsBtn setFrame:(CGRect){{CGRectGetMaxX(propertiesBtn.frame) + offsetX, ivarsBtn.frame.origin.y, btnWidth1, btnHeight}}];
+            [_actionView addSubview:methodsBtn];
+
+            UIButton *superviewBtn = makeBtnBlock(@"superview");
+            (void)[superviewBtn setFrame:(CGRect){{beginX + marginX, CGRectGetMaxY(ivarsBtn.frame) + offsetY, btnWidth1, btnHeight}}];
+            [_actionView addSubview:superviewBtn];
+
+            UIButton *subviewBtn = makeBtnBlock(@"subviews.first");
+            (void)[subviewBtn setFrame:(CGRect){{CGRectGetMaxX(superviewBtn.frame) + offsetX, superviewBtn.frame.origin.y, btnWidth2, btnHeight}}];
+            [_actionView addSubview:subviewBtn];
+
+            UIButton *siblingBtn = makeBtnBlock(@"next sibling");
+            (void)[siblingBtn setFrame:(CGRect){{beginX + marginX, CGRectGetMaxY(superviewBtn.frame) + offsetY, btnWidth2, btnHeight}}];
+            [_actionView addSubview:siblingBtn];
+
+            UIButton *closeBtn = [[UIButton alloc] init];
+            (void)[closeBtn setFrame:(CGRect){{actionViewWidth - marginX - 50, siblingBtn.frame.origin.y, 50, btnHeight}}];
+            (void)[closeBtn setBackgroundColor:[UIColor colorWithRed:208/255.0 green:2/255.0 blue:27/255.0 alpha:.7]];
+            ((void (*)(id, SEL, id, long)) objc_msgSend)((id)closeBtn, @selector(setTitle:forState:), (id)@"Close", 0); // UIControlStateNormal
+            ((void (*)(id, SEL, id, long)) objc_msgSend)((id)closeBtn, @selector(setTitleColor:forState:), (id)[UIColor whiteColor], 0); // UIControlStateNormal
+
+            closeBtn.titleLabel.font = [UIFont systemFontOfSize:13];
+            closeBtn.layer.cornerRadius = 3;
+            ((void (*)(id, SEL, id, SEL, long)) objc_msgSend)((id)closeBtn, @selector(addTarget:action:forControlEvents:), (id)vc, @selector(clickCloseBtn), 64); // UIControlEventTouchUpInside
+            [_actionView addSubview:closeBtn];
+
             // exitBtn
             UIButton *_exitBtn = [[UIButton alloc] init];
             [vc setValue:_exitBtn forKey:@"_exitBtn"];
             (void)[_exitBtn setBackgroundColor:[UIColor colorWithRed:208/255.0 green:2/255.0 blue:27/255.0 alpha:.7]];
-            ((void (*)(id, SEL, id, long)) objc_msgSend)((id)_exitBtn, @selector(setTitle:forState:), (id)@"Tap to inspect | Exit", 0); // UIControlStateNormal
+            ((void (*)(id, SEL, id, long)) objc_msgSend)((id)_exitBtn, @selector(setTitle:forState:), (id)@"Tap to exit", 0); // UIControlStateNormal
             ((void (*)(id, SEL, id, long)) objc_msgSend)((id)_exitBtn, @selector(setTitleColor:forState:), (id)[UIColor whiteColor], 0); // UIControlStateNormal
             _exitBtn.titleLabel.font = [UIFont systemFontOfSize:13];
             _exitBtn.clipsToBounds = YES;
@@ -201,6 +313,21 @@ def makeClickExitBtnIMP() -> lldb.SBValue:
     return HM.evaluateExpressionValue(command_script)
 
 
+def makeClickCloseBtnIMP() -> lldb.SBValue:
+    command_script = '''
+        void (^IMPBlock)(UIViewController *) = ^(UIViewController *vc) {
+            UIView *_highlightView = (UIView *)[vc valueForKey:@"_highlightView"];
+            UIView *_infoView = (UIView *)[vc valueForKey:@"_infoView"];
+            UIButton *_actionView = (UIButton *)[vc valueForKey:@"_actionView"];
+            _highlightView.hidden = YES;
+            _infoView.hidden = YES;
+            _actionView.hidden = YES;
+        };
+        imp_implementationWithBlock(IMPBlock);
+     '''
+    return HM.evaluateExpressionValue(command_script)
+
+
 def makeHandleTapRecognizerIMP() -> lldb.SBValue:
     command_script = '''
         void (^IMPBlock)(UIViewController *, UITapGestureRecognizer *) = ^(UIViewController *vc, UITapGestureRecognizer *tapRecognizer) {
@@ -234,19 +361,23 @@ def makeRefreshTargetViewIMP() -> lldb.SBValue:
             
             UIView *_highlightView = (UIView *)[vc valueForKey:@"_highlightView"];
             UIView *_infoView = (UIView *)[vc valueForKey:@"_infoView"];
+            UIButton *_actionView = (UIButton *)[vc valueForKey:@"_actionView"];
             if (targetView == nil) {
                 _highlightView.hidden = YES;
                 _infoView.hidden = YES;
+                _actionView.hidden = YES;
                 return;
             }
             
-            // highlightFrame
             _highlightView.hidden = NO;
+            _infoView.hidden = NO;
+            _actionView.hidden = NO;
+        
+            // highlightFrame
             CGRect highlightFrame = [vc.view.window convertRect:targetView.frame fromView:[targetView superview]];
             (void)[_highlightView setFrame:(CGRect)highlightFrame];
             
             // infoView
-            _infoView.hidden = NO;
             NSMutableArray *infoArr = [[NSMutableArray alloc] init]; // NSMutableArray<NSArray<NSString *> *> *infoArr
             NSString *address = [[NSString alloc] initWithFormat:@"%p", targetView];
             [infoArr addObject:@[@"Address", address]];
@@ -275,6 +406,7 @@ def makeRefreshTargetViewIMP() -> lldb.SBValue:
             [_infoView.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
             
             UILabel *clsNameLab = [[UILabel alloc] init];
+            clsNameLab.numberOfLines = 0;
             clsNameLab.text = NSStringFromClass([targetView class]);
             clsNameLab.textColor = [UIColor blackColor];
             clsNameLab.font = [UIFont systemFontOfSize:13 weight:(UIFontWeight)UIFontWeightBold];
@@ -286,7 +418,7 @@ def makeRefreshTargetViewIMP() -> lldb.SBValue:
             
             // infoView width
             CGFloat marginX = 5;
-            CGFloat maxWidth = clsNameLab.intrinsicContentSize.width;
+            CGFloat maxWidth = 0;
             UIFont *infoFont = [UIFont systemFontOfSize:13];
             for (NSArray *info in infoArr) { // NSArray<NSString *> *info
                 CGSize leftSize = (CGSize)[info.firstObject sizeWithAttributes:@{(id)NSFontAttributeName: infoFont}];
@@ -297,23 +429,27 @@ def makeRefreshTargetViewIMP() -> lldb.SBValue:
                 }
             }
             
-            if (maxWidth > vc.view.bounds.size.width * 0.67) {
-                maxWidth = vc.view.bounds.size.width * 0.67;
+            if (maxWidth > vc.view.bounds.size.width - 10) {
+                maxWidth = vc.view.bounds.size.width - 10;
             }
             
             // infoView subviews and frame
-            (void)[clsNameLab setFrame:(CGRect){marginX, 4, clsNameLab.intrinsicContentSize.width, clsNameLab.intrinsicContentSize.height}];
+            CGSize clsNameLabSize = (CGSize)[clsNameLab sizeThatFits:(CGSize){maxWidth - marginX * 2, 1000}];
+            (void)[clsNameLab setFrame:(CGRect){marginX, 4, clsNameLabSize.width, clsNameLabSize.height}];
             (void)[separator setFrame:(CGRect){marginX, CGRectGetMaxY(clsNameLab.frame) + 4, maxWidth - marginX * 2, 0.5}];
     
             CGFloat maxHeight = 0;
             for (int i = 0; i< infoArr.count; ++i) {
                 NSArray *info = infoArr[i]; // NSArray<NSString *> *info
+                CGFloat rowHeight = 25;
+                CGFloat beginY = CGRectGetMaxY(separator.frame) + 4;
+            
                 UILabel *leftLab = [[UILabel alloc] init];
                 leftLab.text = info.firstObject;
                 ((void (*)(id, SEL, long)) objc_msgSend)((id)leftLab, @selector(setTextAlignment:), 0); // NSTextAlignmentLeft
                 leftLab.font = [UIFont systemFontOfSize:13];
                 leftLab.textColor = [UIColor grayColor];
-                (void)[leftLab setFrame:(CGRect){marginX, 30.0 + i * 30.0 , leftLab.intrinsicContentSize.width, leftLab.intrinsicContentSize.height}];
+                (void)[leftLab setFrame:(CGRect){marginX, beginY + i * rowHeight , leftLab.intrinsicContentSize.width, leftLab.intrinsicContentSize.height}];
                 [_infoView addSubview:leftLab];
     
                 UILabel *rightLab = [[UILabel alloc] init];
@@ -321,7 +457,7 @@ def makeRefreshTargetViewIMP() -> lldb.SBValue:
                 ((void (*)(id, SEL, long)) objc_msgSend)((id)rightLab, @selector(setTextAlignment:), 2); // NSTextAlignmentRight
                 rightLab.font = [UIFont systemFontOfSize:13];
                 rightLab.textColor = [UIColor blackColor];
-                (void)[rightLab setFrame:(CGRect){maxWidth - marginX - rightLab.intrinsicContentSize.width, 30.0 + i * 30.0, rightLab.intrinsicContentSize.width, rightLab.intrinsicContentSize.height}];
+                (void)[rightLab setFrame:(CGRect){maxWidth - marginX - rightLab.intrinsicContentSize.width, beginY + i * rowHeight, rightLab.intrinsicContentSize.width, rightLab.intrinsicContentSize.height}];
                 [_infoView addSubview:rightLab];
                 
                 if (maxHeight < CGRectGetMaxY(leftLab.frame) + 4) {
@@ -329,17 +465,44 @@ def makeRefreshTargetViewIMP() -> lldb.SBValue:
                 }
             }
             
-            if (60 + maxHeight > highlightFrame.origin.y) {
-                UIButton *_exitBtn = (UIButton *)[vc valueForKey:@"_exitBtn"];
-                (void)[_infoView setFrame:(CGRect){10, _exitBtn.frame.origin.y - 10 - maxHeight, maxWidth, maxHeight}];
-            } else {
-                (void)[_infoView setFrame:(CGRect){10, 60, maxWidth, maxHeight}];
+            UIButton *_exitBtn = (UIButton *)[vc valueForKey:@"_exitBtn"];
+            CGFloat infoViewY = _exitBtn.frame.origin.y - 10 - _actionView.bounds.size.height - 6 - maxHeight;
+            if (infoViewY < CGRectGetMaxY(highlightFrame)) {
+                infoViewY = 60;
             }
+            (void)[_infoView setFrame:(CGRect){(vc.view.bounds.size.width - maxWidth) / 2, infoViewY, maxWidth, maxHeight}];
+    
+            CGRect actionViewFrame = _actionView.frame;
+            actionViewFrame.origin.y = CGRectGetMaxY(_infoView.frame) + 6;
+            (void)[_actionView setFrame:(CGRect)actionViewFrame];
     
             [vc.view setNeedsLayout];
             [vc.view layoutIfNeeded];
         };
         
+        imp_implementationWithBlock(IMPBlock);
+     '''
+    return HM.evaluateExpressionValue(command_script)
+
+
+def makeClickMoveBtnIMP() -> lldb.SBValue:
+    command_script = '''
+        void (^IMPBlock)(UIViewController *, UIButton *) = ^(UIViewController *vc, UIButton *btn) {
+            UIView *_targetView = (UIView *)[vc valueForKey:@"_targetView"];
+            CGRect targetFrame = [_targetView frame];
+            if (btn.tag == 1) {
+                targetFrame.origin.y = targetFrame.origin.y - 1;
+            } else if (btn.tag == 2) {
+                targetFrame.origin.x = targetFrame.origin.x - 1;
+            } else if (btn.tag == 3) {
+                targetFrame.origin.y = targetFrame.origin.y + 1;
+            } else if (btn.tag == 4) {
+                targetFrame.origin.x = targetFrame.origin.x + 1;
+            }
+            
+            (void)[_targetView setFrame:(CGRect)targetFrame];
+            (void)[vc performSelector:@selector(refreshTargetView:) withObject:(id)_targetView];
+        };
         imp_implementationWithBlock(IMPBlock);
      '''
     return HM.evaluateExpressionValue(command_script)
