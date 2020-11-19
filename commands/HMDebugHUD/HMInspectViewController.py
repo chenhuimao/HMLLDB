@@ -25,6 +25,7 @@ import HMLLDBHelpers as HM
 import HMProgressHUD
 import HMDebugWindow
 import HMDebugBaseViewController
+import HMLLDBClassInfo
 
 
 gClassName = "HMInspectViewController"
@@ -420,9 +421,9 @@ def makeRefreshTargetViewIMP() -> lldb.SBValue:
             CGFloat marginX = 5;
             CGFloat maxWidth = 0;
             UIFont *infoFont = [UIFont systemFontOfSize:13];
-            for (NSArray *info in infoArr) { // NSArray<NSString *> *info
-                CGSize leftSize = (CGSize)[info.firstObject sizeWithAttributes:@{(id)NSFontAttributeName: infoFont}];
-                CGSize rightSize = (CGSize)[info.lastObject sizeWithAttributes:@{(id)NSFontAttributeName: infoFont}];
+            for (NSArray *infos in infoArr) { // NSArray<NSString *> *infos
+                CGSize leftSize = (CGSize)[infos.firstObject sizeWithAttributes:@{(id)NSFontAttributeName: infoFont}];
+                CGSize rightSize = (CGSize)[infos.lastObject sizeWithAttributes:@{(id)NSFontAttributeName: infoFont}];
                 CGFloat labelPadding = 10;
                 if (maxWidth < leftSize.width + rightSize.width + marginX * 2 + labelPadding) {
                     maxWidth = leftSize.width + rightSize.width + marginX * 2 + labelPadding;
@@ -440,12 +441,12 @@ def makeRefreshTargetViewIMP() -> lldb.SBValue:
     
             CGFloat maxHeight = 0;
             for (int i = 0; i< infoArr.count; ++i) {
-                NSArray *info = infoArr[i]; // NSArray<NSString *> *info
+                NSArray *infos = infoArr[i]; // NSArray<NSString *> *infos
                 CGFloat rowHeight = 25;
                 CGFloat beginY = CGRectGetMaxY(separator.frame) + 4;
             
                 UILabel *leftLab = [[UILabel alloc] init];
-                leftLab.text = info.firstObject;
+                leftLab.text = infos.firstObject;
                 ((void (*)(id, SEL, long)) objc_msgSend)((id)leftLab, @selector(setTextAlignment:), 0); // NSTextAlignmentLeft
                 leftLab.font = [UIFont systemFontOfSize:13];
                 leftLab.textColor = [UIColor grayColor];
@@ -453,7 +454,7 @@ def makeRefreshTargetViewIMP() -> lldb.SBValue:
                 [_infoView addSubview:leftLab];
     
                 UILabel *rightLab = [[UILabel alloc] init];
-                rightLab.text = info.lastObject;
+                rightLab.text = infos.lastObject;
                 ((void (*)(id, SEL, long)) objc_msgSend)((id)rightLab, @selector(setTextAlignment:), 2); // NSTextAlignmentRight
                 rightLab.font = [UIFont systemFontOfSize:13];
                 rightLab.textColor = [UIColor blackColor];
