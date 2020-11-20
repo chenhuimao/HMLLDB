@@ -97,11 +97,11 @@ def register() -> None:
         return
     HM.addInstanceMethod(gClassName, "refreshTargetView:", refreshTargetViewIMPValue.GetValue(), "v@:@")
 
-    clickMoveBtnIMPValue = makeClickMoveBtnIMP()
-    if not HM.judgeSBValueHasValue(clickMoveBtnIMPValue):
+    # function action
+    HM.DPrint(f"Add methods to {gClassName}.........")
+    if not addFunctionMethods():
         HMProgressHUD.hide()
         return
-    HM.addInstanceMethod(gClassName, "clickMoveBtn:", clickMoveBtnIMPValue.GetValue(), "v@:@")
 
     HM.DPrint(f"Register {gClassName} done!")
     HMProgressHUD.hide()
@@ -221,16 +221,20 @@ def makeViewDidLoadIMP() -> lldb.SBValue:
             CGFloat marginX = 8;
             CGFloat offsetY = 6;
             CGFloat offsetX = (actionViewWidth - beginX - marginX * 2 - btnWidth1 * 3) / 2;
+
             UIButton *ivarsBtn = makeBtnBlock(@"ivars");
             (void)[ivarsBtn setFrame:(CGRect){{beginX + marginX, 8, btnWidth1, btnHeight}}];
+            ((void (*)(id, SEL, id, SEL, long)) objc_msgSend)((id)ivarsBtn, @selector(addTarget:action:forControlEvents:), (id)vc, @selector(ivarsAction), 64); // UIControlEventTouchUpInside
             [_actionView addSubview:ivarsBtn];
 
             UIButton *propertiesBtn = makeBtnBlock(@"properties");
             (void)[propertiesBtn setFrame:(CGRect){{CGRectGetMaxX(ivarsBtn.frame) + offsetX, ivarsBtn.frame.origin.y, btnWidth1, btnHeight}}];
+            ((void (*)(id, SEL, id, SEL, long)) objc_msgSend)((id)propertiesBtn, @selector(addTarget:action:forControlEvents:), (id)vc, @selector(propertiesAction), 64); // UIControlEventTouchUpInside
             [_actionView addSubview:propertiesBtn];
 
             UIButton *methodsBtn = makeBtnBlock(@"methods");
             (void)[methodsBtn setFrame:(CGRect){{CGRectGetMaxX(propertiesBtn.frame) + offsetX, ivarsBtn.frame.origin.y, btnWidth1, btnHeight}}];
+            ((void (*)(id, SEL, id, SEL, long)) objc_msgSend)((id)methodsBtn, @selector(addTarget:action:forControlEvents:), (id)vc, @selector(methodsAction), 64); // UIControlEventTouchUpInside
             [_actionView addSubview:methodsBtn];
 
             UIButton *superviewBtn = makeBtnBlock(@"superview");
@@ -486,6 +490,30 @@ def makeRefreshTargetViewIMP() -> lldb.SBValue:
     return HM.evaluateExpressionValue(command_script)
 
 
+def addFunctionMethods() -> bool:
+    clickMoveBtnIMPValue = makeClickMoveBtnIMP()
+    if not HM.judgeSBValueHasValue(clickMoveBtnIMPValue):
+        return False
+    HM.addInstanceMethod(gClassName, "clickMoveBtn:", clickMoveBtnIMPValue.GetValue(), "v@:@")
+
+    ivarsActionIMPValue = makeIvarsActionIMP()
+    if not HM.judgeSBValueHasValue(ivarsActionIMPValue):
+        return False
+    HM.addInstanceMethod(gClassName, "ivarsAction", ivarsActionIMPValue.GetValue(), "v@:")
+
+    propertiesActionIMPValue = makePropertiesActionIMP()
+    if not HM.judgeSBValueHasValue(propertiesActionIMPValue):
+        return False
+    HM.addInstanceMethod(gClassName, "propertiesAction", propertiesActionIMPValue.GetValue(), "v@:")
+
+    methodsActionIMPValue = makeMethodsActionIMP()
+    if not HM.judgeSBValueHasValue(methodsActionIMPValue):
+        return False
+    HM.addInstanceMethod(gClassName, "methodsAction", methodsActionIMPValue.GetValue(), "v@:")
+
+    return True
+
+
 def makeClickMoveBtnIMP() -> lldb.SBValue:
     command_script = '''
         void (^IMPBlock)(UIViewController *, UIButton *) = ^(UIViewController *vc, UIButton *btn) {
@@ -503,6 +531,42 @@ def makeClickMoveBtnIMP() -> lldb.SBValue:
             
             (void)[_targetView setFrame:(CGRect)targetFrame];
             (void)[vc performSelector:@selector(refreshTargetView:) withObject:(id)_targetView];
+        };
+        imp_implementationWithBlock(IMPBlock);
+     '''
+    return HM.evaluateExpressionValue(command_script)
+
+
+def makeIvarsActionIMP() -> lldb.SBValue:
+    command_script = '''
+        void (^IMPBlock)(UIViewController *) = ^(UIViewController *vc) {
+            UIView *_targetView = (UIView *)[vc valueForKey:@"_targetView"];
+            NSString *desc = (NSString *)[_targetView performSelector:NSSelectorFromString(@"_ivarDescription")];
+            printf("\\n[HMLLDB]: _ivarDescription:\\n%s\\n", (char *)[desc UTF8String]);
+        };
+        imp_implementationWithBlock(IMPBlock);
+     '''
+    return HM.evaluateExpressionValue(command_script)
+
+
+def makePropertiesActionIMP() -> lldb.SBValue:
+    command_script = '''
+        void (^IMPBlock)(UIViewController *) = ^(UIViewController *vc) {
+            UIView *_targetView = (UIView *)[vc valueForKey:@"_targetView"];
+            NSString *desc = (NSString *)[_targetView performSelector:NSSelectorFromString(@"_propertyDescription")];
+            printf("\\n[HMLLDB]: _propertyDescription:\\n%s\\n", (char *)[desc UTF8String]);
+        };
+        imp_implementationWithBlock(IMPBlock);
+     '''
+    return HM.evaluateExpressionValue(command_script)
+
+
+def makeMethodsActionIMP() -> lldb.SBValue:
+    command_script = '''
+        void (^IMPBlock)(UIViewController *) = ^(UIViewController *vc) {
+            UIView *_targetView = (UIView *)[vc valueForKey:@"_targetView"];
+            NSString *desc = (NSString *)[_targetView performSelector:NSSelectorFromString(@"_methodDescription")];
+            printf("\\n[HMLLDB]: _methodDescription:\\n%s\\n", (char *)[desc UTF8String]);
         };
         imp_implementationWithBlock(IMPBlock);
      '''
