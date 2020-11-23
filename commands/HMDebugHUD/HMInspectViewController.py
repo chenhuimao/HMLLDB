@@ -237,20 +237,28 @@ def makeViewDidLoadIMP() -> lldb.SBValue:
             ((void (*)(id, SEL, id, SEL, long)) objc_msgSend)((id)methodsBtn, @selector(addTarget:action:forControlEvents:), (id)vc, @selector(methodsAction), 64); // UIControlEventTouchUpInside
             [_actionView addSubview:methodsBtn];
 
+            UIButton *siblingNextBtn = makeBtnBlock(@"sibling.next");
+            (void)[siblingNextBtn setFrame:(CGRect){{beginX + marginX, CGRectGetMaxY(ivarsBtn.frame) + offsetY, btnWidth2, btnHeight}}];
+            ((void (*)(id, SEL, id, SEL, long)) objc_msgSend)((id)siblingNextBtn, @selector(addTarget:action:forControlEvents:), (id)vc, @selector(siblingNextAction), 64); // UIControlEventTouchUpInside
+            [_actionView addSubview:siblingNextBtn];
+            
+            UIButton *siblingPreviousBtn = makeBtnBlock(@"sibling.previous");
+            (void)[siblingPreviousBtn setFrame:(CGRect){{CGRectGetMaxX(siblingNextBtn.frame) + offsetX, siblingNextBtn.frame.origin.y, 120, btnHeight}}];
+            ((void (*)(id, SEL, id, SEL, long)) objc_msgSend)((id)siblingPreviousBtn, @selector(addTarget:action:forControlEvents:), (id)vc, @selector(siblingPreviousAction), 64); // UIControlEventTouchUpInside
+            [_actionView addSubview:siblingPreviousBtn];
+            
             UIButton *superviewBtn = makeBtnBlock(@"superview");
-            (void)[superviewBtn setFrame:(CGRect){{beginX + marginX, CGRectGetMaxY(ivarsBtn.frame) + offsetY, btnWidth1, btnHeight}}];
+            (void)[superviewBtn setFrame:(CGRect){{beginX + marginX, CGRectGetMaxY(siblingNextBtn.frame) + offsetY, btnWidth1, btnHeight}}];
+            ((void (*)(id, SEL, id, SEL, long)) objc_msgSend)((id)superviewBtn, @selector(addTarget:action:forControlEvents:), (id)vc, @selector(superviewAction), 64); // UIControlEventTouchUpInside
             [_actionView addSubview:superviewBtn];
-
+            
             UIButton *subviewBtn = makeBtnBlock(@"subviews.first");
             (void)[subviewBtn setFrame:(CGRect){{CGRectGetMaxX(superviewBtn.frame) + offsetX, superviewBtn.frame.origin.y, btnWidth2, btnHeight}}];
+            ((void (*)(id, SEL, id, SEL, long)) objc_msgSend)((id)subviewBtn, @selector(addTarget:action:forControlEvents:), (id)vc, @selector(subviewAction), 64); // UIControlEventTouchUpInside
             [_actionView addSubview:subviewBtn];
 
-            UIButton *siblingBtn = makeBtnBlock(@"next sibling");
-            (void)[siblingBtn setFrame:(CGRect){{beginX + marginX, CGRectGetMaxY(superviewBtn.frame) + offsetY, btnWidth2, btnHeight}}];
-            [_actionView addSubview:siblingBtn];
-
             UIButton *closeBtn = [[UIButton alloc] init];
-            (void)[closeBtn setFrame:(CGRect){{actionViewWidth - marginX - 50, siblingBtn.frame.origin.y, 50, btnHeight}}];
+            (void)[closeBtn setFrame:(CGRect){{actionViewWidth - marginX - 50, superviewBtn.frame.origin.y, 50, btnHeight}}];
             (void)[closeBtn setBackgroundColor:[UIColor colorWithRed:208/255.0 green:2/255.0 blue:27/255.0 alpha:.7]];
             ((void (*)(id, SEL, id, long)) objc_msgSend)((id)closeBtn, @selector(setTitle:forState:), (id)@"Close", 0); // UIControlStateNormal
             ((void (*)(id, SEL, id, long)) objc_msgSend)((id)closeBtn, @selector(setTitleColor:forState:), (id)[UIColor whiteColor], 0); // UIControlStateNormal
@@ -338,7 +346,7 @@ def makeHandleTapRecognizerIMP() -> lldb.SBValue:
         void (^IMPBlock)(UIViewController *, UITapGestureRecognizer *) = ^(UIViewController *vc, UITapGestureRecognizer *tapRecognizer) {
             // find targetView
             CGPoint point = [tapRecognizer locationInView:vc.view];
-            UIView *targetView = nil;
+            UIView *_targetView = nil;
             for (UIWindow *window in [UIApplication sharedApplication].windows.reverseObjectEnumerator) {
     
                 if (window == vc.view.window) {
@@ -349,10 +357,11 @@ def makeHandleTapRecognizerIMP() -> lldb.SBValue:
                 }
     
                 CGPoint wPoint = [window convertPoint:point fromWindow:vc.view.window];
-                targetView = [window hitTest:wPoint withEvent:nil];
+                _targetView = [window hitTest:wPoint withEvent:nil];
             }
     
-            (void)[vc performSelector:@selector(refreshTargetView:) withObject:(id)targetView];
+            printf("\\n[HMLLDB]: %s\\n", (char *)[[_targetView description] UTF8String]);
+            (void)[vc performSelector:@selector(refreshTargetView:) withObject:(id)_targetView];
         };
         imp_implementationWithBlock(IMPBlock);
      '''
@@ -511,6 +520,26 @@ def addFunctionMethods() -> bool:
         return False
     HM.addInstanceMethod(gClassName, "methodsAction", methodsActionIMPValue.GetValue(), "v@:")
 
+    siblingNextActionIMPValue = makeSiblingNextActionIMP()
+    if not HM.judgeSBValueHasValue(siblingNextActionIMPValue):
+        return False
+    HM.addInstanceMethod(gClassName, "siblingNextAction", siblingNextActionIMPValue.GetValue(), "v@:")
+
+    siblingPreviousActionIMPValue = makeSiblingPreviousActionIMP()
+    if not HM.judgeSBValueHasValue(siblingPreviousActionIMPValue):
+        return False
+    HM.addInstanceMethod(gClassName, "siblingPreviousAction", siblingPreviousActionIMPValue.GetValue(), "v@:")
+
+    superviewActionIMPValue = makeSuperviewActionIMP()
+    if not HM.judgeSBValueHasValue(superviewActionIMPValue):
+        return False
+    HM.addInstanceMethod(gClassName, "superviewAction", superviewActionIMPValue.GetValue(), "v@:")
+
+    subviewActionIMPValue = makeSubviewActionIMP()
+    if not HM.judgeSBValueHasValue(subviewActionIMPValue):
+        return False
+    HM.addInstanceMethod(gClassName, "subviewAction", subviewActionIMPValue.GetValue(), "v@:")
+
     return True
 
 
@@ -571,3 +600,76 @@ def makeMethodsActionIMP() -> lldb.SBValue:
         imp_implementationWithBlock(IMPBlock);
      '''
     return HM.evaluateExpressionValue(command_script)
+
+
+def makeSiblingNextActionIMP() -> lldb.SBValue:
+    command_script = '''
+        void (^IMPBlock)(UIViewController *) = ^(UIViewController *vc) {
+            UIView *_targetView = (UIView *)[vc valueForKey:@"_targetView"];
+            NSArray *siblings = [[_targetView superview] subviews];
+            if (siblings != nil) {
+                NSInteger index = [siblings indexOfObject:_targetView];
+                index = index + 1;
+                if (index >= [siblings count]) {
+                    index = 0;
+                }
+                UIView *targetSibling = [siblings objectAtIndex:index];
+                printf("\\n[HMLLDB]: %s\\n", (char *)[[targetSibling description] UTF8String]);
+                (void)[vc performSelector:@selector(refreshTargetView:) withObject:(id)targetSibling];
+            }
+        };
+        imp_implementationWithBlock(IMPBlock);
+     '''
+    return HM.evaluateExpressionValue(command_script)
+
+
+def makeSiblingPreviousActionIMP() -> lldb.SBValue:
+    command_script = '''
+        void (^IMPBlock)(UIViewController *) = ^(UIViewController *vc) {
+            UIView *_targetView = (UIView *)[vc valueForKey:@"_targetView"];
+            NSArray *siblings = [[_targetView superview] subviews];
+            if (siblings != nil) {
+                NSInteger index = [siblings indexOfObject:_targetView];
+                index = index - 1;
+                if (index < 0) {
+                    index = [siblings count] - 1;
+                }
+                UIView *targetSibling = [siblings objectAtIndex:index];
+                printf("\\n[HMLLDB]: %s\\n", (char *)[[targetSibling description] UTF8String]);
+                (void)[vc performSelector:@selector(refreshTargetView:) withObject:(id)targetSibling];
+            }
+        };        
+        imp_implementationWithBlock(IMPBlock);
+     '''
+    return HM.evaluateExpressionValue(command_script)
+
+
+def makeSuperviewActionIMP() -> lldb.SBValue:
+    command_script = '''
+        void (^IMPBlock)(UIViewController *) = ^(UIViewController *vc) {
+            UIView *_targetView = (UIView *)[vc valueForKey:@"_targetView"];
+            UIView *targetSuperView = [_targetView superview];
+            if (targetSuperView != nil) {
+                printf("\\n[HMLLDB]: %s\\n", (char *)[[targetSuperView description] UTF8String]);
+                (void)[vc performSelector:@selector(refreshTargetView:) withObject:(id)targetSuperView];
+            }
+        };       
+        imp_implementationWithBlock(IMPBlock);
+     '''
+    return HM.evaluateExpressionValue(command_script)
+
+
+def makeSubviewActionIMP() -> lldb.SBValue:
+    command_script = '''
+        void (^IMPBlock)(UIViewController *) = ^(UIViewController *vc) {
+            UIView *_targetView = (UIView *)[vc valueForKey:@"_targetView"];
+            UIView *targetSubview = [[_targetView subviews] firstObject];
+            if (targetSubview != nil) {
+                printf("\\n[HMLLDB]: %s\\n", (char *)[[targetSubview description] UTF8String]);
+                (void)[vc performSelector:@selector(refreshTargetView:) withObject:(id)targetSubview];
+            }
+        };     
+        imp_implementationWithBlock(IMPBlock);
+     '''
+    return HM.evaluateExpressionValue(command_script)
+
