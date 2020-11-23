@@ -238,15 +238,15 @@ def makeViewDidLoadIMP() -> lldb.SBValue:
             ((void (*)(id, SEL, id, SEL, long)) objc_msgSend)((id)methodsBtn, @selector(addTarget:action:forControlEvents:), (id)vc, @selector(methodsAction), 64); // UIControlEventTouchUpInside
             [_actionView addSubview:methodsBtn];
 
-            UIButton *siblingNextBtn = makeBtnBlock(@"sibling.next");
-            (void)[siblingNextBtn setFrame:(CGRect){{beginX + marginX, CGRectGetMaxY(ivarsBtn.frame) + offsetY, btnWidth2, btnHeight}}];
-            ((void (*)(id, SEL, id, SEL, long)) objc_msgSend)((id)siblingNextBtn, @selector(addTarget:action:forControlEvents:), (id)vc, @selector(siblingNextAction), 64); // UIControlEventTouchUpInside
-            [_actionView addSubview:siblingNextBtn];
-            
             UIButton *siblingPreviousBtn = makeBtnBlock(@"sibling.previous");
-            (void)[siblingPreviousBtn setFrame:(CGRect){{CGRectGetMaxX(siblingNextBtn.frame) + offsetX, siblingNextBtn.frame.origin.y, 120, btnHeight}}];
+            (void)[siblingPreviousBtn setFrame:(CGRect){{beginX + marginX, CGRectGetMaxY(ivarsBtn.frame) + offsetY, 120, btnHeight}}];
             ((void (*)(id, SEL, id, SEL, long)) objc_msgSend)((id)siblingPreviousBtn, @selector(addTarget:action:forControlEvents:), (id)vc, @selector(siblingPreviousAction), 64); // UIControlEventTouchUpInside
             [_actionView addSubview:siblingPreviousBtn];
+            
+            UIButton *siblingNextBtn = makeBtnBlock(@"sibling.next");
+            (void)[siblingNextBtn setFrame:(CGRect){{CGRectGetMaxX(siblingPreviousBtn.frame) + offsetX, siblingPreviousBtn.frame.origin.y, btnWidth2, btnHeight}}];
+            ((void (*)(id, SEL, id, SEL, long)) objc_msgSend)((id)siblingNextBtn, @selector(addTarget:action:forControlEvents:), (id)vc, @selector(siblingNextAction), 64); // UIControlEventTouchUpInside
+            [_actionView addSubview:siblingNextBtn];
             
             UIButton *superviewBtn = makeBtnBlock(@"superview");
             (void)[superviewBtn setFrame:(CGRect){{beginX + marginX, CGRectGetMaxY(siblingNextBtn.frame) + offsetY, btnWidth1, btnHeight}}];
@@ -433,27 +433,27 @@ def makeRefreshTargetViewIMP() -> lldb.SBValue:
             
             // infoView width
             CGFloat marginX = 5;
-            CGFloat maxWidth = 0;
+            CGFloat infoViewWidth = clsNameLab.intrinsicContentSize.width + marginX * 2;
             UIFont *infoFont = [UIFont systemFontOfSize:13];
             for (NSArray *infos in infoArr) { // NSArray<NSString *> *infos
                 CGSize leftSize = (CGSize)[infos.firstObject sizeWithAttributes:@{(id)NSFontAttributeName: infoFont}];
                 CGSize rightSize = (CGSize)[infos.lastObject sizeWithAttributes:@{(id)NSFontAttributeName: infoFont}];
                 CGFloat labelPadding = 10;
-                if (maxWidth < leftSize.width + rightSize.width + marginX * 2 + labelPadding) {
-                    maxWidth = leftSize.width + rightSize.width + marginX * 2 + labelPadding;
+                if (infoViewWidth < leftSize.width + rightSize.width + marginX * 2 + labelPadding) {
+                    infoViewWidth = leftSize.width + rightSize.width + marginX * 2 + labelPadding;
                 }
             }
             
-            if (maxWidth > vc.view.bounds.size.width - 10) {
-                maxWidth = vc.view.bounds.size.width - 10;
+            if (infoViewWidth > vc.view.bounds.size.width - 10) {
+                infoViewWidth = vc.view.bounds.size.width - 10;
             }
             
             // infoView subviews and frame
-            CGSize clsNameLabSize = (CGSize)[clsNameLab sizeThatFits:(CGSize){maxWidth - marginX * 2, 1000}];
+            CGSize clsNameLabSize = (CGSize)[clsNameLab sizeThatFits:(CGSize){infoViewWidth - marginX * 2, 1000}];
             (void)[clsNameLab setFrame:(CGRect){marginX, 4, clsNameLabSize.width, clsNameLabSize.height}];
-            (void)[separator setFrame:(CGRect){marginX, CGRectGetMaxY(clsNameLab.frame) + 4, maxWidth - marginX * 2, 0.5}];
+            (void)[separator setFrame:(CGRect){marginX, CGRectGetMaxY(clsNameLab.frame) + 4, infoViewWidth - marginX * 2, 0.5}];
     
-            CGFloat maxHeight = 0;
+            CGFloat infoViewHeight = 0;
             for (int i = 0; i< infoArr.count; ++i) {
                 NSArray *infos = infoArr[i]; // NSArray<NSString *> *infos
                 CGFloat rowHeight = 25;
@@ -472,23 +472,25 @@ def makeRefreshTargetViewIMP() -> lldb.SBValue:
                 ((void (*)(id, SEL, long)) objc_msgSend)((id)rightLab, @selector(setTextAlignment:), 2); // NSTextAlignmentRight
                 rightLab.font = [UIFont systemFontOfSize:13];
                 rightLab.textColor = [UIColor blackColor];
-                (void)[rightLab setFrame:(CGRect){maxWidth - marginX - rightLab.intrinsicContentSize.width, beginY + i * rowHeight, rightLab.intrinsicContentSize.width, rightLab.intrinsicContentSize.height}];
+                (void)[rightLab setFrame:(CGRect){infoViewWidth - marginX - rightLab.intrinsicContentSize.width, beginY + i * rowHeight, rightLab.intrinsicContentSize.width, rightLab.intrinsicContentSize.height}];
                 [_infoView addSubview:rightLab];
                 
-                if (maxHeight < CGRectGetMaxY(leftLab.frame) + 4) {
-                    maxHeight = CGRectGetMaxY(leftLab.frame) + 4;
+                if (infoViewHeight < CGRectGetMaxY(leftLab.frame) + 4) {
+                    infoViewHeight = CGRectGetMaxY(leftLab.frame) + 4;
                 }
             }
             
             UIButton *_exitBtn = (UIButton *)[vc valueForKey:@"_exitBtn"];
-            CGFloat infoViewY = _exitBtn.frame.origin.y - 10 - _actionView.bounds.size.height - 6 - maxHeight;
-            if (infoViewY < CGRectGetMaxY(highlightFrame)) {
+            CGFloat actionViewOffsetY = 6;
+            CGFloat infoViewY = _exitBtn.frame.origin.y - 10 - _actionView.bounds.size.height - actionViewOffsetY - infoViewHeight;
+            BOOL canFrameInTop = (60 + infoViewHeight + actionViewOffsetY + _actionView.bounds.size.height) <= CGRectGetMinY(highlightFrame);
+            if (infoViewY < CGRectGetMaxY(highlightFrame) && canFrameInTop) {
                 infoViewY = 60;
             }
-            (void)[_infoView setFrame:(CGRect){(vc.view.bounds.size.width - maxWidth) / 2, infoViewY, maxWidth, maxHeight}];
+            (void)[_infoView setFrame:(CGRect){(vc.view.bounds.size.width - infoViewWidth) / 2, infoViewY, infoViewWidth, infoViewHeight}];
     
             CGRect actionViewFrame = _actionView.frame;
-            actionViewFrame.origin.y = CGRectGetMaxY(_infoView.frame) + 6;
+            actionViewFrame.origin.y = CGRectGetMaxY(_infoView.frame) + actionViewOffsetY;
             (void)[_actionView setFrame:(CGRect)actionViewFrame];
     
             [vc.view setNeedsLayout];
