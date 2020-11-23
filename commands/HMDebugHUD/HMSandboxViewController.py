@@ -24,6 +24,7 @@ import lldb
 import HMLLDBHelpers as HM
 import HMLLDBClassInfo
 import HMProgressHUD
+import HMDebugBaseViewController
 
 
 gClassName = "HMSandboxViewController"
@@ -38,7 +39,7 @@ def register() -> None:
     HMProgressHUD.show(f"Register {gClassName}...")
     HM.DPrint(f"Register {gClassName}...")
 
-    classValue = HM.allocateClass(gClassName, "HMDebugBaseViewController")
+    classValue = HM.allocateClass(gClassName, HMDebugBaseViewController.gClassName)
     HM.addIvar(classValue.GetValue(), "_tableView", "UITableView *")
     HM.addIvar(classValue.GetValue(), "_currentPath", "NSString *")
     HM.addIvar(classValue.GetValue(), "_childPaths", "NSMutableArray *")

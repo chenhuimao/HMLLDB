@@ -37,6 +37,7 @@ def register() -> None:
     if HM.existClass(gClassName):
         return
 
+    HMProgressHUD.register()
     HMDebugWindow.register()
     HMDebugBaseViewController.register()
 

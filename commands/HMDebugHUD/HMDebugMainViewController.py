@@ -255,12 +255,12 @@ def addFeatureMethods() -> bool:
 
 
 def makeSelectedAPPInfoIMP() -> lldb.SBValue:
-    command_script = '''
-        void (^IMPBlock)(UIViewController *) = ^(UIViewController *vc) {
-            Class objClass = (Class)objc_lookUpClass("HMDebugInfoViewController");
+    command_script = f'''
+        void (^IMPBlock)(UIViewController *) = ^(UIViewController *vc) {{
+            Class objClass = (Class)objc_lookUpClass("{HMDebugInfoViewController.gClassName}");
             UIViewController * objVC = (UIViewController *)[[objClass alloc] init];
             [vc.navigationController pushViewController:objVC animated:YES];
-        };
+        }};
 
         imp_implementationWithBlock(IMPBlock);    
     '''
@@ -269,12 +269,12 @@ def makeSelectedAPPInfoIMP() -> lldb.SBValue:
 
 
 def makeSelectedSandboxIMP() -> lldb.SBValue:
-    command_script = '''
-        void (^IMPBlock)(UIViewController *) = ^(UIViewController *vc) {
-            Class objClass = (Class)objc_lookUpClass("HMSandboxViewController");
+    command_script = f'''
+        void (^IMPBlock)(UIViewController *) = ^(UIViewController *vc) {{
+            Class objClass = (Class)objc_lookUpClass("{HMSandboxViewController.gClassName}");
             UIViewController * objVC = (UIViewController *)[[objClass alloc] init];
             [vc.navigationController pushViewController:objVC animated:YES];
-        };
+        }};
 
         imp_implementationWithBlock(IMPBlock);    
     '''
@@ -283,15 +283,15 @@ def makeSelectedSandboxIMP() -> lldb.SBValue:
 
 
 def makeSelectedInspectViewIMP() -> lldb.SBValue:
-    command_script = '''
-        void (^IMPBlock)(UIViewController *) = ^(UIViewController *vc) {
+    command_script = f'''
+        void (^IMPBlock)(UIViewController *) = ^(UIViewController *vc) {{
             [vc.navigationController dismissViewControllerAnimated:NO completion:nil];
             
-            Class objClass = (Class)objc_lookUpClass("HMInspectViewController");
-            if ((BOOL)[(Class)objClass respondsToSelector:@selector(start)]) {
+            Class objClass = (Class)objc_lookUpClass("{HMInspectViewController.gClassName}");
+            if ((BOOL)[(Class)objClass respondsToSelector:@selector(start)]) {{
                 (void)[objClass performSelector:@selector(start)];
-            }
-        };
+            }}
+        }};
 
         imp_implementationWithBlock(IMPBlock);    
     '''

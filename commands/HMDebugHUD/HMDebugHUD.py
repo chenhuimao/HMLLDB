@@ -270,11 +270,11 @@ def makeAddToKeyWindowIMP() -> lldb.SBValue:
 
 
 def makeTapSelfIMP() -> lldb.SBValue:
-    command_script = '''
-        void (^tapSelfBlock)(UIView *) = ^(UIView *HUD) {
-            Class cls = (Class)objc_lookUpClass("HMDebugMainViewController");
+    command_script = f'''
+        void (^tapSelfBlock)(UIView *) = ^(UIView *HUD) {{
+            Class cls = (Class)objc_lookUpClass("{HMDebugMainViewController.gClassName}");
             (id)[cls performSelector:@selector(present)];
-        };
+        }};
 
         imp_implementationWithBlock(tapSelfBlock);
 
