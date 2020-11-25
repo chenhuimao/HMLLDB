@@ -40,6 +40,7 @@ def register() -> None:
     HM.addIvar(classValue.GetValue(), "_contentView", "UIView *")
     HM.addIvar(classValue.GetValue(), "_indicator", "UIActivityIndicatorView *")
     HM.addIvar(classValue.GetValue(), "_textLab", "UILabel *")
+    HM.addIvar(classValue.GetValue(), "_hideDelayTimer", "NSTimer *")
     HM.registerClass(classValue.GetValue())
 
     # Add Class methods
@@ -53,6 +54,11 @@ def register() -> None:
     if not HM.judgeSBValueHasValue(showHUDIMPValue):
         return
     HM.addClassMethod(gClassName, "showHUD", showHUDIMPValue.GetValue(), "@@:")
+
+    showOnlyTextIMPValue = makeShowOnlyTextHiddenAfterDelayIMP()
+    if not HM.judgeSBValueHasValue(showOnlyTextIMPValue):
+        return
+    HM.addClassMethod(gClassName, "showOnlyText:hiddenAfterDelay:", showOnlyTextIMPValue.GetValue(), "@@:@i")
 
     hideHUDIMPValue = makeHideHUDIMP()
     if not HM.judgeSBValueHasValue(hideHUDIMPValue):
@@ -133,10 +139,49 @@ def makeShowHUDIMP() -> lldb.SBValue:
             }} else {{
                 [[HUD superview] bringSubviewToFront:HUD];
             }}
-            
-            UIActivityIndicatorView *indicator = [HUD valueForKey:@"_indicator"];
+                        
+            UIActivityIndicatorView *indicator = (UIActivityIndicatorView *)[HUD valueForKey:@"_indicator"];
+            [indicator setHidden:NO];
             [indicator startAnimating];
+
+            [HUD setNeedsLayout];
+            [HUD layoutIfNeeded];
             
+            return HUD;
+        }};
+
+        imp_implementationWithBlock(IMPBlock);    
+    '''
+
+    return HM.evaluateExpressionValue(command_script)
+
+
+def makeShowOnlyTextHiddenAfterDelayIMP() -> lldb.SBValue:
+    command_script = f'''
+        UIView * (^IMPBlock)(id, NSString *, int) = ^UIView *(id classSelf, NSString *text, int delay) {{
+            
+            UIView *HUD = (UIView *)[(Class)objc_lookUpClass("{gClassName}") performSelector:@selector(sharedInstance)];
+            
+            if ([HUD superview] == nil) {{
+                [[UIApplication sharedApplication].keyWindow addSubview:HUD];
+            }} else {{
+                [[HUD superview] bringSubviewToFront:HUD];
+            }}
+            
+            UIActivityIndicatorView *indicator = (UIActivityIndicatorView *)[HUD valueForKey:@"_indicator"];
+            [indicator setHidden:YES];
+            [indicator stopAnimating];
+
+            UILabel *textLab = (UILabel *)[HUD valueForKey:@"_textLab"];
+            [textLab setText:text];
+            
+            NSTimer * _hideDelayTimer = (NSTimer *)[HUD valueForKey:@"_hideDelayTimer"];
+            [_hideDelayTimer invalidate];
+
+            NSTimer *timer = [NSTimer timerWithTimeInterval:delay target:classSelf selector:@selector(hideHUD) userInfo:nil repeats:NO];
+            [[NSRunLoop currentRunLoop] addTimer:timer forMode:NSRunLoopCommonModes];
+            [HUD setValue:timer forKey:@"_hideDelayTimer"];
+
             [HUD setNeedsLayout];
             [HUD layoutIfNeeded];
             
@@ -160,6 +205,8 @@ def makeHideHUDIMP() -> lldb.SBValue:
             UILabel *textLab = (UILabel *)[HUD valueForKey:@"_textLab"];
             [textLab setText:@""];
             
+            NSTimer * _hideDelayTimer = (NSTimer *)[HUD valueForKey:@"_hideDelayTimer"];
+            [_hideDelayTimer invalidate];
             return HUD;
         }};
 
@@ -242,8 +289,8 @@ def makeLayoutSubviewsIMP() -> lldb.SBValue:
             
             
             UILabel *textLab = (UILabel *)[HUD valueForKey:@"_textLab"];
-            
-            UIView *contentView = [HUD valueForKey:@"_contentView"];
+            UIView *contentView = (UIView *)[HUD valueForKey:@"_contentView"];
+
             CGFloat contentViewHeight = 80;
             if ([textLab.text length] > 0) {{
                 contentViewHeight = 100;
@@ -259,7 +306,7 @@ def makeLayoutSubviewsIMP() -> lldb.SBValue:
             (void)[contentView setBounds:(CGRect){{0, 0, contentViewWidth, contentViewHeight}}];
             (void)[contentView setCenter:(CGPoint){{HUD.bounds.size.width / 2, HUD.bounds.size.height / 2}}];
             
-            UIActivityIndicatorView *indicator = [HUD valueForKey:@"_indicator"];
+            UIActivityIndicatorView *indicator = (UIActivityIndicatorView *)[HUD valueForKey:@"_indicator"];
             CGFloat indicatorWidth = indicator.intrinsicContentSize.width;
             CGFloat indicatorHeight = indicator.intrinsicContentSize.height;
             if ([textLab.text length] > 0) {{
@@ -271,6 +318,11 @@ def makeLayoutSubviewsIMP() -> lldb.SBValue:
             if ([textLab.text length] > 0) {{
                 CGFloat textLabHeight = textLab.intrinsicContentSize.height;
                 (void)[textLab setFrame:(CGRect){{0, contentViewHeight - 15 - textLabHeight, contentViewWidth, textLabHeight}}];
+            }}
+
+            if ([indicator isHidden]) {{
+                contentView.bounds = (CGRect){{0, 0, contentViewWidth, textLab.intrinsicContentSize.height + 40}};
+                (void)[textLab setFrame:contentView.bounds];
             }}
         }};
 

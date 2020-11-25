@@ -179,6 +179,7 @@ def makeViewDidLoadIMP() -> lldb.SBValue:
                 moveBtn.layer.cornerRadius = 18;
                 ((void (*)(id, SEL, id, long)) objc_msgSend)((id)moveBtn, @selector(setTitle:forState:), (id)text, 0); // UIControlStateNormal
                 ((void (*)(id, SEL, id, long)) objc_msgSend)((id)moveBtn, @selector(setTitleColor:forState:), (id)[UIColor blackColor], 0); // UIControlStateNormal
+                ((void (*)(id, SEL, id, long)) objc_msgSend)((id)moveBtn, @selector(setTitleColor:forState:), (id)[[UIColor blackColor] colorWithAlphaComponent:0.2], 1); // UIControlStateHighlighted
                 ((void (*)(id, SEL, id, SEL, long)) objc_msgSend)((id)moveBtn, @selector(addTarget:action:forControlEvents:), (id)vc, @selector(clickMoveBtn:), 64); // UIControlEventTouchUpInside
                 moveBtn.titleLabel.font = [UIFont systemFontOfSize:18 weight:(UIFontWeight)UIFontWeightBold];
                 return moveBtn;
@@ -211,6 +212,7 @@ def makeViewDidLoadIMP() -> lldb.SBValue:
                 btn.layer.cornerRadius = 3;
                 ((void (*)(id, SEL, id, long)) objc_msgSend)((id)btn, @selector(setTitle:forState:), (id)text, 0); // UIControlStateNormal
                 ((void (*)(id, SEL, id, long)) objc_msgSend)((id)btn, @selector(setTitleColor:forState:), (id)[UIColor blackColor], 0); // UIControlStateNormal
+                ((void (*)(id, SEL, id, long)) objc_msgSend)((id)btn, @selector(setTitleColor:forState:), (id)[[UIColor blackColor] colorWithAlphaComponent:0.2], 1); // UIControlStateHighlighted
                 btn.titleLabel.font = [UIFont systemFontOfSize:13 weight:(UIFontWeight)UIFontWeightBold];
                 return btn;
             }};
@@ -570,36 +572,45 @@ def makeClickMoveBtnIMP() -> lldb.SBValue:
 
 
 def makeIvarsActionIMP() -> lldb.SBValue:
-    command_script = '''
-        void (^IMPBlock)(UIViewController *) = ^(UIViewController *vc) {
+    command_script = f'''
+        void (^IMPBlock)(UIViewController *) = ^(UIViewController *vc) {{
             UIView *_targetView = (UIView *)[vc valueForKey:@"_targetView"];
             NSString *desc = (NSString *)[_targetView performSelector:NSSelectorFromString(@"_ivarDescription")];
             printf("\\n[HMLLDB]: _ivarDescription:\\n%s\\n", (char *)[desc UTF8String]);
-        };
+            
+            Class progressHUDCls = (Class)objc_lookUpClass("{HMProgressHUD.gClassName}");
+            ((id (*)(id, SEL, id, int)) objc_msgSend)((id)progressHUDCls, @selector(showOnlyText:hiddenAfterDelay:), @"Please check the Xcode console output", 4);
+        }};
         imp_implementationWithBlock(IMPBlock);
      '''
     return HM.evaluateExpressionValue(command_script)
 
 
 def makePropertiesActionIMP() -> lldb.SBValue:
-    command_script = '''
-        void (^IMPBlock)(UIViewController *) = ^(UIViewController *vc) {
+    command_script = f'''
+        void (^IMPBlock)(UIViewController *) = ^(UIViewController *vc) {{
             UIView *_targetView = (UIView *)[vc valueForKey:@"_targetView"];
             NSString *desc = (NSString *)[_targetView performSelector:NSSelectorFromString(@"_propertyDescription")];
             printf("\\n[HMLLDB]: _propertyDescription:\\n%s\\n", (char *)[desc UTF8String]);
-        };
+            
+            Class progressHUDCls = (Class)objc_lookUpClass("{HMProgressHUD.gClassName}");
+            ((id (*)(id, SEL, id, int)) objc_msgSend)((id)progressHUDCls, @selector(showOnlyText:hiddenAfterDelay:), @"Please check the Xcode console output", 4);
+        }};
         imp_implementationWithBlock(IMPBlock);
      '''
     return HM.evaluateExpressionValue(command_script)
 
 
 def makeMethodsActionIMP() -> lldb.SBValue:
-    command_script = '''
-        void (^IMPBlock)(UIViewController *) = ^(UIViewController *vc) {
+    command_script = f'''
+        void (^IMPBlock)(UIViewController *) = ^(UIViewController *vc) {{
             UIView *_targetView = (UIView *)[vc valueForKey:@"_targetView"];
             NSString *desc = (NSString *)[_targetView performSelector:NSSelectorFromString(@"_methodDescription")];
             printf("\\n[HMLLDB]: _methodDescription:\\n%s\\n", (char *)[desc UTF8String]);
-        };
+            
+            Class progressHUDCls = (Class)objc_lookUpClass("{HMProgressHUD.gClassName}");
+            ((id (*)(id, SEL, id, int)) objc_msgSend)((id)progressHUDCls, @selector(showOnlyText:hiddenAfterDelay:), @"Please check the Xcode console output", 4);
+        }};
         imp_implementationWithBlock(IMPBlock);
      '''
     return HM.evaluateExpressionValue(command_script)
