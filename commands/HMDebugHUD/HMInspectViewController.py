@@ -46,9 +46,11 @@ def register() -> None:
     HM.DPrint(f"Register {gClassName}...")
 
     classValue = HM.allocateClass(gClassName, HMDebugBaseViewController.gClassName)
+    HM.addIvar(classValue.GetValue(), "_previousKeyWindow", "UIWindow *")
     HM.addIvar(classValue.GetValue(), "_highlightView", "UIView *")
     HM.addIvar(classValue.GetValue(), "_targetView", "UIView *")
     HM.addIvar(classValue.GetValue(), "_exitBtn", "UIButton *")
+
     HM.addIvar(classValue.GetValue(), "_infoView", "UIView *")
     HM.addIvar(classValue.GetValue(), "_actionView", "UIButton *")
     HM.registerClass(classValue.GetValue())
@@ -92,6 +94,12 @@ def register() -> None:
         return
     HM.addInstanceMethod(gClassName, "handleTapRecognizer:", handleTapRecognizerIMPValue.GetValue(), "v@:@")
 
+    findSubviewAtPointInViewIMPValue = makeFindSubviewAtPointInViewIMP()
+    if not HM.judgeSBValueHasValue(findSubviewAtPointInViewIMPValue):
+        HMProgressHUD.hide()
+        return
+    HM.addInstanceMethod(gClassName, "findSubviewAtPoint:inView:", findSubviewAtPointInViewIMPValue.GetValue(), "@@:{CGPoint=dd}@")
+
     refreshTargetViewIMPValue = makeRefreshTargetViewIMP()
     if not HM.judgeSBValueHasValue(refreshTargetViewIMPValue):
         HMProgressHUD.hide()
@@ -111,11 +119,14 @@ def register() -> None:
 def makeStartIMP() -> lldb.SBValue:
     command_script = f'''
         UIViewController * (^IMPBlock)(id) = ^UIViewController *(id classSelf) {{
+            UIViewController *vc = (UIViewController *)[[(Class)objc_lookUpClass("{gClassName}") alloc] init];
+            [vc setValue:[UIApplication sharedApplication].keyWindow forKey:@"_previousKeyWindow"];
+
             UIWindow *window = (UIWindow *)[[(Class)objc_lookUpClass("{HMDebugWindow.gClassName}") alloc] init];
+            (void)[window setFrame:(CGRect)UIScreen.mainScreen.bounds];
             (void)[window setBackgroundColor:[UIColor clearColor]];
             window.windowLevel = UIWindowLevelAlert - 1;
             window.tag = {gWindowTag};
-            UIViewController *vc = (UIViewController *)[[(Class)objc_lookUpClass("{gClassName}") alloc] init];
             window.rootViewController = vc;
             [window makeKeyAndVisible];
             return vc;
@@ -322,7 +333,11 @@ def makeViewDidLayoutSubviewsIMP() -> lldb.SBValue:
 def makeClickExitBtnIMP() -> lldb.SBValue:
     command_script = '''
         void (^IMPBlock)(UIViewController *) = ^(UIViewController *vc) {
+            UIWindow *_previousKeyWindow = (UIWindow *)[vc valueForKey:@"_previousKeyWindow"];
+            [vc setValue:nil forKey:@"_previousKeyWindow"];
+            
             [[vc.view window] setHidden:YES];
+            [_previousKeyWindow makeKeyWindow];
         };
         imp_implementationWithBlock(IMPBlock);
      '''
@@ -350,8 +365,11 @@ def makeHandleTapRecognizerIMP() -> lldb.SBValue:
             // find targetView
             CGPoint point = [tapRecognizer locationInView:vc.view];
             UIView *_targetView = nil;
+            UIWindow *_previousKeyWindow = (UIWindow *)[vc valueForKey:@"_previousKeyWindow"];
             for (UIWindow *window in [UIApplication sharedApplication].windows.reverseObjectEnumerator) {
-    
+                if (_targetView) {
+                    break;
+                }
                 if (window == vc.view.window) {
                     continue;
                 }
@@ -360,12 +378,51 @@ def makeHandleTapRecognizerIMP() -> lldb.SBValue:
                 }
     
                 CGPoint wPoint = [window convertPoint:point fromWindow:vc.view.window];
-                _targetView = [window hitTest:wPoint withEvent:nil];
+                if (window == _previousKeyWindow) {
+                    _targetView = ((id (*)(id, SEL, CGPoint, id)) objc_msgSend)((id)vc, @selector(findSubviewAtPoint:inView:), wPoint, (id)window);
+                } else {
+                    _targetView = [window hitTest:wPoint withEvent:nil];
+                }
             }
     
             printf("\\n[HMLLDB]: %s\\n", (char *)[[_targetView description] UTF8String]);
             (void)[vc performSelector:@selector(refreshTargetView:) withObject:(id)_targetView];
         };
+        imp_implementationWithBlock(IMPBlock);
+     '''
+    return HM.evaluateExpressionValue(command_script)
+
+
+def makeFindSubviewAtPointInViewIMP() -> lldb.SBValue:
+    command_script = '''
+        UIView * (^IMPBlock)(UIViewController *, CGPoint, UIView *) = ^UIView *(UIViewController *vc, CGPoint point, UIView *view) {
+            NSArray *clsArr = @[[UITextField class], [UITextView class], [UIProgressView class], [UIActivityIndicatorView class], [UISlider class], [UISwitch class], [UIPageControl class], [UIStepper class]];
+            for (Class cls in clsArr) {
+                if ([view isKindOfClass:cls]) {
+                    return view;
+                }
+            }
+            
+            UIView *targetView = nil;
+            for (UIView *sView in view.subviews.reverseObjectEnumerator) {
+                if ([sView isHidden] || sView.alpha <= 0.01) {
+                    continue;
+                }
+                
+                if (CGRectContainsPoint(sView.frame, point)) {
+                    targetView = sView;
+                    break;;
+                }
+            }
+            
+            if (!targetView) {
+                return view;
+            }
+            
+            CGPoint tPoint = [targetView convertPoint:point fromView:view];
+            targetView = ((id (*)(id, SEL, CGPoint, id)) objc_msgSend)((id)vc, @selector(findSubviewAtPoint:inView:), tPoint, (id)targetView);
+            return targetView;
+        };  
         imp_implementationWithBlock(IMPBlock);
      '''
     return HM.evaluateExpressionValue(command_script)
