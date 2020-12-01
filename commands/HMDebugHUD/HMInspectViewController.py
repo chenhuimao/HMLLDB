@@ -649,14 +649,14 @@ def makeGetInfoArrayFromTargetViewIMP() -> lldb.SBValue:
                 }
             } else if ([targetView isKindOfClass:[UIButton class]]) {
                 UIButton *btn = (UIButton *)targetView;
-                if ([btn titleForState:UIControlStateNormal].length) {
+                if ([btn titleForState:0].length) { // UIControlStateNormal
                     [infoArray addObject:@[@"FontSize", [[NSString alloc] initWithFormat:@"%.2lf", btn.titleLabel.font.pointSize]]];
                     [infoArray addObject:@[@"FontName", btn.titleLabel.font.fontName]];
                     [infoArray addObject:@[@"TextColor", makeColorStringBlock(btn.titleLabel.textColor)]];
                 }
-                NSString *assetName = getAssetNameBlock([btn imageForState:UIControlStateNormal]);
+                NSString *assetName = getAssetNameBlock([btn imageForState:0]); // UIControlStateNormal
                 if ([assetName length] > 0) {
-                    [infoArray addObject:@[@"AssetName", assetName]];
+                    [infoArray addObject:@[@"AssetName.normal", assetName]];
                 }
             } else if ([targetView isKindOfClass:[UILabel class]]) {
                 UILabel *label = (UILabel *)targetView;
