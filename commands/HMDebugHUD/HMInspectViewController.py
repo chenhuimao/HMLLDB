@@ -106,6 +106,12 @@ def register() -> None:
         return
     HM.addInstanceMethod(gClassName, "refreshTargetView:", refreshTargetViewIMPValue.GetValue(), "v@:@")
 
+    getInfoArrayFromTargetViewIMPValue = makeGetInfoArrayFromTargetViewIMP()
+    if not HM.judgeSBValueHasValue(getInfoArrayFromTargetViewIMPValue):
+        HMProgressHUD.hide()
+        return
+    HM.addInstanceMethod(gClassName, "getInfoArrayFromTargetView:", getInfoArrayFromTargetViewIMPValue.GetValue(), "@@:@")
+
     # function action
     HM.DPrint(f"Add methods to {gClassName}.........")
     if not addFunctionMethods():
@@ -451,30 +457,8 @@ def makeRefreshTargetViewIMP() -> lldb.SBValue:
             CGRect highlightFrame = [vc.view.window convertRect:targetView.frame fromView:[targetView superview]];
             (void)[_highlightView setFrame:(CGRect)highlightFrame];
             
-            // infoView
-            NSMutableArray *infoArr = [[NSMutableArray alloc] init]; // NSMutableArray<NSArray<NSString *> *> *infoArr
-            NSString *address = [[NSString alloc] initWithFormat:@"%p", targetView];
-            [infoArr addObject:@[@"Address", address]];
-            NSString *frameStr = ({
-                NSString *frameX = [[NSString alloc] initWithFormat:@"%.1f", targetView.frame.origin.x];
-                if ([frameX hasSuffix:@".0"]) {
-                    frameX = [frameX substringToIndex:[frameX length] - 2];
-                }
-                NSString *frameY = [[NSString alloc] initWithFormat:@"%.1f", targetView.frame.origin.y];
-                if ([frameY hasSuffix:@".0"]) {
-                    frameY = [frameY substringToIndex:[frameY length] - 2];
-                }
-                NSString *frameWidthStr = [[NSString alloc] initWithFormat:@"%.1f", targetView.frame.size.width];
-                if ([frameWidthStr hasSuffix:@".0"]) {
-                    frameWidthStr = [frameWidthStr substringToIndex:[frameWidthStr length] - 2];
-                }
-                NSString *frameHeightStr = [[NSString alloc] initWithFormat:@"%.1f", targetView.frame.size.height];
-                if ([frameHeightStr hasSuffix:@".0"]) {
-                    frameHeightStr = [frameHeightStr substringToIndex:[frameHeightStr length] - 2];
-                }
-                [[NSString alloc] initWithFormat:@"{%@, %@, %@, %@}", frameX, frameY, frameWidthStr, frameHeightStr];
-            });
-            [infoArr addObject:@[@"Frame", frameStr]];
+            // infoView. NSArray<NSArray<NSString *> *> *infoArr
+            NSArray *infoArr = (NSArray *)[vc performSelector:@selector(getInfoArrayFromTargetView:) withObject:targetView];
             
             _infoView.hidden = targetView == nil;
             [_infoView.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
@@ -556,6 +540,155 @@ def makeRefreshTargetViewIMP() -> lldb.SBValue:
             [vc.view layoutIfNeeded];
         };
         
+        imp_implementationWithBlock(IMPBlock);
+     '''
+    return HM.evaluateExpressionValue(command_script)
+
+
+# The "infoView" is based on https://github.com/QMUI/LookinServer
+def makeGetInfoArrayFromTargetViewIMP() -> lldb.SBValue:
+    command_script = '''
+        NSArray * (^IMPBlock)(UIViewController *, UIView *) = ^NSArray *(UIViewController *vc, UIView *targetView) {
+            NSMutableArray *infoArray = [[NSMutableArray alloc] init]; // NSMutableArray<NSArray<NSString *> *> *infoArr
+            
+            // helper block
+            NSString *(^makeColorStringBlock)(UIColor *) = ^NSString *(UIColor *color) {
+                CGFloat r, g, b, a;
+                [color getRed:&r green:&g blue:&b alpha:&a];
+                
+                if (a >= 1) {
+                    return [[NSString alloc] initWithFormat:@"(%.0lf, %.0lf, %.0lf)", r * 255.0, g * 255.0, b * 255.0];
+                } else {
+                    return [[NSString alloc] initWithFormat:@"(%.0lf, %.0lf, %.0lf, %.2lf)", r * 255.0, g * 255.0, b * 255.0, a];
+                }
+            };
+            
+            NSString *(^getAssetNameBlock)(UIImage *) = ^NSString *(UIImage *img) {
+                UIImageAsset *imageAsset = (UIImageAsset *)[img imageAsset];
+                if ((BOOL)[imageAsset respondsToSelector:@selector(assetName)] && (BOOL)[imageAsset respondsToSelector:@selector(_assetManager)]) {
+                    id assetManager = (id)[imageAsset performSelector:@selector(_assetManager)];
+                    if (assetManager) {
+                        return (NSString *)[imageAsset performSelector:@selector(assetName)];
+                    }
+                }
+                return @"";
+            };
+            
+            // Address
+            NSString *address = [[NSString alloc] initWithFormat:@"%p", targetView];
+            [infoArray addObject:@[@"Address", address]];
+            // Frame
+            NSString *frameStr = ({
+                NSString *frameX = [[NSString alloc] initWithFormat:@"%.1f", targetView.frame.origin.x];
+                if ([frameX hasSuffix:@".0"]) {
+                    frameX = [frameX substringToIndex:[frameX length] - 2];
+                }
+                NSString *frameY = [[NSString alloc] initWithFormat:@"%.1f", targetView.frame.origin.y];
+                if ([frameY hasSuffix:@".0"]) {
+                    frameY = [frameY substringToIndex:[frameY length] - 2];
+                }
+                NSString *frameWidthStr = [[NSString alloc] initWithFormat:@"%.1f", targetView.frame.size.width];
+                if ([frameWidthStr hasSuffix:@".0"]) {
+                    frameWidthStr = [frameWidthStr substringToIndex:[frameWidthStr length] - 2];
+                }
+                NSString *frameHeightStr = [[NSString alloc] initWithFormat:@"%.1f", targetView.frame.size.height];
+                if ([frameHeightStr hasSuffix:@".0"]) {
+                    frameHeightStr = [frameHeightStr substringToIndex:[frameHeightStr length] - 2];
+                }
+                [[NSString alloc] initWithFormat:@"{%@, %@, %@, %@}", frameX, frameY, frameWidthStr, frameHeightStr];
+            });
+            [infoArray addObject:@[@"Frame", frameStr]];
+            
+            // BackgroundColor
+            if ((UIColor *)[targetView backgroundColor]) {
+                NSString *colorString = makeColorStringBlock((UIColor *)[targetView backgroundColor]);
+                [infoArray addObject:@[@"BackgroundColor", colorString]];
+            }
+            
+            // Alpha
+            if (targetView.alpha < 1) {
+                NSString *alphaString = [[NSString alloc] initWithFormat:@"%.2lf", targetView.alpha];
+                [infoArray addObject:@[@"Alpha", alphaString]];
+            }
+            
+            // CornerRadius
+            if (targetView.layer.cornerRadius > 0) {
+                NSString *radiusString = [[NSString alloc] initWithFormat:@"%.2lf", targetView.layer.cornerRadius];
+                [infoArray addObject:@[@"CornerRadius", radiusString]];
+            }
+            
+            // BorderColor & BorderWidth
+            if (targetView.layer.borderColor && targetView.layer.borderWidth > 0) {
+                UIColor *borderColor = [[UIColor alloc] initWithCGColor:targetView.layer.borderColor];
+                NSString *colorString = makeColorStringBlock(borderColor);
+                [infoArray addObject:@[@"BorderColor", colorString]];
+                NSString *widthString = [[NSString alloc] initWithFormat:@"%.2lf", targetView.layer.borderWidth];
+                [infoArray addObject:@[@"BorderWidth", widthString]];
+            }
+            
+            // Shadow
+            if (targetView.layer.shadowColor && targetView.layer.shadowOpacity > 0) {
+                UIColor *shadowColor = [[UIColor alloc] initWithCGColor:targetView.layer.shadowColor];
+                [infoArray addObject:@[@"ShadowColor", makeColorStringBlock(shadowColor)]];
+                [infoArray addObject:@[@"ShadowOpacity", [[NSString alloc] initWithFormat:@"%.2lf", targetView.layer.shadowOpacity]]];
+                [infoArray addObject:@[@"ShadowOffset", [[NSString alloc] initWithFormat:@"%@", NSStringFromCGSize(targetView.layer.shadowOffset)]]];
+                [infoArray addObject:@[@"ShadowRadius", [[NSString alloc] initWithFormat:@"%.2lf", targetView.layer.shadowRadius]]];
+            }
+            
+            // UIImageView
+            // UIButton
+            // UILabel
+            // UIScrollView
+            // UITextView
+            // UITextField
+            if ([targetView isKindOfClass:[UIImageView class]]) {
+                UIImageView *imageView = (UIImageView *)targetView;
+                NSString *assetName = getAssetNameBlock([imageView image]);
+                if ([assetName length] > 0) {
+                    [infoArray addObject:@[@"AssetName", assetName]];
+                }
+            } else if ([targetView isKindOfClass:[UIButton class]]) {
+                UIButton *btn = (UIButton *)targetView;
+                if ([btn titleForState:UIControlStateNormal].length) {
+                    [infoArray addObject:@[@"FontSize", [[NSString alloc] initWithFormat:@"%.2lf", btn.titleLabel.font.pointSize]]];
+                    [infoArray addObject:@[@"FontName", btn.titleLabel.font.fontName]];
+                    [infoArray addObject:@[@"TextColor", makeColorStringBlock(btn.titleLabel.textColor)]];
+                }
+                NSString *assetName = getAssetNameBlock([btn imageForState:UIControlStateNormal]);
+                if ([assetName length] > 0) {
+                    [infoArray addObject:@[@"AssetName", assetName]];
+                }
+            } else if ([targetView isKindOfClass:[UILabel class]]) {
+                UILabel *label = (UILabel *)targetView;
+                [infoArray addObject:@[@"FontSize", [[NSString alloc] initWithFormat:@"%.2lf", label.font.pointSize]]];
+                [infoArray addObject:@[@"FontName", label.font.fontName]];
+                [infoArray addObject:@[@"TextColor", makeColorStringBlock(label.textColor)]];
+                [infoArray addObject:@[@"NumberOfLines", [NSString stringWithFormat:@"%ld", label.numberOfLines]]];
+            } else if ([targetView isKindOfClass:[UIScrollView class]]) {
+                UIScrollView *scrollView = (UIScrollView *)targetView;
+                [infoArray addObject:@[@"ContentSize", NSStringFromCGSize(scrollView.contentSize)]];
+                [infoArray addObject:@[@"ContentOffset", NSStringFromCGPoint(scrollView.contentOffset)]];
+                [infoArray addObject:@[@"ContentInset", NSStringFromUIEdgeInsets(scrollView.contentInset)]];
+                if ([scrollView respondsToSelector:@selector(adjustedContentInset)]) {
+                    [infoArray addObject:@[@"AdjustedContentInset", NSStringFromUIEdgeInsets(scrollView.adjustedContentInset)]];
+                }
+                
+                if ([scrollView isKindOfClass:[UITextView class]]) {
+                    UITextView *textView = (UITextView *)scrollView;
+                    [infoArray addObject:@[@"FontSize", [[NSString alloc] initWithFormat:@"%.2lf", textView.font.pointSize]]];
+                    [infoArray addObject:@[@"FontName", textView.font.fontName]];
+                    [infoArray addObject:@[@"TextColor", makeColorStringBlock(textView.textColor)]];
+                }
+            } else if ([targetView isKindOfClass:[UITextField class]]) {
+                UITextField *textField = (UITextField *)targetView;
+                [infoArray addObject:@[@"FontSize", [[NSString alloc] initWithFormat:@"%.2lf", textField.font.pointSize]]];
+                [infoArray addObject:@[@"FontName", textField.font.fontName]];
+                [infoArray addObject:@[@"TextColor", makeColorStringBlock(textField.textColor)]];
+            }
+            
+            return [infoArray copy];
+        };
+    
         imp_implementationWithBlock(IMPBlock);
      '''
     return HM.evaluateExpressionValue(command_script)

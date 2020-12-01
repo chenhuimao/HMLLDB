@@ -12,4 +12,4 @@ command alias -h "Alias for 'expression -l swift --'" -- sp expression -l swift 
 
 command alias -h "Execute [CATransaction flush]" -- caflush expression -l objc -- (void)[CATransaction flush]
 
-command regex ivars -h "Execute [%1 _ivarDescription]" -s "ivars <Instance>, 'ivars [UIView new]'" -- 's/(.+)/expression -l objc -O -- [%1 _ivarDescription]/'
+command regex ivars -h "Execute [%1 _ivarDescription]" -s "ivars <Instance>, Examples: ivars [UIView new], ivars 0x10e016000" -- 's/(.+)/expression -l objc -O -- [%1 _ivarDescription]/'

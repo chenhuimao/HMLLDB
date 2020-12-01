@@ -38,6 +38,10 @@ def inspect(debugger, command, exe_ctx, result, internal_dict):
     Examples:
         (lldb) inspect
 
+    Summary:
+        Inspect UIView.
+        The "infoView" is based on https://github.com/QMUI/LookinServer
+
     This command is implemented in HMInspectView.py
     """
 
