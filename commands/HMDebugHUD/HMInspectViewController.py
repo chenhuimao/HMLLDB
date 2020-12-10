@@ -325,7 +325,7 @@ def makeViewDidLayoutSubviewsIMP() -> lldb.SBValue:
             }}
 
             UIButton *_exitBtn = (UIButton *)[vc valueForKey:@"_exitBtn"];
-            CGSize exitBtnSize = CGSizeMake(_exitBtn.intrinsicContentSize.width + 20, _exitBtn.intrinsicContentSize.height);
+            CGSize exitBtnSize = (CGSize){{_exitBtn.intrinsicContentSize.width + 20, _exitBtn.intrinsicContentSize.height}}; 
             CGFloat exitBtnY = vc.view.frame.size.height - safeAreaInsets.bottom - 10 - exitBtnSize.height;
             (void)[_exitBtn setFrame:(CGRect){{(vc.view.frame.size.width - exitBtnSize.width) / 2, exitBtnY, exitBtnSize.width, exitBtnSize.height}}];
             _exitBtn.layer.cornerRadius = exitBtnSize.height / 2;
