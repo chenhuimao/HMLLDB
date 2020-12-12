@@ -23,6 +23,7 @@
 import lldb
 from typing import Optional
 import HMLLDBHelpers as HM
+import HMExpressionPrefix
 import HMLLDBClassInfo
 
 
@@ -274,7 +275,7 @@ def makeInitWithFrameIMP() -> lldb.SBValue:
         imp_implementationWithBlock(IMPBlock);    
     '''
 
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeLayoutSubviewsIMP() -> lldb.SBValue:

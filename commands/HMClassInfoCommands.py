@@ -81,7 +81,7 @@ def methods(debugger, command, exe_ctx, result, internal_dict):
     else:
         selName = "_methodDescription"
 
-    value = HM.evaluateExpressionValue(f'(NSString *)[{inputStr} performSelector:NSSelectorFromString(@"{selName}")]', False)
+    value = HM.evaluateExpressionValue(expression=f'(NSString *)[{inputStr} performSelector:NSSelectorFromString(@"{selName}")]', printErrors=False)
     if HM.successOfSBError(value.GetError()):
         HM.DPrint(value.GetObjectDescription())
         return
@@ -138,7 +138,7 @@ def properties(debugger, command, exe_ctx, result, internal_dict):
         HM.DPrint("Requires a argument, Please enter \"help properties\" for help.")
         return
 
-    value = HM.evaluateExpressionValue(f'(NSString *)[{command} performSelector:NSSelectorFromString(@"_propertyDescription")]', False)
+    value = HM.evaluateExpressionValue(expression=f'(NSString *)[{command} performSelector:NSSelectorFromString(@"_propertyDescription")]', printErrors=False)
     if HM.successOfSBError(value.GetError()):
         HM.DPrint(value.GetObjectDescription())
         return

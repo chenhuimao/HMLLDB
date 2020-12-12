@@ -25,6 +25,7 @@ import HMLLDBHelpers as HM
 import HMLLDBClassInfo
 import HMProgressHUD
 import HMDebugBaseViewController
+import HMExpressionPrefix
 
 
 gClassName = "HMSandboxViewController"
@@ -143,8 +144,8 @@ def makeLoadPathIMP() -> lldb.SBValue:
                 vc.navigationItem.title = [path lastPathComponent];
             }
             
-            NSMutableArray<NSString *> *childPaths = [[NSMutableArray alloc] init];
-            NSArray<NSString *> *subpaths = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:path error:NULL];
+            NSMutableArray *childPaths = [[NSMutableArray alloc] init]; // NSMutableArray<NSString *> *childPaths
+            NSArray *subpaths = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:path error:NULL]; // NSArray<NSString *> *subpaths
             for (NSString *subpath in subpaths) {
                 [childPaths addObject:[path stringByAppendingPathComponent:subpath]];
             }
@@ -162,7 +163,7 @@ def makeLoadPathIMP() -> lldb.SBValue:
         imp_implementationWithBlock(IMPBlock);
 
      '''
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeClickBackItemIMP() -> lldb.SBValue:

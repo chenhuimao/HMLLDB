@@ -22,6 +22,7 @@
 
 import lldb
 from typing import Any, List, Tuple
+import HMLLDBClassInfo
 
 
 gIsFirstCall = True
@@ -42,7 +43,7 @@ def DPrint(obj: Any) -> None:
     print(obj)
     
 
-def evaluateExpressionValue(expression: str, printErrors=True) -> lldb.SBValue:
+def evaluateExpressionValue(expression: str, prefix='', printErrors=True) -> lldb.SBValue:
     frame = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame()
 
     global gIsFirstCall
@@ -74,7 +75,8 @@ def evaluateExpressionValue(expression: str, printErrors=True) -> lldb.SBValue:
     # options.SetREPLMode(False)
     options.SetLanguage(lldb.eLanguageTypeObjC_plus_plus)
     options.SetSuppressPersistentResult(True)  # default: False
-    # options.SetPrefix(None)
+    if len(prefix) > 0:
+        options.SetPrefix(prefix)
     # options.SetAutoApplyFixIts(True)
 
     # options.SetTopLevel(False)

@@ -26,6 +26,7 @@ import HMLLDBClassInfo
 import HMDebugBaseViewController
 import HMDebugMainViewController
 import HMProgressHUD
+import HMExpressionPrefix
 
 
 def __lldb_init_module(debugger, internal_dict):
@@ -266,7 +267,7 @@ def makeAddToKeyWindowIMP() -> lldb.SBValue:
 
     '''
 
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeTapSelfIMP() -> lldb.SBValue:
@@ -508,7 +509,7 @@ def makeTouchesMovedWithEventIMP() -> lldb.SBValue:
         imp_implementationWithBlock(touchesMovedWithEventBlock);
 
     '''
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeTouchesEndedWithEventIMP() -> lldb.SBValue:
@@ -601,7 +602,7 @@ def makeAttachToEdgeIMP() -> lldb.SBValue:
         imp_implementationWithBlock(attachToEdgeBlock);
 
     '''
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def tapSelfBreakPointHandler(frame, bp_loc, internal_dict) -> bool:

@@ -183,12 +183,12 @@ def printClassName(title: str) -> None:
     print(f"\n\n====={title}================================")
 
 
-def printTraversal(obj: object, getsize: str, getelem: str) -> None:
-    size = getattr(obj, getsize)
-    elem = getattr(obj, getelem)
+def printTraversal(obj: object, getSize: str, getElem: str) -> None:
+    size = getattr(obj, getSize)
+    elem = getattr(obj, getElem)
     global gUnlimited
 
-    print(f"\n##### [{getelem}]({size()}) #####")
+    print(f"\n##### [{getElem}]({size()}) #####")
 
     for i in range(size()):
         if i == 100 and not gUnlimited:

@@ -25,6 +25,7 @@ import HMLLDBHelpers as HM
 import HMProgressHUD
 import HMDebugWindow
 import HMDebugBaseViewController
+import HMExpressionPrefix
 import HMLLDBClassInfo
 
 
@@ -333,7 +334,7 @@ def makeViewDidLayoutSubviewsIMP() -> lldb.SBValue:
 
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeClickExitBtnIMP() -> lldb.SBValue:
@@ -396,7 +397,7 @@ def makeHandleTapRecognizerIMP() -> lldb.SBValue:
         };
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeFindSubviewAtPointInViewIMP() -> lldb.SBValue:
@@ -431,7 +432,7 @@ def makeFindSubviewAtPointInViewIMP() -> lldb.SBValue:
         };  
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeRefreshTargetViewIMP() -> lldb.SBValue:
@@ -542,7 +543,7 @@ def makeRefreshTargetViewIMP() -> lldb.SBValue:
         
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 # The "infoView" is based on https://github.com/QMUI/LookinServer
@@ -758,7 +759,7 @@ def makeClickMoveBtnIMP() -> lldb.SBValue:
         };
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeIvarsActionIMP() -> lldb.SBValue:
