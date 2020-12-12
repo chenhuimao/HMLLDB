@@ -201,25 +201,21 @@ def addUpdateMethods() -> bool:
 
     debugHUDtickIMPValue = makeDebugHUDtickIMP()
     if not HM.judgeSBValueHasValue(debugHUDtickIMPValue):
-        HM.DPrint("Error debugHUDtickIMPValue, please fix it.")
         return False
     HM.addInstanceMethod(gClassName, "debugHUDtick:", debugHUDtickIMPValue.GetValue(), "v@:@")
 
     updateMemoryFootprintIMPValue = makeUpdateMemoryFootprintIMP()
     if not HM.judgeSBValueHasValue(updateMemoryFootprintIMPValue):
-        HM.DPrint("Error updateMemoryFootprintIMPValue, please fix it.")
         return False
     HM.addInstanceMethod(gClassName, "updateMemoryFootprint", updateMemoryFootprintIMPValue.GetValue(), "v@:")
 
     updateCPUUtilizationIMPValue = makeUpdateCPUUtilizationIMP()
     if not HM.judgeSBValueHasValue(updateCPUUtilizationIMPValue):
-        HM.DPrint("Error updateCPUUtilizationIMPValue, please fix it.")
         return False
     HM.addInstanceMethod(gClassName, "updateCPUUtilization", updateCPUUtilizationIMPValue.GetValue(), "v@:")
 
     updateFPSIMPValue = makeUpdateFPSIMP()
     if not HM.judgeSBValueHasValue(updateFPSIMPValue):
-        HM.DPrint("Error updateFPSIMPValue, please fix it.")
         return False
     HM.addInstanceMethod(gClassName, "updateFPS:", updateFPSIMPValue.GetValue(), "v@:i")
 
@@ -448,25 +444,21 @@ def addMoveMethods() -> bool:
 
     touchesMovedWithEventIMPValue = makeTouchesMovedWithEventIMP()
     if not HM.judgeSBValueHasValue(touchesMovedWithEventIMPValue):
-        HM.DPrint("Error touchesMovedWithEventIMPValue, please fix it.")
         return False
     HM.addInstanceMethod(gClassName, "touchesMoved:withEvent:", touchesMovedWithEventIMPValue.GetValue(), "v@:@@")
 
     touchesEndedWithEventIMPValue = makeTouchesEndedWithEventIMP()
     if not HM.judgeSBValueHasValue(touchesEndedWithEventIMPValue):
-        HM.DPrint("Error touchesEndedWithEventIMPValue, please fix it.")
         return False
     HM.addInstanceMethod(gClassName, "touchesEnded:withEvent:", touchesEndedWithEventIMPValue.GetValue(), "v@:@@")
 
     touchesCancelledWithEventIMPValue = makeTouchesCancelledWithEventIMP()
     if not HM.judgeSBValueHasValue(touchesCancelledWithEventIMPValue):
-        HM.DPrint("Error touchesCancelledWithEventIMPValue, please fix it.")
         return False
     HM.addInstanceMethod(gClassName, "touchesCancelled:withEvent:", touchesCancelledWithEventIMPValue.GetValue(), "v@:@@")
 
     attachToEdgeIMPValue = makeAttachToEdgeIMP()
     if not HM.judgeSBValueHasValue(attachToEdgeIMPValue):
-        HM.DPrint("Error attachToEdgeIMPValue, please fix it.")
         return False
     HM.addInstanceMethod(gClassName, "attachToEdge", attachToEdgeIMPValue.GetValue(), "v@:")
 

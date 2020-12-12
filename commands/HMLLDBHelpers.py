@@ -22,6 +22,7 @@
 
 import lldb
 from typing import Any, List, Tuple
+import inspect
 import HMLLDBClassInfo
 
 
@@ -87,6 +88,7 @@ def evaluateExpressionValue(expression: str, prefix='', printErrors=True) -> lld
 
     if printErrors and not successOfSBError(error):
         DPrint(error)
+        DPrint(inspect.getframeinfo(inspect.currentframe().f_back))
 
     return value
 
