@@ -130,6 +130,16 @@ def makeStartIMP() -> lldb.SBValue:
             [vc setValue:[UIApplication sharedApplication].keyWindow forKey:@"_previousKeyWindow"];
 
             UIWindow *window = (UIWindow *)[[(Class)objc_lookUpClass("{HMDebugWindow.gClassName}") alloc] init];
+            if ((BOOL)[[UIApplication sharedApplication] respondsToSelector:@selector(connectedScenes)]) {{
+                NSSet *scenes = [[UIApplication sharedApplication] connectedScenes]; // NSSet<UIScene *> *scenes
+                for (id scene in scenes) {{
+                    if ((long)[scene activationState] == 0 && (BOOL)[scene isKindOfClass:NSClassFromString(@"UIWindowScene")]) {{
+                        // UISceneActivationStateForegroundActive
+                        (void)[window setWindowScene:scene];
+                        break;
+                    }}
+                }}
+            }}
             (void)[window setFrame:(CGRect)UIScreen.mainScreen.bounds];
             (void)[window setBackgroundColor:[UIColor clearColor]];
             window.windowLevel = UIWindowLevelAlert - 1;

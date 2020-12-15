@@ -89,13 +89,16 @@ def makePresentIMP() -> lldb.SBValue:
             UIViewController *vc = (UIViewController *)[[NSClassFromString(@"{gClassName}") alloc] init];
             UINavigationController *nv = [[UINavigationController alloc] initWithRootViewController:vc];
             ((void (*)(id, SEL, long)) objc_msgSend)((id)nv, @selector(setModalPresentationStyle:), 0); // UIModalPresentationFullScreen
-            [[UIApplication sharedApplication].keyWindow.rootViewController presentViewController:nv animated:YES completion:nil];
-            
-             return vc;
-         }};
+            UIViewController *rootVC = [UIApplication sharedApplication].keyWindow.rootViewController;
+            if ([rootVC presentedViewController]) {{
+                [[rootVC presentedViewController] presentViewController:nv animated:YES completion:nil];
+            }} else {{
+                [rootVC presentViewController:nv animated:YES completion:nil];
+            }}
+            return vc;
+        }};
 
-         imp_implementationWithBlock(presentBlock);
-
+        imp_implementationWithBlock(presentBlock);
      '''
 
     return HM.evaluateExpressionValue(command_script)
