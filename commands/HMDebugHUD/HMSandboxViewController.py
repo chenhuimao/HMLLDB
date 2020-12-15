@@ -36,6 +36,9 @@ def register() -> None:
     if HM.existClass(gClassName):
         return
 
+    HMProgressHUD.register()
+    HMDebugBaseViewController.register()
+
     # Register class
     HMProgressHUD.show(f"Register {gClassName}...")
     HM.DPrint(f"Register {gClassName}...")
@@ -108,7 +111,11 @@ def makeViewDidLoadIMP() -> lldb.SBValue:
             (void)[vc.view setBackgroundColor:[[UIColor alloc] initWithRed:0.933 green:0.933 blue:0.961 alpha:1]];
             vc.navigationItem.title = @"SandBox";
             UIBarButtonItem *backItem = [[UIBarButtonItem alloc] initWithTitle:@"Back" style:(UIBarButtonItemStyle)UIBarButtonItemStylePlain target:vc action:@selector(clickBackItem)];
-            UIBarButtonItem *popItem = [[UIBarButtonItem alloc] initWithTitle:@"Pop" style:(UIBarButtonItemStyle)UIBarButtonItemStylePlain target:vc action:@selector(clickPopItem)];
+            NSString *popItemTitle = @"Pop";
+            if ([[vc.navigationController viewControllers] count] == 1) {{
+                popItemTitle = @"Dismiss";
+            }}
+            UIBarButtonItem *popItem = [[UIBarButtonItem alloc] initWithTitle:popItemTitle style:(UIBarButtonItemStyle)UIBarButtonItemStylePlain target:vc action:@selector(clickPopItem)];
             (void)[vc.navigationItem setLeftBarButtonItems:@[popItem, backItem]];
             
             // tableView
@@ -171,7 +178,7 @@ def makeClickBackItemIMP() -> lldb.SBValue:
         void (^IMPBlock)(UIViewController *) = ^(UIViewController *vc) {
             NSString *currentPath = (NSString *)[vc valueForKey:@"_currentPath"];
             if ([currentPath isEqual:(NSString *)NSHomeDirectory()]) {
-                [vc.navigationController popViewControllerAnimated:YES];
+                (void)[vc performSelector:@selector(clickPopItem)];
             } else {
                 NSString *upperDirectory = [currentPath stringByDeletingLastPathComponent];
                 (void)[vc performSelector:@selector(loadPath:) withObject:upperDirectory];
@@ -187,7 +194,11 @@ def makeClickBackItemIMP() -> lldb.SBValue:
 def makeClickPopItemIMP() -> lldb.SBValue:
     command_script = '''
         void (^IMPBlock)(UIViewController *) = ^(UIViewController *vc) {
-            [vc.navigationController popViewControllerAnimated:YES];
+            if ([[vc.navigationController viewControllers] count] == 1) {
+                [vc.navigationController dismissViewControllerAnimated:YES completion:nil];
+            } else {
+                [vc.navigationController popViewControllerAnimated:YES];
+            }
         };
         imp_implementationWithBlock(IMPBlock);
 
