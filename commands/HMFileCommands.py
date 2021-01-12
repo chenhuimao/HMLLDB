@@ -107,12 +107,12 @@ def deleteFile(debugger, command, exe_ctx, result, internal_dict):
 
     Options:
         --all/-a; Delete all file in the sandbox
-        --documents/-d; Delete documents's file
-        --library/-l; Delete library's file
-        --tmp/-t; Delete tmp's file
-        --caches/-c; Delete caches's file
-        --preferences/-p; Delete preferences's file
-        --file/-f; Delete the file or directory
+        --documents/-d; Delete the "~/Documents" directory
+        --library/-l; Delete the "~/Library" directory
+        --tmp/-t; Delete the "~/tmp" directory
+        --caches/-c; Delete the "~/Library/Caches" directory
+        --preferences/-p; Delete the "~Library/Preferences" directory
+        --file/-f; Delete the specified file or directory
 
     Examples:
         (lldb) deletefile -a
