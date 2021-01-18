@@ -102,7 +102,7 @@ def methods(debugger, command, exe_ctx, result, internal_dict):
 
         NSMutableString *result = [[NSMutableString alloc] init];
         if (inputClass == nil) {{
-            [result appendString:@"Unable to resolve {inputStr} or find {inputStr} class\\n"];
+            [result appendString:@"Unable to resolve {inputStr} or find {inputStr} class, maybe {inputStr} is not a subclass of NSObject\\n"];
         }} else {{
             if ((BOOL)[(Class)inputClass respondsToSelector:(SEL)NSSelectorFromString(@"{selName}")]) {{
                 [result appendString:(NSString *)[inputClass performSelector:NSSelectorFromString(@"{selName}")]];
@@ -159,7 +159,7 @@ def properties(debugger, command, exe_ctx, result, internal_dict):
 
         NSMutableString *result = [[NSMutableString alloc] init];
         if (inputClass == nil) {{
-            [result appendString:@"Unable to resolve {command} or find {command} class\\n"];
+            [result appendString:@"Unable to resolve {command} or find {command} class, maybe {command} is not a subclass of NSObject\\n"];
         }} else {{
             if ((BOOL)[(Class)inputClass respondsToSelector:(SEL)NSSelectorFromString(@"_propertyDescription")]) {{
                 [result appendString:(NSString *)[inputClass performSelector:NSSelectorFromString(@"_propertyDescription")]];
@@ -194,12 +194,12 @@ def findClass(debugger, command, exe_ctx, result, internal_dict):
     HM.DPrint("Waiting...")
 
     if len(command) == 0:
-        addObjectScript = '[classNames appendFormat:@"%@\\n", name]; findCount += 1;'
+        addObjectScript = '[classNames appendFormat:@"%@ (%p)\\n", name, classList[i]]; findCount += 1;'
     else:
         command = command.lower()
         addObjectScript = f'''
             if ([[name lowercaseString] containsString:@"{command}"]) {{
-                [classNames appendFormat:@"%@\\n", name];
+                [classNames appendFormat:@"%@ (%p)\\n", name, classList[i]];
                 findCount += 1;
             }}
         '''
@@ -454,6 +454,8 @@ def findMethod(debugger, command, exe_ctx, result, internal_dict):
                     [result insertString:@"No method found.\\n" atIndex:0];
                 }} else {{
                     [result insertString:[[NSString alloc] initWithFormat:@"Instance methods count: %u. Class method count: %u.\\n", instanceMethodCount, classMethodCount] atIndex:0];
+                    NSString *clsName = [[NSString alloc] initWithUTF8String:class_getName(inputClass)];
+                    [result insertString:[[NSString alloc] initWithFormat:@"Class: %@ (%p)\\n", clsName, inputClass] atIndex:0];
                 }}
             }}
             
