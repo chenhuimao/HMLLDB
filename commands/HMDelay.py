@@ -28,7 +28,7 @@ from threading import Timer
 
 
 def __lldb_init_module(debugger, internal_dict):
-    debugger.HandleCommand('command script add -f HMDelay.delay delay -h "Executes specified lldb command after delay."')
+    debugger.HandleCommand('command script add -f HMDelay.delay delay -h "(deprecated)Executes specified lldb command after delay."')
 
 
 # Inspired by https://github.com/facebook/chisel/blob/master/commands/FBDelay.py
