@@ -34,7 +34,7 @@ def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand('command script add -f HMClassInfoCommands.findClass fclass -h "Find the class containing the input name(Case insensitive)."')
     debugger.HandleCommand('command script add -f HMClassInfoCommands.findSubclass fsubclass -h "Find the subclass of the input."')
     debugger.HandleCommand('command script add -f HMClassInfoCommands.findSuperClass fsuperclass -h "Find the superclass of the input."')
-    debugger.HandleCommand('command script add -f HMClassInfoCommands.findMethod fmethod -h "Find the method."')
+    debugger.HandleCommand('command script add -f HMClassInfoCommands.findMethod fmethod -h "Find the specified method in the method list, you can also find the method list of the specified class."')
 
 
 def methods(debugger, command, exe_ctx, result, internal_dict):

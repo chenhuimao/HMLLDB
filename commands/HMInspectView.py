@@ -27,7 +27,7 @@ import HMInspectViewController
 
 
 def __lldb_init_module(debugger, internal_dict):
-    debugger.HandleCommand('command script add -f HMInspectView.inspect inspect -h "Inspect UIView"')
+    debugger.HandleCommand('command script add -f HMInspectView.inspect inspect -h "Inspect UIView."')
 
 
 def inspect(debugger, command, exe_ctx, result, internal_dict):

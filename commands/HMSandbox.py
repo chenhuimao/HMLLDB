@@ -27,7 +27,7 @@ import HMSandboxViewController
 
 
 def __lldb_init_module(debugger, internal_dict):
-    debugger.HandleCommand('command script add -f HMSandbox.sandbox sandbox -h "Presenting a view controller of sandbox browser"')
+    debugger.HandleCommand('command script add -f HMSandbox.sandbox sandbox -h "Presenting a view controller of sandbox browser."')
 
 
 def sandbox(debugger, command, exe_ctx, result, internal_dict):
