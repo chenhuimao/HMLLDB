@@ -1,4 +1,5 @@
 `HMLLDB` is a collection of LLDB commands to assist in the debugging of iOS apps.  
+[中文介绍](https://juejin.cn/post/6922784750986297352)
 
 ## Features
 - Non-intrusive. Your iOS project does not need to be modified
