@@ -27,7 +27,7 @@ import HMSandboxViewController
 
 
 def __lldb_init_module(debugger, internal_dict):
-    debugger.HandleCommand('command script add -f HMSandbox.sandbox sandbox -h "Presenting a view controller of sandbox browser."')
+    debugger.HandleCommand('command script add -f HMSandbox.sandbox sandbox -h "Presenting a sandbox browser that can share and delete files."')
 
 
 def sandbox(debugger, command, exe_ctx, result, internal_dict):
@@ -37,9 +37,6 @@ def sandbox(debugger, command, exe_ctx, result, internal_dict):
 
     Examples:
         (lldb) sandbox
-
-    Summary:
-        Presenting a view controller of sandbox browser.
 
     This command is implemented in HMSandbox.py
     """

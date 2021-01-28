@@ -36,7 +36,7 @@ def push(debugger, command, exe_ctx, result, internal_dict):
     """
     Syntax:
         push <className>
-        push [--instance] <classInstance>
+        push [--instance] <instance>
 
     Options:
         --instance/-i; Push the UIViewController instance.
@@ -49,6 +49,9 @@ def push(debugger, command, exe_ctx, result, internal_dict):
         <PersonalViewController: 0x7fed30c5a070>
         (lldb) push -i 0x7fed30c5a070
 
+    Notice:
+        "push MyViewController" needs to execute "[[MyViewController alloc] init]" first.
+        If the initializer of the class requires parameters, or the class needs to pass parameters after initialization, this command may cause errors.
 
     This command is implemented in HMPushViewController.py
     """
