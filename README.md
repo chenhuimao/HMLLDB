@@ -8,7 +8,7 @@
 - Some commands provide interactive UI within the APP
 
 ## Requirements
-- Xcode 12.3
+- Xcode 12.4
 - 64-bit simulator or real device, iOS 9.0+
 - Debug configuration (or ***Optimization Level*** set [-O0]/[-Onone])
 
@@ -155,30 +155,30 @@ Kingfisher_Demo.HighResolutionCollectionViewController
 
 ```
 # Find the specified method in the method list. Case insensitive.
-(lldb) fmethod viewdidload
+(lldb) fmethod clear
 [HMLLDB] Waiting...
-[HMLLDB] Methods count: 158 
-(-) playbackControlsViewDidLoad:
-	Type encoding:v24@0:8@16
-	Class:AVPlaybackControlsController
-(-) turboModePlaybackControlsPlaceholderViewDidLoad:
-	Type encoding:v24@0:8@16
-	Class:AVPlaybackControlsController
-(-) viewDidLoad
+[HMLLDB] Methods count: 3725 
+(-) clearMemoryCache (0x10526f1c0)
 	Type encoding:v16@0:8
-	Class:AVNewsWidgetPlayerBehaviorContext
+	Class:Kingfisher.ImageCache
+(-) accessibilityClearInternalData (0x1084ffd08)
+	Type encoding:v16@0:8
+	Class:NSObject
+(+) _accessibilityClearProcessedClasses: (0x7fff2dc2cd25)
+	Type encoding:v24@0:8@16
+	Class:NSObject
 ...
 
 # Option -c: Find the method list of the specified class. Case sensitive.
 (lldb) fmethod -c ImageCache
 [HMLLDB] Waiting...
-[HMLLDB] Class: Kingfisher.ImageCache (0x10264c6f8)
+[HMLLDB] Class: Kingfisher.ImageCache (0x1052f26f8)
 Instance methods count: 3. Class method count: 0.
-(-) cleanExpiredDiskCache
+(-) cleanExpiredDiskCache (0x10526fa00)
 	Type encoding:v16@0:8
-(-) backgroundCleanExpiredDiskCache
+(-) backgroundCleanExpiredDiskCache (0x105271330)
 	Type encoding:v16@0:8
-(-) clearMemoryCache
+(-) clearMemoryCache (0x10526f1c0)
 	Type encoding:v16@0:8
 ```
 

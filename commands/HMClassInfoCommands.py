@@ -402,8 +402,8 @@ def findMethod(debugger, command, exe_ctx, result, internal_dict):
         if len(args) != 1:
             HM.DPrint("Error input, Please enter \"help fmethod\" for help.")
             return
-        elif len(args[0]) <= 5:
-            HM.DPrint("Argument length must be greater than 5.")
+        elif len(args[0]) <= 4:
+            HM.DPrint("Argument length must be greater than 4.")
             return
 
 
@@ -433,7 +433,8 @@ def findMethod(debugger, command, exe_ctx, result, internal_dict):
                     Method method = instanceMethodList[j];
                     SEL sel = method_getName(method);
                     NSString *selName = [[NSString alloc] initWithUTF8String:sel_getName(sel)];
-                    [result appendFormat:@"(-) %@\\n\\tType encoding:%s\\n", selName, method_getTypeEncoding(method)];
+                    void (*impl)() = (void (*)())method_getImplementation(method);
+                    [result appendFormat:@"(-) %@ (%p)\\n\\tType encoding:%s\\n", selName, impl, method_getTypeEncoding(method)];
                 }}
                 free(instanceMethodList);
                 
@@ -445,7 +446,8 @@ def findMethod(debugger, command, exe_ctx, result, internal_dict):
                         Method method = classMethodList[j];
                         SEL sel = method_getName(method);
                         NSString *selName = [[NSString alloc] initWithUTF8String:sel_getName(sel)];
-                        [result appendFormat:@"(+) %@\\n\\tType encoding:%s\\n", selName, method_getTypeEncoding(method)];
+                        void (*impl)() = (void (*)())method_getImplementation(method);
+                        [result appendFormat:@"(+) %@ (%p)\\n\\tType encoding:%s\\n", selName, impl, method_getTypeEncoding(method)];
                     }}
                     free(classMethodList);
                 }}
@@ -485,7 +487,8 @@ def findMethod(debugger, command, exe_ctx, result, internal_dict):
                     NSString *selName = [[NSString alloc] initWithUTF8String:sel_getName(sel)];
                     if ([[selName lowercaseString] containsString:inputMethodName]) {{
                         NSString *clsName = [[NSString alloc] initWithUTF8String:class_getName(cls)];
-                        [result appendFormat:@"(-) %@\\n\\tType encoding:%s\\n\\tClass:%@\\n", selName, method_getTypeEncoding(method), clsName];
+                        void (*impl)() = (void (*)())method_getImplementation(method);
+                        [result appendFormat:@"(-) %@ (%p)\\n\\tType encoding:%s\\n\\tClass:%@\\n", selName, impl, method_getTypeEncoding(method), clsName];
                         findCount += 1;
                     }}
                 }}
@@ -505,7 +508,8 @@ def findMethod(debugger, command, exe_ctx, result, internal_dict):
                     NSString *selName = [[NSString alloc] initWithUTF8String:sel_getName(sel)];
                     if ([[selName lowercaseString] containsString:inputMethodName]) {{
                         NSString *clsName = [[NSString alloc] initWithUTF8String:class_getName(cls)];
-                        [result appendFormat:@"(+) %@\\n\\tType encoding:%s\\n\\tClass:%@\\n", selName, method_getTypeEncoding(method), clsName];
+                        void (*impl)() = (void (*)())method_getImplementation(method);
+                        [result appendFormat:@"(+) %@ (%p)\\n\\tType encoding:%s\\n\\tClass:%@\\n", selName, impl, method_getTypeEncoding(method), clsName];
                         findCount += 1;
                     }}
                 }}
