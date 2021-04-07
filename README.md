@@ -43,6 +43,7 @@ For example, the command in my computer:
 | showhud        | Display the debug HUD on the key window, it is showing the memory usage, CPU utilization and FPS of the main thread |
 | sandbox        | Presenting a sandbox browser that can share and delete files |
 | inspect        | Inspect UIView |
+| request        | Print http/https request automatically |
 | environment    | Show diagnostic environment. |
 | ...            |                        |
 
@@ -273,6 +274,10 @@ It takes a few seconds to call the command for the first time.
 Inspect UIView of the current page.   
 ![img8](./img/img8.jpg)
 
+### request
+Print http/https request automatically.   
+The same request may be printed multiple times, please judge for yourself.   
+![request](./img/request.gif)
 
 ### environment
 Show diagnostic environment.   
