@@ -60,7 +60,7 @@ def evaluateExpressionValue(expression: str, prefix='', printErrors=True) -> lld
 
     options = lldb.SBExpressionOptions()
     # options.SetCoerceResultToId(False)
-    # options.SetFetchDynamicValue(0)
+    # options.SetFetchDynamicValue(0)  # default: lldb.eNoDynamicValues 0
 
     # options.SetUnwindOnError(True)
     options.SetIgnoreBreakpoints(True)  # default: False
@@ -77,8 +77,9 @@ def evaluateExpressionValue(expression: str, prefix='', printErrors=True) -> lld
     options.SetLanguage(lldb.eLanguageTypeObjC_plus_plus)
     options.SetSuppressPersistentResult(True)  # default: False
     if len(prefix) > 0:
-        options.SetPrefix(prefix)
+        options.SetPrefix(prefix)  # default: None
     # options.SetAutoApplyFixIts(True)
+    # options.SetRetriesWithFixIts(1)
 
     # options.SetTopLevel(False)
     # options.SetAllowJIT(True)

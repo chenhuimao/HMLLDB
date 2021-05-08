@@ -144,6 +144,8 @@ def plldbClassInfo(debugger, command, exe_ctx, result, internal_dict):
         pSBUnixSignals(None)
     if compareName("SBLaunchInfo"):
         pSBLaunchInfo(None)
+    if compareName("SBEnvironment"):
+        pSBEnvironment(None)
     if compareName("SBCommandInterpreter"):
         pSBCommandInterpreter(None)
     if compareName("SBQueue"):
@@ -379,6 +381,7 @@ def pSBTarget(obj: Optional[lldb.SBTarget]) -> None:
     printFormat("FindFirstGlobalVariable", target.FindFirstGlobalVariable("shared"))  # SBValue
     printFormat("FindGlobalVariables", target.FindGlobalVariables("shared", 2))  # SBValueList
     printFormat("FindGlobalFunctions.first", target.FindGlobalFunctions("viewDidLoad", 1, 0)[0])  # SBSymbolContext
+    printFormat("GetEnvironment", target.GetEnvironment())  # SBEnvironment
     printFormat("GetNumBreakpoints", target.GetNumBreakpoints())
     stringList = lldb.SBStringList()
     target.GetBreakpointNames(stringList)
@@ -522,7 +525,6 @@ def pSBFrame(obj: Optional[lldb.SBFrame]) -> None:
     printFormat("GetDisplayFunctionName", frame.GetDisplayFunctionName())
     printFormat("GetFunctionName", frame.GetFunctionName())
     printFormat("GuessLanguage", frame.GuessLanguage())  # LanguageType int
-    printFormat("IsSwiftThunk", frame.IsSwiftThunk())
     printFormat("IsInlined", frame.IsInlined())
     printFormat("IsArtificial", frame.IsArtificial())
     printFormat("GetFrameBlock", frame.GetFrameBlock())  # SBBlock
@@ -649,6 +651,7 @@ def pSBModule(obj: Optional[lldb.SBModule]) -> None:
     printFormat("GetSymbolFileSpec", module.GetSymbolFileSpec())  # SBFileSpec
     printFormat("GetObjectFileHeaderAddress", module.GetObjectFileHeaderAddress())  # SBAddress
     printFormat("GetObjectFileEntryPointAddress", module.GetObjectFileEntryPointAddress())  # SBAddress
+    printFormat("SBModule.GetNumberAllocatedModules", lldb.SBModule.GetNumberAllocatedModules())
 
     printTraversal(module, "GetNumCompileUnits", "GetCompileUnitAtIndex")  # [SBCompileUnit]
     printTraversal(module, "GetNumSymbols", "GetSymbolAtIndex")  # [SBSymbol]
@@ -860,6 +863,7 @@ def pSBBreakpoint(obj: Optional[lldb.SBBreakpoint]) -> None:
     printFormat("SBBreakpoint", bp)
     printFormat("GetID", bp.GetID())
     printFormat("IsValid", bp.IsValid())
+    printFormat("GetTarget", bp.GetTarget())  # SBTarget
     printFormat("IsEnabled", bp.IsEnabled())
     printFormat("IsOneShot", bp.IsOneShot())
     printFormat("IsInternal", bp.IsInternal())
@@ -879,6 +883,7 @@ def pSBBreakpoint(obj: Optional[lldb.SBBreakpoint]) -> None:
     printFormat("GetNames", getStringFromSBStringList(stringList))
     printFormat("GetNumResolvedLocations", bp.GetNumResolvedLocations())
     printFormat("GetNumLocations", bp.GetNumLocations())
+    printFormat("SerializeToStructuredData", bp.SerializeToStructuredData())  # SBStructuredData
     printFormat("IsHardware", bp.IsHardware())
 
     printTraversal(bp, "GetNumLocations", "GetLocationAtIndex")  # [SBBreakpointLocation]
@@ -1253,9 +1258,11 @@ def pSBPlatform(obj: Optional[lldb.SBPlatform]) -> None:
     else:
         platform = lldb.debugger.GetSelectedPlatform()
         # platform = lldb.debugger.GetSelectedTarget().GetPlatform()
+        # platform = lldb.SBPlatform.GetHostPlatform()
 
     printClassName("SBPlatform")
     printFormat("SBPlatform", platform)
+    printFormat("SBPlatform.GetHostPlatform", lldb.SBPlatform.GetHostPlatform())  # SBPlatform
     printFormat("IsValid", platform.IsValid())
     printFormat("GetWorkingDirectory", platform.GetWorkingDirectory())
     printFormat("GetName", platform.GetName())
@@ -1313,6 +1320,7 @@ def pSBLaunchInfo(obj: Optional[lldb.SBLaunchInfo]) -> None:
     printFormat("GetListener", info.GetListener())  # SBListener
     printFormat("GetNumArguments", info.GetNumArguments())
     printFormat("GetNumEnvironmentEntries", info.GetNumEnvironmentEntries())
+    printFormat("GetEnvironment", info.GetEnvironment())  # SBEnvironment
     printFormat("GetWorkingDirectory", info.GetWorkingDirectory())
     printFormat("GetLaunchFlags", info.GetLaunchFlags())
     printFormat("GetProcessPluginName", info.GetProcessPluginName())
@@ -1324,6 +1332,24 @@ def pSBLaunchInfo(obj: Optional[lldb.SBLaunchInfo]) -> None:
 
     printTraversal(info, "GetNumArguments", "GetArgumentAtIndex")  # [str]
     printTraversal(info, "GetNumEnvironmentEntries", "GetEnvironmentEntryAtIndex")  # [str]
+
+
+def pSBEnvironment(obj: Optional[lldb.SBEnvironment]) -> None:
+    if obj:
+        env = obj
+    else:
+        env = lldb.debugger.GetSelectedTarget().GetEnvironment()
+        # env = lldb.debugger.GetSelectedTarget().GetLaunchInfo().GetEnvironment()
+
+    printClassName("SBEnvironment")
+    printFormat("SBEnvironment", env)
+    printFormat("GetNumValues", env.GetNumValues())
+    entriesStringList = env.GetEntries()  # SBStringList
+    printFormat("GetEntries", entriesStringList)
+    printFormat("GetEntries(str)", getStringFromSBStringList(entriesStringList))
+
+    printTraversal(env, "GetNumValues", "GetNameAtIndex")
+    printTraversal(env, "GetNumValues", "GetValueAtIndex")
 
 
 def pSBCommandInterpreter(obj: Optional[lldb.SBCommandInterpreter]) -> None:
@@ -1422,5 +1448,6 @@ def pSBExpressionOptions(obj: Optional[lldb.SBExpressionOptions]) -> None:
     printFormat("GetSuppressPersistentResult", options.GetSuppressPersistentResult())
     printFormat("GetPrefix", options.GetPrefix())
     printFormat("GetAutoApplyFixIts", options.GetAutoApplyFixIts())
+    printFormat("GetRetriesWithFixIts", options.GetRetriesWithFixIts())
     printFormat("GetTopLevel", options.GetTopLevel())
     printFormat("GetAllowJIT", options.GetAllowJIT())
