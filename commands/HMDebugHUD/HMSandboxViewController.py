@@ -289,8 +289,13 @@ def makeCellForRowAtIndexPathIMP() -> lldb.SBValue:
             NSString * reuseIdentifier = @"Cell";
             UITableViewCell *cell = [tv dequeueReusableCellWithIdentifier:reuseIdentifier];
             if (cell == nil) {
-                cell = [[UITableViewCell alloc] initWithStyle:(UITableViewCellStyle)UITableViewCellStyleDefault reuseIdentifier:reuseIdentifier];
-                cell.accessoryType = (UITableViewCellAccessoryType)UITableViewCellAccessoryDisclosureIndicator;
+                // UITableViewCellStyleDefault
+                cell = [UITableViewCell alloc];
+                cell = ((UITableViewCell * (*)(id, SEL, long, id)) objc_msgSend)((id)cell, @selector(initWithStyle:reuseIdentifier:), 0, reuseIdentifier);
+                
+                // UITableViewCellAccessoryDisclosureIndicator
+                ((void (*)(id, SEL, long)) objc_msgSend)((id)cell, @selector(setAccessoryType:), 1);
+                
                 (void)[cell setBackgroundColor:[UIColor whiteColor]];
                             
                 UILabel *topLeftLab = [[UILabel alloc] init];

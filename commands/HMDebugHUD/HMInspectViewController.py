@@ -151,7 +151,7 @@ def makeStartIMP() -> lldb.SBValue:
 
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeViewDidLoadIMP() -> lldb.SBValue:

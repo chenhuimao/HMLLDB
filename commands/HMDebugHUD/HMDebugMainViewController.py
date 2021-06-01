@@ -190,9 +190,13 @@ def makeCellForRowAtIndexPathIMP() -> lldb.SBValue:
             NSString * reuseIdentifier = @"Cell";
             UITableViewCell *cell = [tv dequeueReusableCellWithIdentifier:reuseIdentifier];
             if (cell == nil) {
-                cell = [[UITableViewCell alloc] initWithStyle:(UITableViewCellStyle)0 reuseIdentifier:reuseIdentifier];
-                cell.selectionStyle = (UITableViewCellSelectionStyle)0;
-                cell.accessoryType = (UITableViewCellAccessoryType)1;
+                // UITableViewCellStyleDefault
+                cell = [UITableViewCell alloc];
+                cell = ((UITableViewCell * (*)(id, SEL, long, id)) objc_msgSend)((id)cell, @selector(initWithStyle:reuseIdentifier:), 0, reuseIdentifier);
+                // UITableViewCellSelectionStyleNone
+                ((void (*)(id, SEL, long)) objc_msgSend)((id)cell, @selector(setSelectionStyle:), 0);
+                // UITableViewCellAccessoryDisclosureIndicator
+                ((void (*)(id, SEL, long)) objc_msgSend)((id)cell, @selector(setAccessoryType:), 1);
             }
             
             long row = indexPath.row;
