@@ -417,7 +417,7 @@ def makeDidSelectRowAtIndexPathIMP() -> lldb.SBValue:
             if (isDirectory) {
                 (void)[vc performSelector:@selector(loadPath:) withObject:path];
             } else {
-                UIAlertController *alertController = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:(UIAlertControllerStyle)UIAlertControllerStyleActionSheet];
+                UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"Actions" message:nil preferredStyle:(UIAlertControllerStyle)UIAlertControllerStyleActionSheet];
                 
                 [alertController addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
                     (void)[vc performSelector:@selector(deleteFileOrDir:) withObject:path];
