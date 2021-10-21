@@ -390,6 +390,8 @@ def pSBTarget(obj: Optional[lldb.SBTarget]) -> None:
     printFormat("GetBroadcaster", target.GetBroadcaster())  # SBBroadcaster
     printFormat("FindSymbols", target.FindSymbols("UIView"))  # SBSymbolContextList
     printFormat("GetStackRedZoneSize", target.GetStackRedZoneSize())
+    module = target.GetProcess().GetSelectedThread().GetSelectedFrame().GetModule()
+    printFormat("IsLoaded", target.IsLoaded(module))
     printFormat("GetLaunchInfo", target.GetLaunchInfo())  # SBLaunchInfo
     printFormat("GetCollectingStats", target.GetCollectingStats())
     printFormat("GetStatistics", target.GetStatistics())  # SBStructuredData
@@ -540,6 +542,7 @@ def pSBFrame(obj: Optional[lldb.SBFrame]) -> None:
     printFormat("GetRegisters", frame.GetRegisters())  # SBValueList
     printFormat("FindVariable", frame.FindVariable("self"))  # SBValue
     printFormat("GetValueForVariablePath", frame.GetValueForVariablePath("self.customVariable"))  # SBValue
+    printFormat("GetLanguageSpecificData", frame.GetLanguageSpecificData())  # SBStructuredData
     printFormat("get_parent_frame", frame.get_parent_frame())  # SBFrame
 
 
@@ -953,6 +956,7 @@ def pSBType(obj: Optional[lldb.SBType]) -> None:
     printFormat("IsVectorType", t.IsVectorType())
     printFormat("IsTypedefType", t.IsTypedefType())
     printFormat("IsAnonymousType", t.IsAnonymousType())
+    printFormat("IsScopedEnumerationType", t.IsScopedEnumerationType())
     printFormat("GetPointerType", t.GetPointerType())  # SBType
     printFormat("GetPointeeType", t.GetPointeeType())  # SBType
     printFormat("GetReferenceType", t.GetReferenceType())  # SBType
@@ -960,6 +964,7 @@ def pSBType(obj: Optional[lldb.SBType]) -> None:
     printFormat("GetDereferencedType", t.GetDereferencedType())  # SBType
     printFormat("GetUnqualifiedType", t.GetUnqualifiedType())  # SBType
     printFormat("GetCanonicalType", t.GetCanonicalType())  # SBType
+    printFormat("GetEnumerationIntegerType", t.GetEnumerationIntegerType())  # SBType
     printFormat("GetArrayElementType", t.GetArrayElementType())  # SBType
     printFormat("GetVectorElementType", t.GetVectorElementType())  # SBType
     printFormat("GetBasicType", t.GetBasicType())  # BasicType int
@@ -967,6 +972,7 @@ def pSBType(obj: Optional[lldb.SBType]) -> None:
     printFormat("GetNumberOfDirectBaseClasses", t.GetNumberOfDirectBaseClasses())
     printFormat("GetNumberOfVirtualBaseClasses", t.GetNumberOfVirtualBaseClasses())
     printFormat("GetEnumMembers", t.GetEnumMembers())  # SBTypeEnumMemberList
+    printFormat("GetModule", t.GetModule())  # SBModule
     printFormat("GetName", t.GetName())
     printFormat("GetDisplayTypeName", t.GetDisplayTypeName())
     printFormat("GetTypeClass", t.GetTypeClass())  # TypeClass int
