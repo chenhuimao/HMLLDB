@@ -25,7 +25,7 @@ import HMLLDBHelpers as HM
 
 
 def __lldb_init_module(debugger, internal_dict):
-    debugger.HandleCommand('command script add -f HMFont.printFont pfont -h "Print all font names."')
+    debugger.HandleCommand('command script add -f HMFont.printFont pfont -h "Print all font names supported by the device."')
 
 
 def printFont(debugger, command, exe_ctx, result, internal_dict):
@@ -54,7 +54,7 @@ def printFont(debugger, command, exe_ctx, result, internal_dict):
             }
         }
         [result insertString:[[NSString alloc] initWithFormat:@"Family names count: %ld, font names count: %u\\n", [familyNames count], fontNamesCount] atIndex:0];
-        result;
+        (NSMutableString *)result;
     '''
 
     fontNames = HM.evaluateExpressionValue(command_script).GetObjectDescription()

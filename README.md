@@ -8,7 +8,7 @@
 - Some commands provide interactive UI within the APP
 
 ## Requirements
-- Xcode 12.5
+- Xcode 13.1
 - 64-bit simulator or real device, iOS 9.0+
 - Debug configuration (or ***Optimization Level*** set [-O0]/[-Onone])
 
@@ -37,6 +37,7 @@ For example, the command in my computer:
 | methods        | Execute `[inputClass _methodDescription]` or `[inputClass _shortMethodDescription]` |
 | properties     | Execute `[inputClass _propertyDescription]` |
 | ivars          | Execute `[instance _ivarDescription]` |
+| pfont          | Print all font names supported by the device |
 | plifecycle     | Print life cycle of UIViewController |
 | redirect       | Redirect stdout/stderr |
 | push           | Find UINavigationController in keyWindow then push a specified UIViewController |
@@ -211,6 +212,21 @@ in Kingfisher_Demo.NormalLoadingViewController:
 (lldb) methods KingfisherManager
 [HMLLDB] KingfisherManager is not a subclass of NSObject
 
+```
+
+### pfont
+Print all font names supported by the device.   
+```
+(lldb) pfont
+[HMLLDB] Family names count: 81, font names count: 274
+familyNames: Academy Engraved LET
+	fontName: AcademyEngravedLetPlain
+familyNames: Al Nile
+	fontName: AlNile
+	fontName: AlNile-Bold
+familyNames: American Typewriter
+	fontName: AmericanTypewriter
+...
 ```
 
 ### plifecycle

@@ -146,7 +146,7 @@ def getClassPrefixes() -> Tuple[List[str], lldb.SBValue]:
             }
         }
         free(classList);
-        clsPrefixes;
+        (NSMutableArray *)clsPrefixes;
     '''
 
     gClassPrefixesValue = evaluateExpressionValue(command_script)
@@ -164,7 +164,7 @@ def existClass(className: str) -> bool:
         if (cls) {{
             exist = YES;
         }}
-        exist;
+        (BOOL)exist;
     '''
 
     value = evaluateExpressionValue(command_script)
@@ -178,7 +178,7 @@ def allocateClass(className: str, superClassName: str) -> lldb.SBValue:
             Class superCls = (Class)objc_lookUpClass("{superClassName}");
             newCls = (Class)objc_allocateClassPair(superCls, "{className}", 0);
         }}
-        newCls;
+        (Class)newCls;
     '''
 
     return evaluateExpressionValue(command_script)
