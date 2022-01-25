@@ -113,8 +113,8 @@ def makeTickIMP() -> lldb.SBValue:
         
         void (^tickBlock)(UILabel *, CADisplayLink *) = ^(UILabel *fpsLabel, CADisplayLink *link) {
             NSNumber *countNum = [fpsLabel valueForKey:@"_count"];
-            int count = [countNum intValue] + 1;
-            [fpsLabel setValue:@(count) forKey:@"_count"];
+            int hm_count = [countNum intValue] + 1;
+            [fpsLabel setValue:@(hm_count) forKey:@"_count"];
             
             NSNumber *lastTimeNum = [fpsLabel valueForKey:@"_lastTime"];
             double delta = link.timestamp - [lastTimeNum doubleValue];
@@ -124,7 +124,7 @@ def makeTickIMP() -> lldb.SBValue:
     
             [fpsLabel setValue:@(link.timestamp) forKey:@"_lastTime"];
             
-            int fps = (int)((count / delta) + 0.5);
+            int fps = (int)((hm_count / delta) + 0.5);
             [fpsLabel setValue:@(0) forKey:@"_count"];
             
             UIColor *valueColor = [UIColor whiteColor];

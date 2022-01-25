@@ -336,8 +336,8 @@ def makeCellForRowAtIndexPathIMP() -> lldb.SBValue:
             BOOL isDirectory = [[attributes fileType] isEqual:NSFileTypeDirectory];
             NSString *bottomLeftText = nil;
             if (isDirectory) {
-                unsigned long count = [[fileManager contentsOfDirectoryAtPath:path error:NULL] count];
-                bottomLeftText = [[NSString alloc] initWithFormat:@"%lu item%@", count, (count == 1 ? @"" : @"s")];
+                unsigned long hm_count = [[fileManager contentsOfDirectoryAtPath:path error:NULL] count];
+                bottomLeftText = [[NSString alloc] initWithFormat:@"%lu item%@", hm_count, (hm_count == 1 ? @"" : @"s")];
             } else {
                 if (attributes) {
                     bottomLeftText = [[NSString alloc] initWithFormat:@"%@", [attributes fileModificationDate]];

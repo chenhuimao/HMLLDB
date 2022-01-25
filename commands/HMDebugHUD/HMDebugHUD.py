@@ -284,8 +284,8 @@ def makeDebugHUDtickIMP() -> lldb.SBValue:
 
         void (^debugHUDtickBlock)(UIView *, CADisplayLink *) = ^(UIView *HUD, CADisplayLink *link) {
             NSNumber *countNum = [HUD valueForKey:@"_count"];
-            int count = [countNum intValue] + 1;
-            [HUD setValue:@(count) forKey:@"_count"];
+            int hm_count = [countNum intValue] + 1;
+            [HUD setValue:@(hm_count) forKey:@"_count"];
 
             NSNumber *lastTimeNum = [HUD valueForKey:@"_lastTime"];
             double delta = link.timestamp - [lastTimeNum doubleValue];
@@ -296,7 +296,7 @@ def makeDebugHUDtickIMP() -> lldb.SBValue:
             [HUD setValue:@(link.timestamp) forKey:@"_lastTime"];
             [HUD setValue:@(0) forKey:@"_count"];
 
-            int fps = (int)((count / delta) + 0.5);
+            int fps = (int)((hm_count / delta) + 0.5);
             
             (void)[HUD updateMemoryFootprint];
             (void)[HUD updateCPUUtilization];
@@ -317,10 +317,10 @@ def makeUpdateMemoryFootprintIMP() -> lldb.SBValue:
             
             task_vm_info_data_t vmInfo;
             vmInfo.phys_footprint = 0;
-            mach_msg_type_number_t count = ((mach_msg_type_number_t) (sizeof(task_vm_info_data_t) / sizeof(natural_t)));
+            mach_msg_type_number_t hm_count = ((mach_msg_type_number_t) (sizeof(task_vm_info_data_t) / sizeof(natural_t)));
             unsigned int task_vm_info = 22;
             unsigned int task = {currentTask().GetValue()};
-            kern_return_t result = (kern_return_t)task_info((unsigned int)task, (unsigned int)task_vm_info, (task_info_t)&vmInfo, &count);
+            kern_return_t result = (kern_return_t)task_info((unsigned int)task, (unsigned int)task_vm_info, (task_info_t)&vmInfo, &hm_count);
             
             int kern_success = 0;
             if (result != kern_success) {{
@@ -358,15 +358,15 @@ def makeUpdateCPUUtilizationIMP() -> lldb.SBValue:
             thread_info_data_t thinfo;
             thread_act_array_t threads;
             thread_basic_info_t basic_info_t;
-            mach_msg_type_number_t count = 0;
+            mach_msg_type_number_t hm_count = 0;
             
             mach_msg_type_number_t thread_info_count = 32;
             int kern_success = 0;
             int thread_basic_info = 3;
             int th_flags_idle = 2;
             double th_usage_scale = 1000.0;
-            if ((kern_return_t)(task_threads({currentTask().GetValue()}, &threads, &count)) == kern_success) {{
-                for (int idx = 0; idx < count; idx++) {{
+            if ((kern_return_t)(task_threads({currentTask().GetValue()}, &threads, &hm_count)) == kern_success) {{
+                for (int idx = 0; idx < hm_count; idx++) {{
                     if ((kern_return_t)(thread_info(threads[idx], thread_basic_info, (thread_info_t)thinfo, &thread_info_count)) == kern_success) {{
                         basic_info_t = (thread_basic_info_t)thinfo;
         
@@ -380,7 +380,7 @@ def makeUpdateCPUUtilizationIMP() -> lldb.SBValue:
                     }}
                 }}
         
-                if ((kern_return_t)(vm_deallocate({currentTask().GetValue()}, (vm_address_t)threads, count * sizeof(thread_t))) != kern_success) {{
+                if ((kern_return_t)(vm_deallocate({currentTask().GetValue()}, (vm_address_t)threads, hm_count * sizeof(thread_t))) != kern_success) {{
                     printf("[HMLLDB] vm_deallocate failed\\n");
                 }}
             }}
