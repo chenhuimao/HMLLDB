@@ -122,6 +122,56 @@ def addOneShotBreakPointInIMP(imp: lldb.SBValue, callbackFunc: str, name: str) -
     bp.SetScriptCallbackFunction(callbackFunc)
 
 
+def getFunctionAddress(name: str, moduleName='') -> int:
+    target = lldb.debugger.GetSelectedTarget()
+    modulesCount = target.GetNumModules()
+    for i in range(modulesCount):
+        module = target.GetModuleAtIndex(i)
+        if len(moduleName) > 0:
+            fileName = module.GetFileSpec().GetFilename()
+            if not moduleName in fileName:
+                continue
+
+        sclist: lldb.SBSymbolContextList = module.FindFunctions(name, lldb.eFunctionNameTypeAny)
+        sclistCount = sclist.GetSize()
+        for j in range(sclistCount):
+            symbolContext = sclist.GetContextAtIndex(j)
+            address = symbolContextGetBaseRangeAddress(symbolContext)
+            if address.IsValid():
+                addressIntValue = address.GetLoadAddress(lldb.debugger.GetSelectedTarget())
+                return addressIntValue
+
+    return 0
+
+
+def symbolContextGetBaseRangeAddress(sc: lldb.SBSymbolContext) -> lldb.SBAddress:
+    # SymbolContext::GetAddressRange(...)
+    baseRangeAddress = lldb.SBAddress()
+    lineEntry = sc.GetLineEntry()
+    block = sc.GetBlock()
+    function = sc.GetFunction()
+    symbol = sc.GetSymbol()
+
+    # HMLLDBClassInfo.pSBSymbolContext(sc)
+    # HMLLDBClassInfo.pSBLineEntry(lineEntry)
+    # HMLLDBClassInfo.pSBBlock(block)
+    # HMLLDBClassInfo.pSBFunction(function)
+    # HMLLDBClassInfo.pSBSymbol(symbol)
+
+    if lineEntry.IsValid():
+        baseRangeAddress = lineEntry.GetStartAddress()
+    elif block.IsValid():
+        inlineBlock = block.GetContainingInlinedBlock()
+        if inlineBlock.IsValid():
+            baseRangeAddress = inlineBlock.GetRangeStartAddress(0)
+    elif function.IsValid():
+        baseRangeAddress = function.GetStartAddress()
+    elif symbol.IsValid():
+        baseRangeAddress = symbol.GetStartAddress()
+
+    return baseRangeAddress
+
+
 def getClassPrefixes() -> Tuple[List[str], lldb.SBValue]:
     global gClassPrefixes
     global gClassPrefixesValue

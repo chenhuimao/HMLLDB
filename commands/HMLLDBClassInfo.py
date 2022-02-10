@@ -626,11 +626,15 @@ def pSBSymbolContext(obj: Optional[lldb.SBSymbolContext]) -> None:
 
 
 def pSBModule(obj: Optional[lldb.SBModule]) -> None:
+    functionName = 'viewWillLayoutSubviews'
+    # functionName = 'CGRectMake'
+
     if obj:
         module = obj
     else:
-        module = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetModule()
-        # module = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")[0].GetModule()
+        # module = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetModule()
+        module = lldb.debugger.GetSelectedTarget().FindFunctions(functionName)[0].GetModule()
+        # module = lldb.debugger.GetSelectedTarget().GetModuleAtIndex(0)
 
     printClassName("SBModule")
     printFormat("SBModule", module)
@@ -641,9 +645,10 @@ def pSBModule(obj: Optional[lldb.SBModule]) -> None:
     printFormat("GetUUIDString", module.GetUUIDString())
     printFormat("GetNumCompileUnits", module.GetNumCompileUnits())
     printFormat("GetNumSymbols", module.GetNumSymbols())
-    printFormat("FindSymbol", module.FindSymbol("CGRectMake"))  # SBSymbol
-    printFormat("FindSymbols", module.FindSymbols("CGRectMake"))  # SBSymbolContextList
+    printFormat("FindSymbol", module.FindSymbol(functionName))  # SBSymbol
+    printFormat("FindSymbols", module.FindSymbols(functionName))  # SBSymbolContextList
     printFormat("GetNumSections", module.GetNumSections())
+    printFormat("FindFunctions", module.FindFunctions(functionName, lldb.eFunctionNameTypeAny))  # SBSymbolContextList
     printFormat("GetTypes", module.GetTypes())  # SBTypeList
     byteOrder = module.GetByteOrder()  # ByteOrder int
     printFormat("GetByteOrder(raw)", byteOrder)
@@ -756,6 +761,7 @@ def pSBBlock(obj: Optional[lldb.SBBlock]) -> None:
     printFormat("GetFirstChild", block.GetFirstChild())  # SBBlock
     printFormat("GetNumRanges", block.GetNumRanges())
     printFormat("GetRangeStartAddress", block.GetRangeStartAddress(0))  # SBAddress
+    printFormat("GetRangeEndAddress", block.GetRangeEndAddress(0))  # SBAddress
 
 
 def pSBCompileUnit(obj: Optional[lldb.SBCompileUnit]) -> None:
@@ -845,6 +851,7 @@ def pSBAddress(obj: Optional[lldb.SBAddress]) -> None:
     printFormat("SBAddress", address)
     printFormat("IsValid", address.IsValid())
     printFormat("GetFileAddress", address.GetFileAddress())
+    printFormat("GetLoadAddress", address.GetLoadAddress(lldb.debugger.GetSelectedTarget()))
     printFormat("GetSection", address.GetSection())  # SBSection
     printFormat("GetOffset", address.GetOffset())
     printFormat("GetSymbolContext", address.GetSymbolContext(lldb.eSymbolContextEverything))  # SBSymbolContext
@@ -1419,6 +1426,7 @@ def pSBSection(obj: Optional[lldb.SBSection]) -> None:
     printFormat("GetParent", section.GetParent())  # SBSection
     printFormat("GetNumSubSections", section.GetNumSubSections())
     printFormat("GetFileAddress", section.GetFileAddress())
+    printFormat("GetLoadAddress", section.GetLoadAddress(lldb.debugger.GetSelectedTarget()))
     printFormat("GetByteSize", section.GetByteSize())
     printFormat("GetFileOffset", section.GetFileOffset())
     printFormat("GetFileByteSize", section.GetFileByteSize())
