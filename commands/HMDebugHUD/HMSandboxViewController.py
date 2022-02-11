@@ -132,6 +132,9 @@ def makeViewDidLoadIMP() -> lldb.SBValue:
                 // UIScrollViewContentInsetAdjustmentAutomatic
                 ((void (*)(id, SEL, long)) objc_msgSend)((id)tv, @selector(setContentInsetAdjustmentBehavior:), 0);
             }}
+            if ([tv respondsToSelector:@selector(setSectionHeaderTopPadding:)]) {{
+                ((void (*)(id, SEL, double)) objc_msgSend)((id)tv, @selector(setSectionHeaderTopPadding:), 0);
+            }}
             [vc.view addSubview:tv];            
         }};
 

@@ -89,6 +89,12 @@ def makePresentIMP() -> lldb.SBValue:
             UIViewController *vc = (UIViewController *)[[NSClassFromString(@"{gClassName}") alloc] init];
             UINavigationController *nv = [[UINavigationController alloc] initWithRootViewController:vc];
             ((void (*)(id, SEL, long)) objc_msgSend)((id)nv, @selector(setModalPresentationStyle:), 0); // UIModalPresentationFullScreen
+            if ([nv.navigationBar respondsToSelector:@selector(setScrollEdgeAppearance:)]) {{
+                NSObject *barAppearance = (NSObject *)[[NSClassFromString(@"UINavigationBarAppearance") alloc] init];
+                ((void (*)(id, SEL, id)) objc_msgSend)((id)barAppearance, @selector(setBackgroundColor:), (id)[UIColor whiteColor]);
+                (void)[nv.navigationBar setScrollEdgeAppearance:barAppearance];
+                (void)[nv.navigationBar setStandardAppearance:barAppearance];
+            }}
             UIViewController *rootVC = [UIApplication sharedApplication].keyWindow.rootViewController;
             if ([rootVC presentedViewController]) {{
                 [[rootVC presentedViewController] presentViewController:nv animated:YES completion:nil];
