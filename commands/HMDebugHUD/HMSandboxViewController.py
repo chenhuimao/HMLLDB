@@ -47,6 +47,7 @@ def register() -> None:
     HM.addIvar(classValue.GetValue(), "_tableView", "UITableView *")
     HM.addIvar(classValue.GetValue(), "_currentPath", "NSString *")
     HM.addIvar(classValue.GetValue(), "_childPaths", "NSMutableArray *")
+    HM.addIvar(classValue.GetValue(), "_documentController", "UIDocumentInteractionController *")
     HM.registerClass(classValue.GetValue())
 
     # Add methods
@@ -75,12 +76,17 @@ def register() -> None:
         return
     HM.addInstanceMethod(gClassName, "clickPopItem", clickPopItemIMPValue.GetValue(), "v@:")
 
-    deleteFileOrDirIMPValue = makeDeleteFileOrDirIMP()
-    if not HM.judgeSBValueHasValue(deleteFileOrDirIMPValue):
+    deleteFileOrDirectoryIMPValue = makeDeleteFileOrDirectoryIMP()
+    if not HM.judgeSBValueHasValue(deleteFileOrDirectoryIMPValue):
         HMProgressHUD.hide()
         return
-    HM.addInstanceMethod(gClassName, "deleteFileOrDir:", deleteFileOrDirIMPValue.GetValue(), "v@:@")
+    HM.addInstanceMethod(gClassName, "deleteFileOrDirectory:", deleteFileOrDirectoryIMPValue.GetValue(), "v@:@")
 
+    shareFileOrDirectoryIMPValue = makeShareFileOrDirectoryIMP()
+    if not HM.judgeSBValueHasValue(shareFileOrDirectoryIMPValue):
+        HMProgressHUD.hide()
+        return
+    HM.addInstanceMethod(gClassName, "shareFileOrDirectory:", shareFileOrDirectoryIMPValue.GetValue(), "v@:@")
 
     # Methods related to tableView.
     HM.DPrint(f"Add methods to {gClassName}......")
@@ -209,7 +215,7 @@ def makeClickPopItemIMP() -> lldb.SBValue:
     return HM.evaluateExpressionValue(command_script)
 
 
-def makeDeleteFileOrDirIMP() -> lldb.SBValue:
+def makeDeleteFileOrDirectoryIMP() -> lldb.SBValue:
     command_script = '''
         void (^IMPBlock)(UIViewController *, NSString *) = ^(UIViewController *vc, NSString *path) {
             NSString *title = [[NSString alloc] initWithFormat:@"Delete %@?", [path lastPathComponent]];
@@ -228,6 +234,29 @@ def makeDeleteFileOrDirIMP() -> lldb.SBValue:
         };
         imp_implementationWithBlock(IMPBlock);
 
+     '''
+    return HM.evaluateExpressionValue(command_script)
+
+
+def makeShareFileOrDirectoryIMP() -> lldb.SBValue:
+    command_script = '''
+        void (^IMPBlock)(UIViewController *, NSString *) = ^(UIViewController *vc, NSString *path) {
+            BOOL isDirectory = NO;
+            BOOL exist = [[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDirectory];
+            NSURL *url = [[NSURL alloc] initFileURLWithPath:path];
+    
+            if (isDirectory) {
+                UIDocumentInteractionController *documentController = [[UIDocumentInteractionController alloc] init];
+                documentController.URL = url;
+                [documentController presentOptionsMenuFromRect:vc.view.bounds inView:vc.view animated:YES];
+                [vc setValue:documentController forKey:@"_documentController"];
+            } else {
+                NSArray *items = @[url];    // NSString、NSURL、UIImage
+                UIActivityViewController *controller = [[UIActivityViewController alloc] initWithActivityItems:items applicationActivities:nil];
+                [vc presentViewController:controller animated:YES completion:nil];
+            }
+        };
+        imp_implementationWithBlock(IMPBlock);
      '''
     return HM.evaluateExpressionValue(command_script)
 
@@ -272,13 +301,17 @@ def addTableViewMethods() -> bool:
         return False
     HM.addInstanceMethod(gClassName, "tableView:editingStyleForRowAtIndexPath:", editingStyleForRowAtIndexPathIMPValue.GetValue(), "q@:@@")
 
+    contextMenuConfigurationForRowAtIndexPathIMPValue = makeContextMenuConfigurationForRowAtIndexPathIMP()
+    if not HM.judgeSBValueHasValue(contextMenuConfigurationForRowAtIndexPathIMPValue):
+        return False
+    HM.addInstanceMethod(gClassName, "tableView:contextMenuConfigurationForRowAtIndexPath:point:", contextMenuConfigurationForRowAtIndexPathIMPValue.GetValue(), "@@:@@{CGPoint=dd}")
     return True
 
 
 def makeNumberOfRowsInSectionIMP() -> lldb.SBValue:
     command_script = '''
         long (^IMPBlock)(UIViewController *, UITableView *, long) = ^long(UIViewController *vc, UITableView *tv, long section) {
-            NSMutableArray *childPaths = (NSMutableArray *)[vc valueForKey:@"childPaths"];
+            NSMutableArray *childPaths = (NSMutableArray *)[vc valueForKey:@"_childPaths"];
             return [childPaths count];
         };
         imp_implementationWithBlock(IMPBlock);
@@ -323,7 +356,7 @@ def makeCellForRowAtIndexPathIMP() -> lldb.SBValue:
             }
             
             // data
-            NSMutableArray *childPaths = (NSMutableArray *)[vc valueForKey:@"childPaths"];
+            NSMutableArray *childPaths = (NSMutableArray *)[vc valueForKey:@"_childPaths"];
             NSString *path = childPaths[indexPath.row];
     
             UILabel *topLeftLab = (UILabel *)[cell.contentView viewWithTag:1111];
@@ -389,9 +422,9 @@ def makeCommitEditingStyleForRowAtIndexPathIMP() -> lldb.SBValue:
     command_script = '''
         void (^IMPBlock)(UIViewController *, UITableView *, UITableViewCellEditingStyle, NSIndexPath *) = ^(UIViewController *vc, UITableView *tv, UITableViewCellEditingStyle editingStyle, NSIndexPath *indexPath) {
             if (editingStyle == UITableViewCellEditingStyleDelete) {
-                NSMutableArray *childPaths = (NSMutableArray *)[vc valueForKey:@"childPaths"];
+                NSMutableArray *childPaths = (NSMutableArray *)[vc valueForKey:@"_childPaths"];
                 NSString *path = childPaths[indexPath.row];
-                (void)[vc performSelector:@selector(deleteFileOrDir:) withObject:path];
+                (void)[vc performSelector:@selector(deleteFileOrDirectory:) withObject:path];
             }
         };
         imp_implementationWithBlock(IMPBlock);
@@ -404,7 +437,7 @@ def makeDidSelectRowAtIndexPathIMP() -> lldb.SBValue:
         void (^IMPBlock)(UIViewController *, UITableView *, NSIndexPath *) = ^(UIViewController *vc, UITableView *tv, NSIndexPath *indexPath) {
             [tv deselectRowAtIndexPath:indexPath animated:YES];
     
-            NSMutableArray *childPaths = (NSMutableArray *)[vc valueForKey:@"childPaths"];
+            NSMutableArray *childPaths = (NSMutableArray *)[vc valueForKey:@"_childPaths"];
             NSString *path = childPaths[indexPath.row];
             
             BOOL isDirectory = NO;
@@ -420,19 +453,18 @@ def makeDidSelectRowAtIndexPathIMP() -> lldb.SBValue:
             if (isDirectory) {
                 (void)[vc performSelector:@selector(loadPath:) withObject:path];
             } else {
-                UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"Actions" message:nil preferredStyle:(UIAlertControllerStyle)UIAlertControllerStyleActionSheet];
+                UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"Manage File" message:nil preferredStyle:(UIAlertControllerStyle)UIAlertControllerStyleActionSheet];
                 
                 [alertController addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
-                    (void)[vc performSelector:@selector(deleteFileOrDir:) withObject:path];
+                    (void)[vc performSelector:@selector(deleteFileOrDirectory:) withObject:path];
                 }]];
                 
+                [alertController addAction:[UIAlertAction actionWithTitle:@"Copy Path" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                    (void)[[UIPasteboard generalPasteboard] setString:path];
+                }]];
+            
                 [alertController addAction:[UIAlertAction actionWithTitle:@"Share" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-                    NSURL *url = [[NSURL alloc] initFileURLWithPath:path];
-                    if (url) {
-                        NSArray *items = @[url];    // NSString、NSURL、UIImage
-                        UIActivityViewController *controller = [[UIActivityViewController alloc] initWithActivityItems:items applicationActivities:nil];
-                        [vc presentViewController:controller animated:YES completion:nil];
-                    }
+                    (void)[vc performSelector:@selector(shareFileOrDirectory:) withObject:path];
                 }]];
                 
                 [alertController addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:nil]];
@@ -488,3 +520,42 @@ def makeEditingStyleForRowAtIndexPathIMP() -> lldb.SBValue:
         imp_implementationWithBlock(IMPBlock);
      '''
     return HM.evaluateExpressionValue(command_script)
+
+
+def makeContextMenuConfigurationForRowAtIndexPathIMP() -> lldb.SBValue:
+    if not HM.existClass('UIContextMenuConfiguration'):
+        expression = '''
+            NSObject * (^IMPBlock)(NSObject *, NSObject *, NSObject *, CGPoint) = ^NSObject *(NSObject *vc, NSObject *tv, NSObject *indexPath, CGPoint point) {
+                return [[NSObject alloc] init];
+            };
+            imp_implementationWithBlock(IMPBlock);
+        '''
+        return HM.evaluateExpressionValue(expression)
+
+    command_script = '''
+        UIContextMenuConfiguration * (^IMPBlock)(UIViewController *, UITableView *, NSIndexPath *, CGPoint) = ^UIContextMenuConfiguration *(UIViewController *vc, UITableView *tv, NSIndexPath *indexPath, CGPoint point) {
+            
+            NSMutableArray *childPaths = (NSMutableArray *)[vc valueForKey:@"_childPaths"];
+            NSString *path = childPaths[indexPath.row];
+    
+            UIAction *deleteAction = [UIAction actionWithTitle:@"Delete" image:nil identifier:@"Delete" handler:^(UIAction *action) {
+                (void)[vc performSelector:@selector(deleteFileOrDirectory:) withObject:path];
+            }];
+            
+            UIAction *copyPathAction = [UIAction actionWithTitle:@"Copy Path" image:nil identifier:@"Copy Path" handler:^(UIAction *action) {
+                (void)[[UIPasteboard generalPasteboard] setString:path];
+            }];
+            
+            UIAction *shareAction = [UIAction actionWithTitle:@"Share" image:nil identifier:@"Share" handler:^(UIAction *action) {
+                (void)[vc performSelector:@selector(shareFileOrDirectory:) withObject:path];
+            }];
+            
+            UIContextMenuConfiguration *hm_configuration = [UIContextMenuConfiguration configurationWithIdentifier:nil previewProvider:nil actionProvider:^UIMenu *(NSArray *suggestedActions) {
+                return [UIMenu menuWithTitle:@"Manage File" children:@[deleteAction, copyPathAction, shareAction]];
+            }];
+            return hm_configuration;
+        };
+        imp_implementationWithBlock(IMPBlock);
+     '''
+    return HM.evaluateExpressionValue(command_script)
+
