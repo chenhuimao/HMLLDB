@@ -76,6 +76,12 @@ def register() -> None:
         return
     HM.addInstanceMethod(gClassName, "clickPopItem", clickPopItemIMPValue.GetValue(), "v@:")
 
+    alertAccessPermissionIMPValue = makeAlertAccessPermissionIMP()
+    if not HM.judgeSBValueHasValue(alertAccessPermissionIMPValue):
+        HMProgressHUD.hide()
+        return
+    HM.addInstanceMethod(gClassName, "alertAccessPermission", alertAccessPermissionIMPValue.GetValue(), "v@:")
+
     deleteFileOrDirectoryIMPValue = makeDeleteFileOrDirectoryIMP()
     if not HM.judgeSBValueHasValue(deleteFileOrDirectoryIMPValue):
         HMProgressHUD.hide()
@@ -215,15 +221,37 @@ def makeClickPopItemIMP() -> lldb.SBValue:
     return HM.evaluateExpressionValue(command_script)
 
 
+def makeAlertAccessPermissionIMP() -> lldb.SBValue:
+    command_script = '''
+        void (^IMPBlock)(UIViewController *) = ^(UIViewController *vc) {
+            UIAlertController *alertController = [UIAlertController alertControllerWithTitle:nil message:@"You don’t have permission to access it, or this file no longer exists." preferredStyle:(UIAlertControllerStyle)UIAlertControllerStyleAlert];
+            [alertController addAction:[UIAlertAction actionWithTitle:@"Cancel" style:(UIAlertActionStyle)UIAlertActionStyleCancel handler:nil]];
+            [vc presentViewController:alertController animated:YES completion:nil];
+        };
+        imp_implementationWithBlock(IMPBlock);
+     '''
+    return HM.evaluateExpressionValue(command_script)
+
+
 def makeDeleteFileOrDirectoryIMP() -> lldb.SBValue:
     command_script = '''
         void (^IMPBlock)(UIViewController *, NSString *) = ^(UIViewController *vc, NSString *path) {
+            BOOL exist = [[NSFileManager defaultManager] fileExistsAtPath:path];
+            if (!exist) {
+                (void)[vc performSelector:@selector(alertAccessPermission) withObject:path];
+                return;
+            }
+            
             NSString *title = [[NSString alloc] initWithFormat:@"Delete %@?", [path lastPathComponent]];
             UIAlertController *alertController = [UIAlertController alertControllerWithTitle:title message:nil preferredStyle:(UIAlertControllerStyle)UIAlertControllerStyleAlert];
     
             [alertController addAction:[UIAlertAction actionWithTitle:@"Delete" style:(UIAlertActionStyle)UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
                 NSFileManager *fileMgr = [NSFileManager defaultManager];
-                [fileMgr removeItemAtPath:path error:nil];
+                NSError *removeError;
+                [fileMgr removeItemAtPath:path error:&removeError];
+                if (removeError) {
+                    printf("\\n[HMLLDB]: remove error:%s\\n", (char *)[[removeError description] UTF8String]);
+                }
                 
                 NSString *currentPath = (NSString *)[vc valueForKey:@"_currentPath"];
                 (void)[vc performSelector:@selector(loadPath:) withObject:currentPath];
@@ -243,8 +271,12 @@ def makeShareFileOrDirectoryIMP() -> lldb.SBValue:
         void (^IMPBlock)(UIViewController *, NSString *) = ^(UIViewController *vc, NSString *path) {
             BOOL isDirectory = NO;
             BOOL exist = [[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDirectory];
+            if (!exist) {
+                (void)[vc performSelector:@selector(alertAccessPermission) withObject:path];
+                return;
+            }
+            
             NSURL *url = [[NSURL alloc] initFileURLWithPath:path];
-    
             if (isDirectory) {
                 UIDocumentInteractionController *documentController = [[UIDocumentInteractionController alloc] init];
                 documentController.URL = url;
@@ -444,9 +476,7 @@ def makeDidSelectRowAtIndexPathIMP() -> lldb.SBValue:
             BOOL exist = [[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDirectory];
     
             if (!exist) {
-                UIAlertController *alertController = [UIAlertController alertControllerWithTitle:nil message:@"You don’t have permission to access it, or this file no longer exists." preferredStyle:(UIAlertControllerStyle)UIAlertControllerStyleAlert];
-                [alertController addAction:[UIAlertAction actionWithTitle:@"Cancel" style:(UIAlertActionStyle)UIAlertActionStyleCancel handler:nil]];
-                [vc presentViewController:alertController animated:YES completion:nil];
+                (void)[vc performSelector:@selector(alertAccessPermission) withObject:path];
                 return;
             }
             
@@ -541,6 +571,8 @@ def makeContextMenuConfigurationForRowAtIndexPathIMP() -> lldb.SBValue:
             UIAction *deleteAction = [UIAction actionWithTitle:@"Delete" image:nil identifier:@"Delete" handler:^(UIAction *action) {
                 (void)[vc performSelector:@selector(deleteFileOrDirectory:) withObject:path];
             }];
+            // UIMenuElementAttributesDestructive
+            ((void (*)(id, SEL, long)) objc_msgSend)((id)deleteAction, @selector(setAttributes:), 2);
             
             UIAction *copyPathAction = [UIAction actionWithTitle:@"Copy Path" image:nil identifier:@"Copy Path" handler:^(UIAction *action) {
                 (void)[[UIPasteboard generalPasteboard] setString:path];
