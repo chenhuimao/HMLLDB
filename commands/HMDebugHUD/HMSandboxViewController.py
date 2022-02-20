@@ -52,6 +52,13 @@ def register() -> None:
 
     # Add methods
     HM.DPrint(f"Add methods to {gClassName}...")
+
+    initialPathIMPValue = makeInitialPathIMP()
+    if not HM.judgeSBValueHasValue(initialPathIMPValue):
+        HMProgressHUD.hide()
+        return
+    HM.addClassMethod(gClassName, "initialPath", initialPathIMPValue.GetValue(), "@@:")
+
     viewDidLoadIMPValue = makeViewDidLoadIMP()
     if not HM.judgeSBValueHasValue(viewDidLoadIMPValue):
         HMProgressHUD.hide()
@@ -80,7 +87,7 @@ def register() -> None:
     if not HM.judgeSBValueHasValue(alertAccessPermissionIMPValue):
         HMProgressHUD.hide()
         return
-    HM.addInstanceMethod(gClassName, "alertAccessPermission", alertAccessPermissionIMPValue.GetValue(), "v@:")
+    HM.addInstanceMethod(gClassName, "alertAccessPermission:", alertAccessPermissionIMPValue.GetValue(), "v@:@")
 
     deleteFileOrDirectoryIMPValue = makeDeleteFileOrDirectoryIMP()
     if not HM.judgeSBValueHasValue(deleteFileOrDirectoryIMPValue):
@@ -105,6 +112,16 @@ def register() -> None:
     HMProgressHUD.hide()
 
 
+def makeInitialPathIMP() -> lldb.SBValue:
+    command_script = '''
+        NSString * (^IMPBlock)(id) = ^NSString *(id classSelf) {
+            return @"HMLLDB_Sandbox_Initial_Path";
+        };
+        imp_implementationWithBlock(IMPBlock);
+     '''
+    return HM.evaluateExpressionValue(command_script)
+
+
 def makeViewDidLoadIMP() -> lldb.SBValue:
     command_script = f'''
         void (^IMPBlock)(UIViewController *) = ^(UIViewController *vc) {{
@@ -117,7 +134,8 @@ def makeViewDidLoadIMP() -> lldb.SBValue:
             ((void (*)(struct objc_super *, SEL))objc_msgSendSuper)(&superInfo, @selector(viewDidLoad));
 
             // initialize ivar and dataSource
-            (void)[vc performSelector:@selector(loadPath:) withObject:NSHomeDirectory()];
+            NSString *initialPath = (NSString *)[cls performSelector:@selector(initialPath)];
+            (void)[vc performSelector:@selector(loadPath:) withObject:initialPath];
             
             // property initialize
             (void)[vc.view setBackgroundColor:[[UIColor alloc] initWithRed:0.933 green:0.933 blue:0.961 alpha:1]];
@@ -160,16 +178,29 @@ def makeLoadPathIMP() -> lldb.SBValue:
     command_script = '''
         void (^IMPBlock)(UIViewController *, NSString *) = ^(UIViewController *vc, NSString *path) {
             [vc setValue:path forKey:@"_currentPath"];
-            if ([path isEqual:(NSString *)NSHomeDirectory()]) {
-                vc.navigationItem.title = @"SandBox";
+            NSString *initialPath = (NSString *)[(Class)[vc class] performSelector:@selector(initialPath)];
+            BOOL isInitialPath = [path isEqual:initialPath];
+            BOOL isBundleDirectory = [path isEqual:(NSString *)[[NSBundle mainBundle] bundlePath]];
+            BOOL isHomeDirectory = [path isEqual:(NSString *)NSHomeDirectory()];
+            if (isInitialPath) {
+                vc.navigationItem.title = @"Sandbox";
+            } else if (isBundleDirectory) {
+                vc.navigationItem.title = @"Bundle Container";
+            } else if (isHomeDirectory) {
+                vc.navigationItem.title = @"Data Container";
             } else {
                 vc.navigationItem.title = [path lastPathComponent];
             }
             
             NSMutableArray *childPaths = [[NSMutableArray alloc] init]; // NSMutableArray<NSString *> *childPaths
-            NSArray *subpaths = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:path error:NULL]; // NSArray<NSString *> *subpaths
-            for (NSString *subpath in subpaths) {
-                [childPaths addObject:[path stringByAppendingPathComponent:subpath]];
+            if (isInitialPath) {
+                [childPaths addObject:(NSString *)[[NSBundle mainBundle] bundlePath]];
+                [childPaths addObject:(NSString *)NSHomeDirectory()];
+            } else {
+                NSArray *subpaths = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:path error:NULL]; // NSArray<NSString *> *subpaths
+                for (NSString *subpath in subpaths) {
+                    [childPaths addObject:[path stringByAppendingPathComponent:subpath]];
+                }
             }
             [vc setValue:childPaths forKey:@"_childPaths"];
             
@@ -192,8 +223,15 @@ def makeClickBackItemIMP() -> lldb.SBValue:
     command_script = '''
         void (^IMPBlock)(UIViewController *) = ^(UIViewController *vc) {
             NSString *currentPath = (NSString *)[vc valueForKey:@"_currentPath"];
-            if ([currentPath isEqual:(NSString *)NSHomeDirectory()]) {
+            NSString *initialPath = (NSString *)[(Class)[vc class] performSelector:@selector(initialPath)];
+            BOOL isInitialPath = [currentPath isEqual:initialPath];
+            BOOL isBundleDirectory = [currentPath isEqual:(NSString *)[[NSBundle mainBundle] bundlePath]];
+            BOOL isHomeDirectory = [currentPath isEqual:(NSString *)NSHomeDirectory()];
+    
+            if (isInitialPath) {
                 (void)[vc performSelector:@selector(clickPopItem)];
+            } else if (isBundleDirectory || isHomeDirectory) {
+                (void)[vc performSelector:@selector(loadPath:) withObject:initialPath];
             } else {
                 NSString *upperDirectory = [currentPath stringByDeletingLastPathComponent];
                 (void)[vc performSelector:@selector(loadPath:) withObject:upperDirectory];
@@ -223,8 +261,9 @@ def makeClickPopItemIMP() -> lldb.SBValue:
 
 def makeAlertAccessPermissionIMP() -> lldb.SBValue:
     command_script = '''
-        void (^IMPBlock)(UIViewController *) = ^(UIViewController *vc) {
-            UIAlertController *alertController = [UIAlertController alertControllerWithTitle:nil message:@"You don’t have permission to access it, or this file no longer exists." preferredStyle:(UIAlertControllerStyle)UIAlertControllerStyleAlert];
+        void (^IMPBlock)(UIViewController *, NSString *) = ^(UIViewController *vc, NSString *message) {
+            NSString *content = [message length] > 0 ? message : @"You don’t have permission to access it, or this file no longer exists.";
+            UIAlertController *alertController = [UIAlertController alertControllerWithTitle:nil message:content preferredStyle:(UIAlertControllerStyle)UIAlertControllerStyleAlert];
             [alertController addAction:[UIAlertAction actionWithTitle:@"Cancel" style:(UIAlertActionStyle)UIAlertActionStyleCancel handler:nil]];
             [vc presentViewController:alertController animated:YES completion:nil];
         };
@@ -238,7 +277,17 @@ def makeDeleteFileOrDirectoryIMP() -> lldb.SBValue:
         void (^IMPBlock)(UIViewController *, NSString *) = ^(UIViewController *vc, NSString *path) {
             BOOL exist = [[NSFileManager defaultManager] fileExistsAtPath:path];
             if (!exist) {
-                (void)[vc performSelector:@selector(alertAccessPermission) withObject:path];
+                (void)[vc performSelector:@selector(alertAccessPermission:) withObject:nil];
+                return;
+            }
+            BOOL isPathContainsBundle = [path containsString:(NSString *)[[NSBundle mainBundle] bundlePath]];
+            if (isPathContainsBundle) {
+                (void)[vc performSelector:@selector(alertAccessPermission:) withObject:@"You can't delete bundle files!"];
+                return;
+            }
+            BOOL isHomeDirectory = [path isEqual:(NSString *)NSHomeDirectory()];
+            if (isHomeDirectory) {
+                (void)[vc performSelector:@selector(alertAccessPermission:) withObject:@"You can't delete home directory!"];
                 return;
             }
             
@@ -272,7 +321,13 @@ def makeShareFileOrDirectoryIMP() -> lldb.SBValue:
             BOOL isDirectory = NO;
             BOOL exist = [[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDirectory];
             if (!exist) {
-                (void)[vc performSelector:@selector(alertAccessPermission) withObject:path];
+                (void)[vc performSelector:@selector(alertAccessPermission:) withObject:nil];
+                return;
+            }
+            
+            BOOL isHomeDirectory = [path isEqual:(NSString *)NSHomeDirectory()];
+            if (isHomeDirectory) {
+                (void)[vc performSelector:@selector(alertAccessPermission:) withObject:@"You can't share home directory!"];
                 return;
             }
             
@@ -396,8 +451,16 @@ def makeCellForRowAtIndexPathIMP() -> lldb.SBValue:
             UILabel *rightLab = (UILabel *)[cell.contentView viewWithTag:3333];
     
             // topLeftLab
-            topLeftLab.text = [path lastPathComponent];
-            
+            BOOL isBundleDirectory = [path isEqual:(NSString *)[[NSBundle mainBundle] bundlePath]];
+            BOOL isHomeDirectory = [path isEqual:(NSString *)NSHomeDirectory()];
+            if (isBundleDirectory) {
+                topLeftLab.text = @"Bundle Container";
+            } else if (isHomeDirectory) {
+                topLeftLab.text = @"Data Container";
+            } else {
+                topLeftLab.text = [path lastPathComponent];
+            }
+                    
             // bottomLeftLab
             NSFileManager *fileManager =[NSFileManager defaultManager];
             NSDictionary *attributes = [fileManager attributesOfItemAtPath:path error:NULL];
@@ -476,7 +539,7 @@ def makeDidSelectRowAtIndexPathIMP() -> lldb.SBValue:
             BOOL exist = [[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDirectory];
     
             if (!exist) {
-                (void)[vc performSelector:@selector(alertAccessPermission) withObject:path];
+                (void)[vc performSelector:@selector(alertAccessPermission:) withObject:nil];
                 return;
             }
             
@@ -533,8 +596,13 @@ def makeViewForHeaderInSectionIMP() -> lldb.SBValue:
             
             UILabel *titleLab = (UILabel *)[header.contentView viewWithTag:11111];
             NSString *currentPath = (NSString *)[vc valueForKey:@"_currentPath"];
-            titleLab.text = [currentPath stringByAbbreviatingWithTildeInPath];
-    
+            NSString *initialPath = (NSString *)[(Class)[vc class] performSelector:@selector(initialPath)];
+            BOOL isInitialPath = [currentPath isEqual:initialPath];
+            if (isInitialPath) {
+                titleLab.text = @"Sandbox";
+            } else {
+                titleLab.text = [currentPath stringByAbbreviatingWithTildeInPath];
+            }
             return header;
         };
         imp_implementationWithBlock(IMPBlock);
