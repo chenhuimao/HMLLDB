@@ -8,17 +8,17 @@
 - Some commands provide interactive UI within the APP
 
 ## Requirements
-- Xcode 13.1
+- Xcode 13.2.1
 - 64-bit simulator or real device, iOS 9.0+
 - Debug configuration (or ***Optimization Level*** set [-O0]/[-Onone])
 
 ## Installation
-1. Download all the files. I recommend cloning the repository.
-2. Open up (or create) `~/.lldbinit` file, and append the following lines to the end of the file: 
+1. Download all the files. I recommend you to clone the repository.
+2. Open  (or create) `~/.lldbinit` file, and append the following lines to the end of the file: 
 ```
 command script import /path/to/HMLLDB.py
 ```
-For example, the command in my computer:   
+For example, this is the command in my computer:   
 `command script import /Users/pal/Desktop/gitProjects/HMLLDB/commands/HMLLDB.py`
 
 3. Restart Xcode, run your own iOS project, click `Pause program execution` to enter the LLDB debugging mode, enter the command `help`, if you see the commands described below, the installation is successful.
@@ -41,8 +41,8 @@ For example, the command in my computer:
 | plifecycle     | Print life cycle of UIViewController |
 | redirect       | Redirect stdout/stderr |
 | push           | Find UINavigationController in keyWindow then push a specified UIViewController |
-| showhud        | Display the debug HUD on the key window, it is showing the memory usage, CPU utilization and FPS of the main thread |
-| sandbox        | Presenting a sandbox browser that can share and delete files |
+| showhud        | Display the debug HUD on the key window. It shows the memory usage, CPU utilization and FPS of the main thread |
+| sandbox        | Present a sandbox browser that can share and delete files |
 | inspect        | Inspect UIView |
 | request        | Print http/https request automatically |
 | environment    | Show diagnostic environment. |
@@ -273,17 +273,19 @@ The GIF demo didn't use **Kingfisher** because the UIViewController in the demo 
 
 
 ### showhud
-Display the debug HUD on the *keyWindow*, it is showing the memory usage, CPU utilization and FPS of the main thread.
+Display the debug HUD on the *keyWindow*. It shows the memory usage, CPU utilization and FPS of the main thread.   
 ![img5](./img/img5.jpg)
 
-Tapping the debug HUD will present a new view controller, and its function will be introduced later. 
+Tap the debug HUD will present a new view controller, and its function will be introduced later.   
 ![img6](./img/img6.jpg)
 
 
 ### sandbox
-Presenting a sandbox browser that can share and delete files.  
-It takes a few seconds to call the command for the first time.
+Present a sandbox browser that can access Bundle Container and  Data Container. You can delete files in the Data Container and share files with AirDrop.   
+It takes a few seconds to call the command for the first time.   
 ![img7](./img/img7.gif)
+This is an example of sharing files with AirDrop.   
+![share_AirDrop](./img/share_AirDrop.jpg)
 
 
 ### inspect
@@ -292,7 +294,7 @@ Inspect UIView of the current page.
 
 ### request
 Print http/https request automatically.(Except WKWebView)   
-The same request may be printed multiple times, please judge for yourself.   
+The same request may be printed several times. Please judge by yourself.   
 ![request](./img/request.gif)
 
 ### environment
