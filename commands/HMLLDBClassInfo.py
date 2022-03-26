@@ -152,6 +152,10 @@ def plldbClassInfo(debugger, command, exe_ctx, result, internal_dict):
         pSBQueue(None)
     if compareName("SBSection"):
         pSBSection(None)
+    if compareName("SBMemoryRegionInfoList"):
+        pSBMemoryRegionInfoList(None)
+    if compareName("SBMemoryRegionInfo"):
+        pSBMemoryRegionInfo(None)
     if compareName("SBExpressionOptions"):
         pSBExpressionOptions(None)
 
@@ -395,6 +399,7 @@ def pSBTarget(obj: Optional[lldb.SBTarget]) -> None:
     printFormat("GetLaunchInfo", target.GetLaunchInfo())  # SBLaunchInfo
     printFormat("GetCollectingStats", target.GetCollectingStats())
     printFormat("GetStatistics", target.GetStatistics())  # SBStructuredData
+    printFormat("GetTrace", target.GetTrace())  # SBTrace
 
     printTraversal(target, "GetNumModules", "GetModuleAtIndex")  # [SBModule]
     printTraversal(target, "GetNumBreakpoints", "GetBreakpointAtIndex")  # [SBBreakpoint]
@@ -464,6 +469,7 @@ def pSBProcessInfo(obj: Optional[lldb.SBProcessInfo]) -> None:
     printFormat("EffectiveUserIDIsValid", info.EffectiveUserIDIsValid())
     printFormat("EffectiveGroupIDIsValid", info.EffectiveGroupIDIsValid())
     printFormat("GetParentProcessID", info.GetParentProcessID())
+    printFormat("GetTriple", info.GetTriple())
 
 
 def pSBThread(obj: Optional[lldb.SBThread]) -> None:
@@ -1342,6 +1348,8 @@ def pSBLaunchInfo(obj: Optional[lldb.SBLaunchInfo]) -> None:
     printFormat("GetResumeCount", info.GetResumeCount())
     printFormat("GetLaunchEventData", info.GetLaunchEventData())
     printFormat("GetDetachOnError", info.GetDetachOnError())
+    printFormat("GetScriptedProcessClassName", info.GetScriptedProcessClassName())
+    printFormat("GetScriptedProcessDictionary", info.GetScriptedProcessDictionary())  # SBStructuredData
 
     printTraversal(info, "GetNumArguments", "GetArgumentAtIndex")  # [str]
     printTraversal(info, "GetNumEnvironmentEntries", "GetEnvironmentEntryAtIndex")  # [str]
@@ -1437,6 +1445,52 @@ def pSBSection(obj: Optional[lldb.SBSection]) -> None:
     printFormat("get_addr", section.get_addr())  # SBAddress
 
     printTraversal(section, "GetNumSubSections", "GetSubSectionAtIndex")  # [SBSection]
+
+
+def pSBMemoryRegionInfoList(obj: Optional[lldb.SBMemoryRegionInfoList]) -> None:
+    if obj:
+        memoryRegionInfoList = obj
+    else:
+        memoryRegionInfoList = lldb.debugger.GetSelectedTarget().GetProcess().GetMemoryRegions()
+
+    printClassName("SBMemoryRegionInfoList")
+    printFormat("SBMemoryRegionInfoList", memoryRegionInfoList)
+    printFormat("GetSize", memoryRegionInfoList.GetSize())
+
+    size = memoryRegionInfoList.GetSize()
+    global gUnlimited
+    print(f"\n##### [GetMemoryRegionContainingAddress]({size}) #####")
+    for i in range(size):
+        if i == 100 and not gUnlimited:
+            break
+        info = lldb.SBMemoryRegionInfo()
+        memoryRegionInfoList.GetMemoryRegionAtIndex(i, info)
+        print(type(info))
+        print(info)
+
+
+def pSBMemoryRegionInfo(obj: Optional[lldb.SBMemoryRegionInfo]) -> None:
+    if obj:
+        memoryRegionInfo = obj
+    else:
+        memoryRegionInfo = lldb.SBMemoryRegionInfo()
+        index = 0
+        lldb.debugger.GetSelectedTarget().GetProcess().GetMemoryRegions().GetMemoryRegionAtIndex(index, memoryRegionInfo)
+
+    printClassName("SBMemoryRegionInfo")
+    printFormat("SBMemoryRegionInfo", memoryRegionInfo)
+    printFormat("GetRegionBase", memoryRegionInfo.GetRegionBase())
+    printFormat("GetRegionEnd", memoryRegionInfo.GetRegionEnd())
+    printFormat("IsReadable", memoryRegionInfo.IsReadable())
+    printFormat("IsWritable", memoryRegionInfo.IsWritable())
+    printFormat("IsExecutable", memoryRegionInfo.IsExecutable())
+    printFormat("IsMapped", memoryRegionInfo.IsMapped())
+    printFormat("GetName", memoryRegionInfo.GetName())
+    printFormat("HasDirtyMemoryPageList", memoryRegionInfo.HasDirtyMemoryPageList())
+    printFormat("GetNumDirtyPages", memoryRegionInfo.GetNumDirtyPages())
+    printFormat("GetPageSize", memoryRegionInfo.GetPageSize())
+
+    printTraversal(memoryRegionInfo, "GetNumDirtyPages", "GetDirtyPageAddressAtIndex")  # [int]
 
 
 def pSBExpressionOptions(obj: Optional[lldb.SBExpressionOptions]) -> None:

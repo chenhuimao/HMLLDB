@@ -185,9 +185,9 @@ Instance methods count: 3. Class method count: 0.
 ```
 
 ### methods & properties & ivars
-`methods`: Execute `[inputClass _methodDescription]` or `[inputClass _shortMethodDescription]`
-`properties`: Execute `[inputClass _propertyDescription]`
-`ivars`: Execute `[instance _ivarDescription]`
+`methods`: Execute `[inputClass _methodDescription]` or `[inputClass _shortMethodDescription]`   
+`properties`: Execute `[inputClass _propertyDescription]`   
+`ivars`: Execute `[instance _ivarDescription]`   
 
 These commands are optimized for Swift, and the namespace can be omitted when entering the Swift class.
 
