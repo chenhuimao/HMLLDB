@@ -20,6 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+# https://github.com/chenhuimao/HMLLDB
+
 import lldb
 import sys
 import os

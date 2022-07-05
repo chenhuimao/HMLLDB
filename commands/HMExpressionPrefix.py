@@ -20,6 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+# https://github.com/chenhuimao/HMLLDB
+
 gPrefix = '''
 typedef struct CGPoint {
     double x;
