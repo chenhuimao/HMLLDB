@@ -24,12 +24,15 @@
 
 import lldb
 from typing import List
+import shlex
+import optparse
 import HMLLDBHelpers as HM
 import HMLLDBClassInfo
 
 
 def __lldb_init_module(debugger, internal_dict):
-    debugger.HandleCommand('command script add -f HMBreakpoint.breakpoint_frame bpframe -h "Set a symbolic breakpoint that stops only when the specified stack keyword is matched"')
+    debugger.HandleCommand('command script add -f HMBreakpoint.breakpoint_frame bpframe -h "Set a symbolic breakpoint that stops only when the specified stack keyword is matched."')
+    debugger.HandleCommand('command script add -f HMBreakpoint.breakpoint_next_oc_method bpmethod -h "Set a breakpoint that stops when the next OC method is called."')
 
 
 def breakpoint_frame(debugger, command, exe_ctx, result, internal_dict):
@@ -116,4 +119,107 @@ def breakpoint_frame_handler(frame, bp_loc, extra_args, internal_dict) -> bool:
                 result = True
                 break
     return result
+
+
+def breakpoint_next_oc_method(debugger, command, exe_ctx, result, internal_dict):
+    """
+    Syntax:
+        bpmethod [--continue]
+
+    Options:
+        --continue/-c; Continue program execution After executing bpmethod
+
+    Examples:
+        (lldb) bpmethod
+        (lldb) bpmethod -c
+
+    This command is implemented in HMBreakpoint.py
+    """
+
+    command_args = shlex.split(command)
+    parser = generate_bpmethod_option_parser()
+    try:
+        # options: optparse.Values
+        # args: list
+        (options, args) = parser.parse_args(command_args)
+    except:
+        result.SetError(parser.usage)
+        return
+
+    # Step:
+    # 1. Add breakpoint in objc_msgSend.
+    # 2. Get arguments(object & selector) by registers. Delete breakpoint(objc_msgSend).
+    # 3. Get implementation via runtime.
+    # 4. Set breakpoint(OneShot) in implementation.
+
+    target = debugger.GetSelectedTarget()
+    bp = target.BreakpointCreateByName("objc_msgSend", "libobjc.A.dylib")
+    bp.AddName("HMLLDB_bpmethod_objc_msgSend")
+    bp.SetScriptCallbackFunction("HMBreakpoint.breakpoint_next_oc_method_handler")
+
+    if options.is_continue:
+        HM.processContinue()
+    else:
+        HM.DPrint("Done! You can continue program execution.")
+
+
+def generate_bpmethod_option_parser() -> optparse.OptionParser:
+    usage = "usage: bpmethod [--continue]"
+    parser = optparse.OptionParser(usage=usage, prog="bpmethod")
+    parser.add_option("-c", "--continue",
+                      action="store_true",
+                      default=False,
+                      dest="is_continue",
+                      help="Continue program execution After executing bpmethod")
+
+    return parser
+
+
+def breakpoint_next_oc_method_handler(frame, bp_loc, extra_args, internal_dict) -> bool:
+    # Delete current breakpoint
+    bp = bp_loc.GetBreakpoint()
+    target = frame.GetThread().GetProcess().GetTarget()
+    target.BreakpointDelete(bp.GetID())
+
+    # Get object and selector from registers
+    registers: lldb.SBValueList = frame.GetRegisters()
+    object_value: lldb.SBValue
+    selector_value: lldb.SBValue
+    for value in registers:
+        if "General Purpose Registers" in value.GetName():
+            children_num = value.GetNumChildren()
+            for i in range(children_num):
+                reg_value = value.GetChildAtIndex(i)
+                if reg_value.GetName() in ["x0", "rdi"]:
+                    object_value = reg_value
+                elif reg_value.GetName() in ["x1", "rsi"]:
+                    selector_value = reg_value
+
+    # Set breakpoint with object and selector.
+    set_breakpoint_with_object_and_selector(object_value, selector_value)
+    return False
+
+
+def set_breakpoint_with_object_and_selector(object_value: lldb.SBValue, selector_value: lldb.SBValue):
+    command_script = f'''
+        id object = (id){object_value.GetValue()};
+        char *selName = (char *){selector_value.GetValue()};
+        Class cls = object_getClass((id)object);
+        SEL hm_selector = sel_registerName(selName);
+        Method targetMethod = class_getInstanceMethod(cls, hm_selector);
+        (IMP)method_getImplementation(targetMethod);
+    '''
+    imp_value = HM.evaluateExpressionValue(command_script)
+    if not HM.judgeSBValueHasValue(imp_value):
+        selector_desc = HM.evaluateExpressionValue(f"(char *){selector_value.GetValue()};").GetSummary()
+        HM.DPrint(f"Failed to find {selector_desc} implementation in object({object_value.GetValue()})")
+        return
+
+    imp_address = imp_value.GetValueAsUnsigned()
+    HM.DPrint(f"Set a breakpoint on the implemented address:{hex(imp_address)}({imp_address})")
+    HM.addOneShotBreakPointInIMP(imp_value, "HMBreakpoint.breakpoint_next_oc_method_implementation_handler", "HMLLDB_bpmethod_implementation")
+
+
+def breakpoint_next_oc_method_implementation_handler(frame, bp_loc, extra_args, internal_dict) -> bool:
+    return True
 
