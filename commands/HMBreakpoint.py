@@ -32,7 +32,7 @@ import HMLLDBClassInfo
 
 def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand('command script add -f HMBreakpoint.breakpoint_frame bpframe -h "Set a symbolic breakpoint that stops only when the specified stack keyword is matched."')
-    debugger.HandleCommand('command script add -f HMBreakpoint.breakpoint_next_oc_method bpmethod -h "Set a breakpoint that stops when the next OC method is called."')
+    debugger.HandleCommand('command script add -f HMBreakpoint.breakpoint_next_oc_method bpmethod -h "Set a breakpoint that stops when the next OC method is called(via objc_msgSend)."')
 
 
 def breakpoint_frame(debugger, command, exe_ctx, result, internal_dict):
@@ -127,7 +127,7 @@ def breakpoint_next_oc_method(debugger, command, exe_ctx, result, internal_dict)
         bpmethod [--continue]
 
     Options:
-        --continue/-c; Continue program execution After executing bpmethod
+        --continue/-c; Continue program execution after executing bpmethod
 
     Examples:
         (lldb) bpmethod
@@ -170,7 +170,7 @@ def generate_bpmethod_option_parser() -> optparse.OptionParser:
                       action="store_true",
                       default=False,
                       dest="is_continue",
-                      help="Continue program execution After executing bpmethod")
+                      help="Continue program execution after executing bpmethod")
 
     return parser
 
@@ -215,8 +215,7 @@ def set_breakpoint_with_object_and_selector(object_value: lldb.SBValue, selector
         HM.DPrint(f"Failed to find {selector_desc} implementation in object({object_value.GetValue()})")
         return
 
-    imp_address = imp_value.GetValueAsUnsigned()
-    HM.DPrint(f"Set a breakpoint on the implemented address:{hex(imp_address)}({imp_address})")
+    HM.DPrint(f"Set a breakpoint on the implemented address:{imp_value.GetValue()}")
     HM.addOneShotBreakPointInIMP(imp_value, "HMBreakpoint.breakpoint_next_oc_method_implementation_handler", "HMLLDB_bpmethod_implementation")
 
 
