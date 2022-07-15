@@ -8,7 +8,7 @@
 - Some commands provide interactive UI within the APP
 
 ## Requirements
-- Xcode 13.2.1
+- Xcode 13.4.1
 - 64-bit simulator or real device, iOS 9.0+
 - Debug configuration (or ***Optimization Level*** set [-O0]/[-Onone])
 
@@ -37,6 +37,8 @@ For example, this is the command in my computer:
 | methods        | Execute `[inputClass _methodDescription]` or `[inputClass _shortMethodDescription]` |
 | properties     | Execute `[inputClass _propertyDescription]` |
 | ivars          | Execute `[instance _ivarDescription]` |
+| bpframe        | Set a symbolic breakpoint that stops only when the specified stack keyword is matched |
+| bpmethod       | Set a breakpoint that stops when the next OC method is called(via objc_msgSend) |
 | pfont          | Print all font names supported by the device |
 | plifecycle     | Print life cycle of UIViewController |
 | redirect       | Redirect stdout/stderr |
@@ -214,6 +216,29 @@ in Kingfisher_Demo.NormalLoadingViewController:
 
 ```
 
+### bpframe
+Set a symbolic breakpoint that stops only when the specified stack keyword is matched.    
+```
+# Stop when "viewDidAppear:" is hit and the call stack contains "customMethod"
+(lldb) bpframe viewDidAppear: customMethod
+
+# one shot
+(lldb) bpframe -o viewDidAppear: customMethod
+```
+
+### bpmethod
+Set a breakpoint that stops when the next OC method is called(via objc_msgSend).    
+When debugging the assembly instruction, it is very troublesome to see the `objc_msgSend` instruction. I usually want to jump the implementation of the method, but it is very inconvenient to find it. This command can solve this problem.     
+
+```
+# I want to step into implementation of the method, not the objc_msgSend function!!!
+0x10075a574 <+64>: bl     0x10075a95c       ; symbol stub for: objc_msgSend
+
+# Solution
+(lldb) bpmethod
+[HMLLDB] Done! You can continue program execution.
+```
+
 ### pfont
 Print all font names supported by the device.   
 ```
@@ -294,7 +319,7 @@ Inspect UIView of the current page.
 
 ### request
 Print http/https request automatically.(Except WKWebView)   
-The same request may be printed several times. Please judge by yourself.   
+The same request may be printed several times.    
 ![request](./img/request.gif)
 
 ### environment
