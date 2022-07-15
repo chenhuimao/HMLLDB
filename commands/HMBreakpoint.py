@@ -38,11 +38,15 @@ def __lldb_init_module(debugger, internal_dict):
 def breakpoint_frame(debugger, command, exe_ctx, result, internal_dict):
     """
     Syntax:
-        bpframe <symbol or function> <stack keyword 1> <stack keyword 2> ... <stack keyword n>
+        bpframe [--one-shot] <symbol or function> <stack keyword 1> <stack keyword 2> ... <stack keyword n>
+
+    Options:
+        --one-shot/-o; The breakpoint is deleted the first time it stop.
 
     Examples:
         // Stop when "viewDidAppear:" is hit and the call stack contains "customMethod"
         (lldb) bpframe viewDidAppear: customMethod
+        (lldb) bpframe -o viewDidAppear: customMethod
 
     Notice:
         1. Separate keywords with spaces.
@@ -52,24 +56,33 @@ def breakpoint_frame(debugger, command, exe_ctx, result, internal_dict):
     This command is implemented in HMBreakpoint.py
     """
 
-    parameters_list: List[str] = command.split(" ")
-    # HM.DPrint(parameters_list)
+    command_args = shlex.split(command)
+    parser = generate_bpframe_option_parser()
+    try:
+        # options: optparse.Values
+        # args: list
+        (options, args_list) = parser.parse_args(command_args)
+    except:
+        result.SetError(parser.usage)
+        return
 
-    if len(parameters_list) < 2:
+    # HM.DPrint(args_list)
+    if len(args_list) < 2:
         HM.DPrint("Error input. Requires at least 2 parameters. Please enter 'help bpframe' for more infomation")
         return
 
     target = lldb.debugger.GetSelectedTarget()
-    breakpoint = target.BreakpointCreateByName(parameters_list[0])
-    breakpoint.AddName(f"HMLLDB_bpframe_{parameters_list[0]}")
+    bp = target.BreakpointCreateByName(args_list[0])
+    bp.AddName(f"HMLLDB_bpframe_{args_list[0]}")
+    bp.SetOneShot(options.is_one_shot)
 
     # call stack symbols for script callback
     call_stack_symbols: str = ""
-    for i in range(1, len(parameters_list)):
+    for i in range(1, len(args_list)):
         if i == 1:
-            call_stack_symbols += '"' + parameters_list[1] + '"'
+            call_stack_symbols += '"' + args_list[1] + '"'
         else:
-            call_stack_symbols += ',"' + parameters_list[i] + '"'
+            call_stack_symbols += ',"' + args_list[i] + '"'
 
     extra_args = lldb.SBStructuredData()
     stream = lldb.SBStream()
@@ -77,13 +90,25 @@ def breakpoint_frame(debugger, command, exe_ctx, result, internal_dict):
     extra_args.SetFromJSON(stream)
 
     # set callback with extra_args
-    error: lldb.SBError = breakpoint.SetScriptCallbackFunction("HMBreakpoint.breakpoint_frame_handler", extra_args)
+    error: lldb.SBError = bp.SetScriptCallbackFunction("HMBreakpoint.breakpoint_frame_handler", extra_args)
     if error.Success():
         HM.DPrint("Set breakpoint successfully")
-        breakpoint_id = breakpoint.GetID()
-        lldb.debugger.HandleCommand(f"breakpoint list {breakpoint_id}")
+        bp_id = bp.GetID()
+        lldb.debugger.HandleCommand(f"breakpoint list {bp_id}")
     else:
         HM.DPrint(error)
+
+
+def generate_bpframe_option_parser() -> optparse.OptionParser:
+    usage = "usage: bpframe [--one-shot]"
+    parser = optparse.OptionParser(usage=usage, prog="bpframe")
+    parser.add_option("-o", "--one-shot",
+                      action="store_true",
+                      default=False,
+                      dest="is_one_shot",
+                      help="The breakpoint is deleted the first time it stop.")
+
+    return parser
 
 
 def breakpoint_frame_handler(frame, bp_loc, extra_args, internal_dict) -> bool:
