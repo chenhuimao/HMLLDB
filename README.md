@@ -37,7 +37,7 @@ For example, this is the command in my computer:
 | methods        | Execute `[inputClass _methodDescription]` or `[inputClass _shortMethodDescription]` |
 | properties     | Execute `[inputClass _propertyDescription]` |
 | ivars          | Execute `[instance _ivarDescription]` |
-| bpframe        | Set a symbolic breakpoint that stops only when the specified stack keyword is matched |
+| bpframe        | Set a breakpoint that stops only when the specified stack keyword is matched |
 | bpmethod       | Set a breakpoint that stops when the next OC method is called(via objc_msgSend) |
 | pfont          | Print all font names supported by the device |
 | plifecycle     | Print life cycle of UIViewController |
@@ -217,13 +217,22 @@ in Kingfisher_Demo.NormalLoadingViewController:
 ```
 
 ### bpframe
-Set a symbolic breakpoint that stops only when the specified stack keyword is matched.    
+Set a  breakpoint that stops only when the specified stack keyword is matched.    
 ```
+Syntax:
+bpframe [--one-shot] <symbol or function> <stack keyword 1> <stack keyword 2> ... <stack keyword n>
+bpframe [--one-shot] --address <address> <stack keyword 1> <stack keyword 2> ... <stack keyword n>
+
 # Stop when "viewDidAppear:" is hit and the call stack contains "customMethod"
 (lldb) bpframe viewDidAppear: customMethod
 
-# one shot
+# --address/-a; Set breakpoint at the address(hexadecimal).
+# Stop when "0x1025df6c0" is hit and the call stack contains "customMethod"
+(lldb) bpframe -a 0x1025df6c0 customMethod
+
+# --one-shot/-o; The breakpoint is deleted the first time it stop.
 (lldb) bpframe -o viewDidAppear: customMethod
+(lldb) bpframe -o -a 0x1025df6c0 customMethod
 ```
 
 ### bpmethod
@@ -237,6 +246,9 @@ When debugging the assembly instruction, it is very troublesome to see the `objc
 # Solution
 (lldb) bpmethod
 [HMLLDB] Done! You can continue program execution.
+
+# --continue/-c; Continue program execution after executing bpmethod
+(lldb) bpmethod -c
 ```
 
 ### pfont

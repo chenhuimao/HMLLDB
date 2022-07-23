@@ -31,7 +31,7 @@ import HMLLDBClassInfo
 
 
 def __lldb_init_module(debugger, internal_dict):
-    debugger.HandleCommand('command script add -f HMBreakpoint.breakpoint_frame bpframe -h "Set a symbolic breakpoint that stops only when the specified stack keyword is matched."')
+    debugger.HandleCommand('command script add -f HMBreakpoint.breakpoint_frame bpframe -h "Set a breakpoint that stops only when the specified stack keyword is matched."')
     debugger.HandleCommand('command script add -f HMBreakpoint.breakpoint_next_oc_method bpmethod -h "Set a breakpoint that stops when the next OC method is called(via objc_msgSend)."')
 
 
@@ -39,19 +39,26 @@ def breakpoint_frame(debugger, command, exe_ctx, result, internal_dict):
     """
     Syntax:
         bpframe [--one-shot] <symbol or function> <stack keyword 1> <stack keyword 2> ... <stack keyword n>
+        bpframe [--one-shot] --address <address> <stack keyword 1> <stack keyword 2> ... <stack keyword n>
+
 
     Options:
         --one-shot/-o; The breakpoint is deleted the first time it stop.
+        --address/-a; Set breakpoint at the address(hexadecimal).
 
     Examples:
         // Stop when "viewDidAppear:" is hit and the call stack contains "customMethod"
         (lldb) bpframe viewDidAppear: customMethod
         (lldb) bpframe -o viewDidAppear: customMethod
 
+        // Stop when "0x1025df6c0" is hit and the call stack contains "customMethod"
+        (lldb) bpframe -a 0x1025df6c0 customMethod
+        (lldb) bpframe -o -a 0x1025df6c0 customMethod
+
     Notice:
         1. Separate keywords with spaces.
         2. Match keywords in order.
-        3. Hitting a breakpoint is expensive even if it doesn't stop. Do not use symbolic breakpoint to set high-frequency symbols.
+        3. Hitting a breakpoint is expensive even if it doesn't stop. Do not set breakpoint on high frequency symbol or address.
 
     This command is implemented in HMBreakpoint.py
     """
@@ -72,7 +79,12 @@ def breakpoint_frame(debugger, command, exe_ctx, result, internal_dict):
         return
 
     target = lldb.debugger.GetSelectedTarget()
-    bp = target.BreakpointCreateByName(args_list[0])
+    if options.address:
+        address = int(args_list[0], 16)
+        # HM.DPrint(address)
+        bp = target.BreakpointCreateByAddress(address)
+    else:
+        bp = target.BreakpointCreateByName(args_list[0])
     bp.AddName(f"HMLLDB_bpframe_{args_list[0]}")
     bp.SetOneShot(options.is_one_shot)
 
@@ -100,13 +112,21 @@ def breakpoint_frame(debugger, command, exe_ctx, result, internal_dict):
 
 
 def generate_bpframe_option_parser() -> optparse.OptionParser:
-    usage = "usage: bpframe [--one-shot]"
+    usage = '''usage: 
+    bpframe [--one-shot] <symbol or function> <stack keyword 1> <stack keyword 2> ... <stack keyword n>
+    bpframe [--one-shot] --address <address> <stack keyword 1> <stack keyword 2> ... <stack keyword n>
+    '''
     parser = optparse.OptionParser(usage=usage, prog="bpframe")
     parser.add_option("-o", "--one-shot",
                       action="store_true",
                       default=False,
                       dest="is_one_shot",
                       help="The breakpoint is deleted the first time it stop.")
+    parser.add_option("-a", "--address",
+                      action="store_true",
+                      default=False,
+                      dest="address",
+                      help="Set breakpoint at the address(hexadecimal).")
 
     return parser
 
