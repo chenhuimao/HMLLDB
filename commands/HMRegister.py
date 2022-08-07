@@ -58,7 +58,7 @@ def register_change(debugger, command, exe_ctx, result, internal_dict):
     frame = exe_ctx.GetTarget().GetProcess().GetSelectedThread().GetSelectedFrame()
     global g_last_registers_dict
     if len(g_last_registers_dict) == 0:
-        HM.DPrint("Get register for the first time.")
+        HM.DPrint("Get registers for the first time.")
 
     # Is it repeated?
     if is_executed_repeatedly(frame):

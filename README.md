@@ -9,7 +9,7 @@
 
 ## Requirements
 - Xcode 13.4.1
-- 64-bit simulator or real device, iOS 9.0+
+- 64-bit simulator or real device, iOS 11.0+
 - Debug configuration (or ***Optimization Level*** set [-O0]/[-Onone])
 
 ## Installation
@@ -39,6 +39,7 @@ For example, this is the command in my computer:
 | ivars          | Execute `[instance _ivarDescription]` |
 | bpframe        | Set a breakpoint that stops only when the specified stack keyword is matched |
 | bpmethod       | Set a breakpoint that stops when the next OC method is called(via objc_msgSend) |
+| rc             | Show general purpose registers changes |
 | pfont          | Print all font names supported by the device |
 | plifecycle     | Print life cycle of UIViewController |
 | redirect       | Redirect stdout/stderr |
@@ -249,6 +250,20 @@ When debugging the assembly instruction, it is very troublesome to see the `objc
 
 # --continue/-c; Continue program execution after executing bpmethod
 (lldb) bpmethod -c
+```
+
+### rc
+Show general purpose registers changes after stepping over instruction.
+```
+(lldb) rc
+[HMLLDB] Get registers for the first time.
+
+// Step over instruction
+(lldb) rc
+0x100a8a470 <+16>:  mov    x1, x2
+        x1:0x0000000100a8aa9b -> 0x0000000100f0a450
+        pc:0x0000000100a8a470 -> 0x0000000100a8a474
+        w1:0x00a8aa9b -> 0x00f0a450
 ```
 
 ### pfont
