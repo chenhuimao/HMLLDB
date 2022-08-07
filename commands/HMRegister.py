@@ -24,8 +24,6 @@
 
 import lldb
 from typing import Dict, List
-import shlex
-import optparse
 import HMLLDBHelpers as HM
 import HMLLDBClassInfo
 
@@ -35,33 +33,27 @@ last_disassemble: str = ""
 
 
 def __lldb_init_module(debugger, internal_dict):
-    debugger.HandleCommand('command script add -f HMRegister.register_change rc -h "TODO."')
+    debugger.HandleCommand('command script add -f HMRegister.register_change rc -h "Show general purpose registers changes."')
 
 
 def register_change(debugger, command, exe_ctx, result, internal_dict):
     """
     Syntax:
-        rc [--all/-a]
-
-    Options:
-        --all/-a; Show all register sets.
+        rc
 
     Examples:
         (lldb) rc
-        (lldb) rc -a
+        [HMLLDB] Get register for the first time.
+
+        // Step over instruction
+        (lldb) rc
+        0x100a8a470 <+16>:  mov    x1, x2
+                x1:0x0000000100a8aa9b -> 0x0000000100f0a450
+                pc:0x0000000100a8a470 -> 0x0000000100a8a474
+                w1:0x00a8aa9b -> 0x00f0a450
 
     This command is implemented in HMRegister.py
     """
-
-    command_args = shlex.split(command)
-    parser = generate_register_change_option_parser()
-    try:
-        # options: optparse.Values
-        # args: list
-        (options, args_list) = parser.parse_args(command_args)
-    except:
-        result.SetError(parser.usage)
-        return
 
     frame = exe_ctx.GetTarget().GetProcess().GetSelectedThread().GetSelectedFrame()
     global g_last_registers_dict
@@ -78,40 +70,24 @@ def register_change(debugger, command, exe_ctx, result, internal_dict):
 
     # Print and save registers
     current_registers: lldb.SBValueList = frame.GetRegisters()
-    for register_set_value in current_registers:
-        is_print: bool = options.all or "General Purpose Registers" == register_set_value.GetName()
-        has_print_register_set_name: bool = False
-        children_num = register_set_value.GetNumChildren()
-        for i in range(children_num):
-            reg_value = register_set_value.GetChildAtIndex(i)
+    general_purpose_registers: lldb.SBValue = current_registers.GetFirstValueByName("General Purpose Registers")
+    children_num = general_purpose_registers.GetNumChildren()
+    for i in range(children_num):
+        reg_value = general_purpose_registers.GetChildAtIndex(i)
 
-            if reg_value.GetName() not in g_last_registers_dict:
-                g_last_registers_dict[reg_value.GetName()] = reg_value.GetValue()
-                continue
-
-            last_register_value: str = g_last_registers_dict[reg_value.GetName()]
-            if is_print and reg_value.GetValue() != last_register_value:
-                if not has_print_register_set_name:
-                    has_print_register_set_name = True
-                    print(f"{register_set_value.GetName()}:")
-                print(f"\t\t{reg_value.GetName()}:{last_register_value} -> {reg_value.GetValue()}")
-
+        if reg_value.GetName() not in g_last_registers_dict:
             g_last_registers_dict[reg_value.GetName()] = reg_value.GetValue()
+            continue
+
+        last_register_value: str = g_last_registers_dict[reg_value.GetName()]
+        if reg_value.GetValue() != last_register_value:
+            print(f"\t\t{reg_value.GetName()}:{last_register_value} -> {reg_value.GetValue()}")
+
+        g_last_registers_dict[reg_value.GetName()] = reg_value.GetValue()
 
     # Record last disassemble
     global last_disassemble
     last_disassemble = frame.Disassemble()
-
-
-def generate_register_change_option_parser() -> optparse.OptionParser:
-    usage = 'usage: rc [--all]'
-    parser = optparse.OptionParser(usage=usage, prog="rc")
-    parser.add_option("-a", "--all",
-                      action="store_true",
-                      default=False,
-                      dest="all",
-                      help="Show all register sets.")
-    return parser
 
 
 def is_executed_repeatedly(frame: lldb.SBFrame) -> bool:
