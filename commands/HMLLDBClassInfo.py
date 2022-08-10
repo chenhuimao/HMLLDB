@@ -631,6 +631,9 @@ def pSBSymbolContext(obj: Optional[lldb.SBSymbolContext]) -> None:
     printFormat("GetBlock", ctx.GetBlock())  # SBBlock
     printFormat("GetLineEntry", ctx.GetLineEntry())  # SBLineEntry
     printFormat("GetSymbol", ctx.GetSymbol())  # SBSymbol
+    stream = lldb.SBStream()
+    ctx.GetDescription(stream)
+    printFormat("GetDescription", stream.GetData())
 
 
 def pSBModule(obj: Optional[lldb.SBModule]) -> None:
@@ -860,6 +863,9 @@ def pSBAddress(obj: Optional[lldb.SBAddress]) -> None:
     printFormat("IsValid", address.IsValid())
     printFormat("GetFileAddress", address.GetFileAddress())
     printFormat("GetLoadAddress", address.GetLoadAddress(lldb.debugger.GetSelectedTarget()))
+    stream = lldb.SBStream()
+    address.GetDescription(stream)
+    printFormat("GetDescription", stream.GetData())
     printFormat("GetSection", address.GetSection())  # SBSection
     printFormat("GetOffset", address.GetOffset())
     printFormat("GetSymbolContext", address.GetSymbolContext(lldb.eSymbolContextEverything))  # SBSymbolContext

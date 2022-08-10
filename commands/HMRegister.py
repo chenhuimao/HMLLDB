@@ -47,10 +47,9 @@ def register_change(debugger, command, exe_ctx, result, internal_dict):
 
         // Step over instruction
         (lldb) rc
-        0x100a8a470 <+16>:  mov    x1, x2
-                x1:0x0000000100a8aa9b -> 0x0000000100f0a450
-                pc:0x0000000100a8a470 -> 0x0000000100a8a474
-                w1:0x00a8aa9b -> 0x00f0a450
+        0x10431a3cc <+16>:  mov    x1, x2
+                x1:0x000000010431aa94 -> 0x000000010490be50
+                pc:0x000000010431a3cc -> 0x000000010431a3d0  Demo`-[ViewController clickBtn:] + 20 at ViewController.m:24
 
     This command is implemented in HMRegister.py
     """
@@ -74,16 +73,30 @@ def register_change(debugger, command, exe_ctx, result, internal_dict):
     children_num = general_purpose_registers.GetNumChildren()
     for i in range(children_num):
         reg_value = general_purpose_registers.GetChildAtIndex(i)
+        reg_name = reg_value.GetName()
+        reg_value_str: str = reg_value.GetValue()
 
-        if reg_value.GetName() not in g_last_registers_dict:
-            g_last_registers_dict[reg_value.GetName()] = reg_value.GetValue()
+        # Ignore w0 ~ w28
+        if reg_name.startswith("w"):
             continue
 
-        last_register_value: str = g_last_registers_dict[reg_value.GetName()]
-        if reg_value.GetValue() != last_register_value:
-            print(f"\t\t{reg_value.GetName()}:{last_register_value} -> {reg_value.GetValue()}")
+        if reg_name not in g_last_registers_dict:
+            g_last_registers_dict[reg_name] = reg_value_str
+            continue
 
-        g_last_registers_dict[reg_value.GetName()] = reg_value.GetValue()
+        last_register_value: str = g_last_registers_dict[reg_name]
+        if reg_value_str != last_register_value:
+            address: lldb.SBAddress = lldb.SBAddress(reg_value.GetValueAsUnsigned(), exe_ctx.GetTarget())
+            address_desc = ""
+            if address.GetSymbol().IsValid():
+                desc_stream = lldb.SBStream()
+                address.GetDescription(desc_stream)
+                address_desc = desc_stream.GetData()
+
+            # x16:0x0000000300982fd4 -> 0x00000001c7a6f508  libobjc.A.dylib`objc_release
+            print(f"\t\t{reg_name}:{last_register_value} -> {reg_value_str}  {address_desc}")
+
+        g_last_registers_dict[reg_name] = reg_value_str
 
     # Record last disassemble
     global last_disassemble

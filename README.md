@@ -260,10 +260,9 @@ Show general purpose registers changes after stepping over instruction.
 
 // Step over instruction
 (lldb) rc
-0x100a8a470 <+16>:  mov    x1, x2
-        x1:0x0000000100a8aa9b -> 0x0000000100f0a450
-        pc:0x0000000100a8a470 -> 0x0000000100a8a474
-        w1:0x00a8aa9b -> 0x00f0a450
+0x10431a3cc <+16>:  mov    x1, x2
+        x1:0x000000010431aa94 -> 0x000000010490be50
+        pc:0x000000010431a3cc -> 0x000000010431a3d0  Demo`-[ViewController clickBtn:] + 20 at ViewController.m:24
 ```
 
 ### pfont
