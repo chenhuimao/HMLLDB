@@ -30,14 +30,14 @@ import HMLLDBHelpers as HM
 
 
 def __lldb_init_module(debugger, internal_dict):
-    debugger.HandleCommand('command script add -f HMLLDBClassInfo.plldbClassInfo plldbClassInfo -h "Print infomation of lldb class."')
+    debugger.HandleCommand('command script add -f HMLLDBClassInfo.print_lldb_class_info plldbClassInfo -h "Print infomation of lldb class."')
 
 
-gLastCommand = ""
-gUnlimited = False
+g_last_command = ""
+g_unlimited = False
 
 
-def plldbClassInfo(debugger, command, exe_ctx, result, internal_dict):
+def print_lldb_class_info(debugger, command, exe_ctx, result, internal_dict):
     """
     Syntax:
         plldbClassInfo [--entire] <className/all>
@@ -68,103 +68,105 @@ def plldbClassInfo(debugger, command, exe_ctx, result, internal_dict):
         HM.DPrint("Error input, plase enter 'help plldbClassInfo' for more infomation")
         return
 
-    global gUnlimited
-    gUnlimited = options.entire
+    global g_unlimited
+    g_unlimited = options.entire
 
-    global gLastCommand
-    gLastCommand = args[0]
+    global g_last_command
+    g_last_command = args[0]
 
-    if compareName("SBHostOS"):
+    if compare_name("SBHostOS"):
         pSBHostOS(None)
 
-    if compareName("SBDebugger"):
+    if compare_name("SBDebugger"):
         pSBDebugger(None)
-    if compareName("SBTarget"):
+    if compare_name("SBTarget"):
         pSBTarget(None)
-    if compareName("SBProcess"):
+    if compare_name("SBProcess"):
         pSBProcess(None)
-    if compareName("SBProcessInfo"):
+    if compare_name("SBProcessInfo"):
         pSBProcessInfo(None)
-    if compareName("SBThread"):
+    if compare_name("SBThread"):
         pSBThread(None)
-    if compareName("SBFrame"):
+    if compare_name("SBThreadPlan"):
+        pSBThreadPlan(None)
+    if compare_name("SBFrame"):
         pSBFrame(None)
-    if compareName("SBValue"):
+    if compare_name("SBValue"):
         pSBValue(None)
 
-    if compareName("SBSymbolContext"):
+    if compare_name("SBSymbolContext"):
         pSBSymbolContext(None)
-    if compareName("SBModule"):
+    if compare_name("SBModule"):
         pSBModule(None)
-    if compareName("SBSymbol"):
+    if compare_name("SBSymbol"):
         pSBSymbol(None)
-    if compareName("SBInstruction"):
+    if compare_name("SBInstruction"):
         pSBInstruction(None)
-    if compareName("SBFunction"):
+    if compare_name("SBFunction"):
         pSBFunction(None)
-    if compareName("SBBlock"):
+    if compare_name("SBBlock"):
         pSBBlock(None)
-    if compareName("SBCompileUnit"):
+    if compare_name("SBCompileUnit"):
         pSBCompileUnit(None)
-    if compareName("SBLineEntry"):
+    if compare_name("SBLineEntry"):
         pSBLineEntry(None)
 
-    if compareName("SBFile"):
+    if compare_name("SBFile"):
         pSBFile(None)
-    if compareName("SBFileSpec"):
+    if compare_name("SBFileSpec"):
         pSBFileSpec(None)
-    if compareName("SBAddress"):
+    if compare_name("SBAddress"):
         pSBAddress(None)
-    if compareName("SBBreakpoint"):
+    if compare_name("SBBreakpoint"):
         pSBBreakpoint(None)
-    if compareName("SBBreakpointLocation"):
+    if compare_name("SBBreakpointLocation"):
         pSBBreakpointLocation(None)
-    if compareName("SBError"):
+    if compare_name("SBError"):
         pSBError(None)
 
-    if compareName("SBType"):
+    if compare_name("SBType"):
         pSBType(None)
-    if compareName("SBTypeMemberFunction"):
+    if compare_name("SBTypeMemberFunction"):
         pSBTypeMemberFunction(None)
-    if compareName("SBTypeCategory"):
+    if compare_name("SBTypeCategory"):
         pSBTypeCategory(None)
 
-    if compareName("SBBroadcaster"):
+    if compare_name("SBBroadcaster"):
         pSBBroadcaster(None)
-    if compareName("SBListener"):
+    if compare_name("SBListener"):
         pSBListener(None)
-    if compareName("SBEvent"):
+    if compare_name("SBEvent"):
         pSBEvent(None)
-    if compareName("SBStructuredData"):
+    if compare_name("SBStructuredData"):
         pSBStructuredData(None)
 
-    if compareName("SBPlatform"):
+    if compare_name("SBPlatform"):
         pSBPlatform(None)
-    if compareName("SBSourceManager"):
+    if compare_name("SBSourceManager"):
         pSBSourceManager(None)
-    if compareName("SBUnixSignals"):
+    if compare_name("SBUnixSignals"):
         pSBUnixSignals(None)
-    if compareName("SBLaunchInfo"):
+    if compare_name("SBLaunchInfo"):
         pSBLaunchInfo(None)
-    if compareName("SBEnvironment"):
+    if compare_name("SBEnvironment"):
         pSBEnvironment(None)
-    if compareName("SBCommandInterpreter"):
+    if compare_name("SBCommandInterpreter"):
         pSBCommandInterpreter(None)
-    if compareName("SBQueue"):
+    if compare_name("SBQueue"):
         pSBQueue(None)
-    if compareName("SBSection"):
+    if compare_name("SBSection"):
         pSBSection(None)
-    if compareName("SBMemoryRegionInfoList"):
+    if compare_name("SBMemoryRegionInfoList"):
         pSBMemoryRegionInfoList(None)
-    if compareName("SBMemoryRegionInfo"):
+    if compare_name("SBMemoryRegionInfo"):
         pSBMemoryRegionInfo(None)
-    if compareName("SBExpressionOptions"):
+    if compare_name("SBExpressionOptions"):
         pSBExpressionOptions(None)
 
 
-def compareName(className: str) -> bool:
-    global gLastCommand
-    if gLastCommand.lower() in className.lower() or gLastCommand.lower() == "all":
+def compare_name(class_name: str) -> bool:
+    global g_last_command
+    if g_last_command.lower() in class_name.lower() or g_last_command.lower() == "all":
         return True
     else:
         return False
@@ -183,38 +185,38 @@ def generate_option_parser() -> optparse.OptionParser:
     return parser
 
 
-def printFormat(desc: str, value: object) -> None:
+def print_format(desc: str, value: object) -> None:
     print(f"[{desc}]: {value}\n\ttype: {type(value)}")
 
 
-def printClassName(title: str) -> None:
+def print_class_name(title: str) -> None:
     print(f"\n\n====={title}================================")
 
 
-def printTraversal(obj: object, getSize: str, getElem: str) -> None:
-    size = getattr(obj, getSize)
-    elem = getattr(obj, getElem)
-    global gUnlimited
+def print_traversal(obj: object, get_size: str, get_elem: str) -> None:
+    size = getattr(obj, get_size)
+    elem = getattr(obj, get_elem)
+    global g_unlimited
 
-    print(f"\n##### [{getElem}]({size()}) #####")
+    print(f"\n##### [{get_elem}]({size()}) #####")
 
     for i in range(size()):
-        if i == 100 and not gUnlimited:
+        if i == 100 and not g_unlimited:
             break
         if i == 0:
             print(type(elem(i)))
         print(elem(i))
 
 
-def getStringFromSBStringList(stringList: lldb.SBStringList) -> str:
-    size = stringList.GetSize()
+def get_string_from_SBStringList(string_list: lldb.SBStringList) -> str:
+    size = string_list.GetSize()
     result = ""
     for i in range(size):
-        result += "\n" + stringList.GetStringAtIndex(i)
+        result += "\n" + string_list.GetStringAtIndex(i)
     return result
 
 
-def getStringFromByteOrder(order: int) -> str:
+def get_string_from_byte_order(order: int) -> str:
     result = 'unknown'
     if order == lldb.eByteOrderInvalid:
         result = 'eByteOrderInvalid'
@@ -227,67 +229,101 @@ def getStringFromByteOrder(order: int) -> str:
     return result
 
 
-def getStringFromSymbolType(symbolType: int) -> str:
-    if symbolType == lldb.eSymbolTypeInvalid:
+def get_string_from_symbol_type(symbol_type: int) -> str:
+    if symbol_type == lldb.eSymbolTypeInvalid:
         return "eSymbolTypeInvalid"
-    elif symbolType == lldb.eSymbolTypeAbsolute:
+    elif symbol_type == lldb.eSymbolTypeAbsolute:
         return "eSymbolTypeAbsolute"
-    elif symbolType == lldb.eSymbolTypeCode:
+    elif symbol_type == lldb.eSymbolTypeCode:
         return "eSymbolTypeCode"
-    elif symbolType == lldb.eSymbolTypeResolver:
+    elif symbol_type == lldb.eSymbolTypeResolver:
         return "eSymbolTypeResolver"
-    elif symbolType == lldb.eSymbolTypeData:
+    elif symbol_type == lldb.eSymbolTypeData:
         return "eSymbolTypeData"
-    elif symbolType == lldb.eSymbolTypeTrampoline:
+    elif symbol_type == lldb.eSymbolTypeTrampoline:
         return "eSymbolTypeTrampoline"
-    elif symbolType == lldb.eSymbolTypeRuntime:
+    elif symbol_type == lldb.eSymbolTypeRuntime:
         return "eSymbolTypeRuntime"
-    elif symbolType == lldb.eSymbolTypeException:
+    elif symbol_type == lldb.eSymbolTypeException:
         return "eSymbolTypeException"
-    elif symbolType == lldb.eSymbolTypeSourceFile:
+    elif symbol_type == lldb.eSymbolTypeSourceFile:
         return "eSymbolTypeSourceFile"
-    elif symbolType == lldb.eSymbolTypeHeaderFile:
+    elif symbol_type == lldb.eSymbolTypeHeaderFile:
         return "eSymbolTypeHeaderFile"
-    elif symbolType == lldb.eSymbolTypeObjectFile:
+    elif symbol_type == lldb.eSymbolTypeObjectFile:
         return "eSymbolTypeObjectFile"
-    elif symbolType == lldb.eSymbolTypeCommonBlock:
+    elif symbol_type == lldb.eSymbolTypeCommonBlock:
         return "eSymbolTypeCommonBlock"
-    elif symbolType == lldb.eSymbolTypeBlock:
+    elif symbol_type == lldb.eSymbolTypeBlock:
         return "eSymbolTypeBlock"
-    elif symbolType == lldb.eSymbolTypeLocal:
+    elif symbol_type == lldb.eSymbolTypeLocal:
         return "eSymbolTypeLocal"
-    elif symbolType == lldb.eSymbolTypeParam:
+    elif symbol_type == lldb.eSymbolTypeParam:
         return "eSymbolTypeParam"
-    elif symbolType == lldb.eSymbolTypeVariable:
+    elif symbol_type == lldb.eSymbolTypeVariable:
         return "eSymbolTypeVariable"
-    elif symbolType == lldb.eSymbolTypeVariableType:
+    elif symbol_type == lldb.eSymbolTypeVariableType:
         return "eSymbolTypeVariableType"
-    elif symbolType == lldb.eSymbolTypeLineEntry:
+    elif symbol_type == lldb.eSymbolTypeLineEntry:
         return "eSymbolTypeLineEntry"
-    elif symbolType == lldb.eSymbolTypeLineHeader:
+    elif symbol_type == lldb.eSymbolTypeLineHeader:
         return "eSymbolTypeLineHeader"
-    elif symbolType == lldb.eSymbolTypeScopeBegin:
+    elif symbol_type == lldb.eSymbolTypeScopeBegin:
         return "eSymbolTypeScopeBegin"
-    elif symbolType == lldb.eSymbolTypeScopeEnd:
+    elif symbol_type == lldb.eSymbolTypeScopeEnd:
         return "eSymbolTypeScopeEnd"
-    elif symbolType == lldb.eSymbolTypeAdditional:
+    elif symbol_type == lldb.eSymbolTypeAdditional:
         return "eSymbolTypeAdditional"
-    elif symbolType == lldb.eSymbolTypeCompiler:
+    elif symbol_type == lldb.eSymbolTypeCompiler:
         return "eSymbolTypeCompiler"
-    elif symbolType == lldb.eSymbolTypeInstrumentation:
+    elif symbol_type == lldb.eSymbolTypeInstrumentation:
         return "eSymbolTypeInstrumentation"
-    elif symbolType == lldb.eSymbolTypeUndefined:
+    elif symbol_type == lldb.eSymbolTypeUndefined:
         return "eSymbolTypeUndefined"
-    elif symbolType == lldb.eSymbolTypeObjCClass:
+    elif symbol_type == lldb.eSymbolTypeObjCClass:
         return "eSymbolTypeObjCClass"
-    elif symbolType == lldb.eSymbolTypeObjCMetaClass:
+    elif symbol_type == lldb.eSymbolTypeObjCMetaClass:
         return "eSymbolTypeObjCMetaClass"
-    elif symbolType == lldb.eSymbolTypeObjCIVar:
+    elif symbol_type == lldb.eSymbolTypeObjCIVar:
         return "eSymbolTypeObjCIVar"
-    elif symbolType == lldb.eSymbolTypeReExported:
+    elif symbol_type == lldb.eSymbolTypeReExported:
         return "eSymbolTypeReExported"
-    elif symbolType == lldb.eSymbolTypeASTFile:
+    elif symbol_type == lldb.eSymbolTypeASTFile:
         return "eSymbolTypeASTFile"
+    return "unknown"
+
+
+def get_string_from_stop_reason(stop_reason: int) -> str:
+    if stop_reason == lldb.eStopReasonInvalid:
+        return 'eStopReasonInvalid'
+    elif stop_reason == lldb.eStopReasonNone:
+        return 'eStopReasonNone'
+    elif stop_reason == lldb.eStopReasonTrace:
+        return 'eStopReasonTrace'
+    elif stop_reason == lldb.eStopReasonBreakpoint:
+        return 'eStopReasonBreakpoint'
+    elif stop_reason == lldb.eStopReasonWatchpoint:
+        return 'eStopReasonWatchpoint'
+    elif stop_reason == lldb.eStopReasonSignal:
+        return 'eStopReasonSignal'
+    elif stop_reason == lldb.eStopReasonException:
+        return 'eStopReasonException'
+    elif stop_reason == lldb.eStopReasonExec:
+        return 'eStopReasonExec'
+    elif stop_reason == lldb.eStopReasonPlanComplete:
+        return 'eStopReasonPlanComplete'
+    elif stop_reason == lldb.eStopReasonThreadExiting:
+        return 'eStopReasonThreadExiting'
+    elif stop_reason == lldb.eStopReasonInstrumentation:
+        return 'eStopReasonInstrumentation'
+    elif stop_reason == lldb.eStopReasonProcessorTrace:
+        return 'eStopReasonProcessorTrace'
+    elif stop_reason == lldb.eStopReasonFork:
+        return 'eStopReasonFork'
+    elif stop_reason == lldb.eStopReasonVFork:
+        return 'eStopReasonVFork'
+    elif stop_reason == lldb.eStopReasonVForkDone:
+        return 'eStopReasonVForkDone'
     return "unknown"
 
 
@@ -297,21 +333,21 @@ def pSBHostOS(obj: Optional[lldb.SBHostOS]) -> None:
     else:
         hostOS = lldb.SBHostOS
 
-    printClassName("SBHostOS")
-    printFormat("GetProgramFileSpec", hostOS.GetProgramFileSpec())  # SBFileSpec
-    printFormat("GetLLDBPythonPath", hostOS.GetLLDBPythonPath())  # SBFileSpec
-    printFormat("GetUserHomeDirectory", hostOS.GetUserHomeDirectory())  # SBFileSpec
+    print_class_name("SBHostOS")
+    print_format("GetProgramFileSpec", hostOS.GetProgramFileSpec())  # SBFileSpec
+    print_format("GetLLDBPythonPath", hostOS.GetLLDBPythonPath())  # SBFileSpec
+    print_format("GetUserHomeDirectory", hostOS.GetUserHomeDirectory())  # SBFileSpec
 
-    printFormat("GetLLDBPath(ePathTypeLLDBShlibDir)", hostOS.GetLLDBPath(lldb.ePathTypeLLDBShlibDir))  # SBFileSpec
-    printFormat("GetLLDBPath(ePathTypeSupportExecutableDir)", hostOS.GetLLDBPath(lldb.ePathTypeSupportExecutableDir))  # SBFileSpec
-    printFormat("GetLLDBPath(ePathTypeHeaderDir)", hostOS.GetLLDBPath(lldb.ePathTypeHeaderDir))  # SBFileSpec
-    printFormat("GetLLDBPath(ePathTypePythonDir)", hostOS.GetLLDBPath(lldb.ePathTypePythonDir))  # SBFileSpec
-    printFormat("GetLLDBPath(ePathTypeLLDBSystemPlugins)", hostOS.GetLLDBPath(lldb.ePathTypeLLDBSystemPlugins))  # SBFileSpec
-    printFormat("GetLLDBPath(ePathTypeLLDBUserPlugins)", hostOS.GetLLDBPath(lldb.ePathTypeLLDBUserPlugins))  # SBFileSpec
-    printFormat("GetLLDBPath(ePathTypeLLDBTempSystemDir)", hostOS.GetLLDBPath(lldb.ePathTypeLLDBTempSystemDir))  # SBFileSpec
-    printFormat("GetLLDBPath(ePathTypeGlobalLLDBTempSystemDir)", hostOS.GetLLDBPath(lldb.ePathTypeGlobalLLDBTempSystemDir))  # SBFileSpec
-    printFormat("GetLLDBPath(ePathTypeClangDir)", hostOS.GetLLDBPath(lldb.ePathTypeClangDir))  # SBFileSpec
-    printFormat("GetLLDBPath(ePathTypeSwiftDir)", hostOS.GetLLDBPath(lldb.ePathTypeSwiftDir))  # SBFileSpec
+    print_format("GetLLDBPath(ePathTypeLLDBShlibDir)", hostOS.GetLLDBPath(lldb.ePathTypeLLDBShlibDir))  # SBFileSpec
+    print_format("GetLLDBPath(ePathTypeSupportExecutableDir)", hostOS.GetLLDBPath(lldb.ePathTypeSupportExecutableDir))  # SBFileSpec
+    print_format("GetLLDBPath(ePathTypeHeaderDir)", hostOS.GetLLDBPath(lldb.ePathTypeHeaderDir))  # SBFileSpec
+    print_format("GetLLDBPath(ePathTypePythonDir)", hostOS.GetLLDBPath(lldb.ePathTypePythonDir))  # SBFileSpec
+    print_format("GetLLDBPath(ePathTypeLLDBSystemPlugins)", hostOS.GetLLDBPath(lldb.ePathTypeLLDBSystemPlugins))  # SBFileSpec
+    print_format("GetLLDBPath(ePathTypeLLDBUserPlugins)", hostOS.GetLLDBPath(lldb.ePathTypeLLDBUserPlugins))  # SBFileSpec
+    print_format("GetLLDBPath(ePathTypeLLDBTempSystemDir)", hostOS.GetLLDBPath(lldb.ePathTypeLLDBTempSystemDir))  # SBFileSpec
+    print_format("GetLLDBPath(ePathTypeGlobalLLDBTempSystemDir)", hostOS.GetLLDBPath(lldb.ePathTypeGlobalLLDBTempSystemDir))  # SBFileSpec
+    print_format("GetLLDBPath(ePathTypeClangDir)", hostOS.GetLLDBPath(lldb.ePathTypeClangDir))  # SBFileSpec
+    print_format("GetLLDBPath(ePathTypeSwiftDir)", hostOS.GetLLDBPath(lldb.ePathTypeSwiftDir))  # SBFileSpec
 
 
 def pSBDebugger(obj: Optional[lldb.SBDebugger]) -> None:
@@ -320,42 +356,42 @@ def pSBDebugger(obj: Optional[lldb.SBDebugger]) -> None:
     else:
         debugger = lldb.debugger
 
-    printClassName("SBDebugger")
-    printFormat("SBDebugger", debugger)
-    printFormat("IsValid", debugger.IsValid())
-    printFormat("GetAsync", debugger.GetAsync())
-    # printFormat("GetInputFileHandle", debugger.GetInputFileHandle())  # FileSP
-    # printFormat("GetOutputFileHandle", debugger.GetOutputFileHandle())  # FileSP
-    # printFormat("GetErrorFileHandle", debugger.GetErrorFileHandle())  # FileSP
-    printFormat("GetInputFile", debugger.GetInputFile())  # SBFile
-    printFormat("GetOutputFile", debugger.GetOutputFile())  # SBFile
-    printFormat("GetErrorFile", debugger.GetErrorFile())  # SBFile
-    printFormat("GetCommandInterpreter", debugger.GetCommandInterpreter())  # SBCommandInterpreter
-    printFormat("GetListener", debugger.GetListener())  # SBListener
-    printFormat("GetDummyTarget", debugger.GetDummyTarget())  # SBTarget
-    printFormat("GetNumTargets", debugger.GetNumTargets())
-    printFormat("GetSelectedTarget", debugger.GetSelectedTarget())  # SBTarget
-    printFormat("GetSelectedPlatform", debugger.GetSelectedPlatform())  # SBPlatform
-    printFormat("GetNumPlatforms", debugger.GetNumPlatforms())
-    printFormat("GetNumAvailablePlatforms", debugger.GetNumAvailablePlatforms())
-    printFormat("GetSourceManager", debugger.GetSourceManager())  # SBSourceManager
-    printFormat("GetUseExternalEditor", debugger.GetUseExternalEditor())
-    printFormat("GetUseColor", debugger.GetUseColor())
-    printFormat("GetVersionString", debugger.GetVersionString())
-    printFormat("GetBuildConfiguration", debugger.GetBuildConfiguration())  # SBStructuredData
-    printFormat("GetInstanceName", debugger.GetInstanceName())
-    printFormat("GetTerminalWidth", debugger.GetTerminalWidth())
-    printFormat("GetID", debugger.GetID())
-    printFormat("GetPrompt", debugger.GetPrompt())
-    printFormat("GetReproducerPath", debugger.GetReproducerPath())
-    printFormat("GetScriptLanguage", debugger.GetScriptLanguage())  # ScriptLanguage int
-    printFormat("GetCloseInputOnEOF", debugger.GetCloseInputOnEOF())
-    printFormat("GetNumCategories", debugger.GetNumCategories())
-    printFormat("GetDefaultCategory", debugger.GetDefaultCategory())  # SBTypeCategory
+    print_class_name("SBDebugger")
+    print_format("SBDebugger", debugger)
+    print_format("IsValid", debugger.IsValid())
+    print_format("GetAsync", debugger.GetAsync())
+    # print_format("GetInputFileHandle", debugger.GetInputFileHandle())  # FileSP
+    # print_format("GetOutputFileHandle", debugger.GetOutputFileHandle())  # FileSP
+    # print_format("GetErrorFileHandle", debugger.GetErrorFileHandle())  # FileSP
+    print_format("GetInputFile", debugger.GetInputFile())  # SBFile
+    print_format("GetOutputFile", debugger.GetOutputFile())  # SBFile
+    print_format("GetErrorFile", debugger.GetErrorFile())  # SBFile
+    print_format("GetCommandInterpreter", debugger.GetCommandInterpreter())  # SBCommandInterpreter
+    print_format("GetListener", debugger.GetListener())  # SBListener
+    print_format("GetDummyTarget", debugger.GetDummyTarget())  # SBTarget
+    print_format("GetNumTargets", debugger.GetNumTargets())
+    print_format("GetSelectedTarget", debugger.GetSelectedTarget())  # SBTarget
+    print_format("GetSelectedPlatform", debugger.GetSelectedPlatform())  # SBPlatform
+    print_format("GetNumPlatforms", debugger.GetNumPlatforms())
+    print_format("GetNumAvailablePlatforms", debugger.GetNumAvailablePlatforms())
+    print_format("GetSourceManager", debugger.GetSourceManager())  # SBSourceManager
+    print_format("GetUseExternalEditor", debugger.GetUseExternalEditor())
+    print_format("GetUseColor", debugger.GetUseColor())
+    print_format("GetVersionString", debugger.GetVersionString())
+    print_format("GetBuildConfiguration", debugger.GetBuildConfiguration())  # SBStructuredData
+    print_format("GetInstanceName", debugger.GetInstanceName())
+    print_format("GetTerminalWidth", debugger.GetTerminalWidth())
+    print_format("GetID", debugger.GetID())
+    print_format("GetPrompt", debugger.GetPrompt())
+    print_format("GetReproducerPath", debugger.GetReproducerPath())
+    print_format("GetScriptLanguage", debugger.GetScriptLanguage())  # ScriptLanguage int
+    print_format("GetCloseInputOnEOF", debugger.GetCloseInputOnEOF())
+    print_format("GetNumCategories", debugger.GetNumCategories())
+    print_format("GetDefaultCategory", debugger.GetDefaultCategory())  # SBTypeCategory
 
-    printTraversal(debugger, "GetNumTargets", "GetTargetAtIndex")  # [SBTarget]
-    printTraversal(debugger, "GetNumPlatforms", "GetPlatformAtIndex")  # [SBPlatform]
-    printTraversal(debugger, "GetNumCategories", "GetCategoryAtIndex")  # [SBTypeCategory]
+    print_traversal(debugger, "GetNumTargets", "GetTargetAtIndex")  # [SBTarget]
+    print_traversal(debugger, "GetNumPlatforms", "GetPlatformAtIndex")  # [SBPlatform]
+    print_traversal(debugger, "GetNumCategories", "GetCategoryAtIndex")  # [SBTypeCategory]
 
 
 def pSBTarget(obj: Optional[lldb.SBTarget]) -> None:
@@ -364,48 +400,48 @@ def pSBTarget(obj: Optional[lldb.SBTarget]) -> None:
     else:
         target = lldb.debugger.GetSelectedTarget()
 
-    printClassName("SBTarget")
-    printFormat("SBTarget", target)
-    printFormat("IsValid", target.IsValid())
-    printFormat("GetBroadcasterClassName", target.GetBroadcasterClassName())
-    printFormat("GetProcess", target.GetProcess())  # SBProcess
-    printFormat("GetPlatform", target.GetPlatform())  # SBPlatform
-    printFormat("GetExecutable", target.GetExecutable())  # SBFileSpec
-    printFormat("GetNumModules", target.GetNumModules())
-    printFormat("GetDebugger", target.GetDebugger())  # SBDebugger
-    byteOrder = target.GetByteOrder()  # ByteOrder int
-    printFormat("GetByteOrder(raw)", byteOrder)
-    printFormat("GetByteOrder(resolved)", getStringFromByteOrder(byteOrder))
-    printFormat("GetAddressByteSize", target.GetAddressByteSize())
-    printFormat("GetTriple", target.GetTriple())
-    printFormat("GetDataByteSize", target.GetDataByteSize())
-    printFormat("GetCodeByteSize", target.GetCodeByteSize())
-    printFormat("FindFunctions.first", target.FindFunctions("viewDidLoad")[0])  # SBSymbolContext
-    printFormat("FindFirstType", target.FindFirstType("UIResponder"))  # SBType
-    printFormat("FindTypes", target.FindTypes("UIView"))  # SBTypeList
-    printFormat("GetSourceManager", target.GetSourceManager())  # SBSourceManager
-    printFormat("FindFirstGlobalVariable", target.FindFirstGlobalVariable("shared"))  # SBValue
-    printFormat("FindGlobalVariables", target.FindGlobalVariables("shared", 2))  # SBValueList
-    printFormat("FindGlobalFunctions.first", target.FindGlobalFunctions("viewDidLoad", 1, 0)[0])  # SBSymbolContext
-    printFormat("GetEnvironment", target.GetEnvironment())  # SBEnvironment
-    printFormat("GetNumBreakpoints", target.GetNumBreakpoints())
-    stringList = lldb.SBStringList()
-    target.GetBreakpointNames(stringList)
-    printFormat("GetBreakpointNames", getStringFromSBStringList(stringList))
-    printFormat("GetNumWatchpoints", target.GetNumWatchpoints())
-    printFormat("GetBroadcaster", target.GetBroadcaster())  # SBBroadcaster
-    printFormat("FindSymbols", target.FindSymbols("UIView"))  # SBSymbolContextList
-    printFormat("GetStackRedZoneSize", target.GetStackRedZoneSize())
+    print_class_name("SBTarget")
+    print_format("SBTarget", target)
+    print_format("IsValid", target.IsValid())
+    print_format("GetBroadcasterClassName", target.GetBroadcasterClassName())
+    print_format("GetProcess", target.GetProcess())  # SBProcess
+    print_format("GetPlatform", target.GetPlatform())  # SBPlatform
+    print_format("GetExecutable", target.GetExecutable())  # SBFileSpec
+    print_format("GetNumModules", target.GetNumModules())
+    print_format("GetDebugger", target.GetDebugger())  # SBDebugger
+    byte_order = target.GetByteOrder()  # ByteOrder int
+    print_format("GetByteOrder(raw)", byte_order)
+    print_format("GetByteOrder(resolved)", get_string_from_byte_order(byte_order))
+    print_format("GetAddressByteSize", target.GetAddressByteSize())
+    print_format("GetTriple", target.GetTriple())
+    print_format("GetDataByteSize", target.GetDataByteSize())
+    print_format("GetCodeByteSize", target.GetCodeByteSize())
+    print_format("FindFunctions.first", target.FindFunctions("viewDidLoad")[0])  # SBSymbolContext
+    print_format("FindFirstType", target.FindFirstType("UIResponder"))  # SBType
+    print_format("FindTypes", target.FindTypes("UIView"))  # SBTypeList
+    print_format("GetSourceManager", target.GetSourceManager())  # SBSourceManager
+    print_format("FindFirstGlobalVariable", target.FindFirstGlobalVariable("shared"))  # SBValue
+    print_format("FindGlobalVariables", target.FindGlobalVariables("shared", 2))  # SBValueList
+    print_format("FindGlobalFunctions.first", target.FindGlobalFunctions("viewDidLoad", 1, 0)[0])  # SBSymbolContext
+    print_format("GetEnvironment", target.GetEnvironment())  # SBEnvironment
+    print_format("GetNumBreakpoints", target.GetNumBreakpoints())
+    string_list = lldb.SBStringList()
+    target.GetBreakpointNames(string_list)
+    print_format("GetBreakpointNames", get_string_from_SBStringList(string_list))
+    print_format("GetNumWatchpoints", target.GetNumWatchpoints())
+    print_format("GetBroadcaster", target.GetBroadcaster())  # SBBroadcaster
+    print_format("FindSymbols", target.FindSymbols("UIView"))  # SBSymbolContextList
+    print_format("GetStackRedZoneSize", target.GetStackRedZoneSize())
     module = target.GetProcess().GetSelectedThread().GetSelectedFrame().GetModule()
-    printFormat("IsLoaded", target.IsLoaded(module))
-    printFormat("GetLaunchInfo", target.GetLaunchInfo())  # SBLaunchInfo
-    printFormat("GetCollectingStats", target.GetCollectingStats())
-    printFormat("GetStatistics", target.GetStatistics())  # SBStructuredData
-    printFormat("GetTrace", target.GetTrace())  # SBTrace
+    print_format("IsLoaded", target.IsLoaded(module))
+    print_format("GetLaunchInfo", target.GetLaunchInfo())  # SBLaunchInfo
+    print_format("GetCollectingStats", target.GetCollectingStats())
+    print_format("GetStatistics", target.GetStatistics())  # SBStructuredData
+    print_format("GetTrace", target.GetTrace())  # SBTrace
 
-    printTraversal(target, "GetNumModules", "GetModuleAtIndex")  # [SBModule]
-    printTraversal(target, "GetNumBreakpoints", "GetBreakpointAtIndex")  # [SBBreakpoint]
-    printTraversal(target, "GetNumWatchpoints", "GetWatchpointAtIndex")  # [SBWatchpoint]
+    print_traversal(target, "GetNumModules", "GetModuleAtIndex")  # [SBModule]
+    print_traversal(target, "GetNumBreakpoints", "GetBreakpointAtIndex")  # [SBBreakpoint]
+    print_traversal(target, "GetNumWatchpoints", "GetWatchpointAtIndex")  # [SBWatchpoint]
 
 
 def pSBProcess(obj: Optional[lldb.SBProcess]) -> None:
@@ -415,39 +451,39 @@ def pSBProcess(obj: Optional[lldb.SBProcess]) -> None:
         process = lldb.debugger.GetSelectedTarget().GetProcess()
         # process = lldb.debugger.GetCommandInterpreter().GetProcess()
 
-    printClassName("SBProcess")
-    printFormat("SBProcess", process)
-    printFormat("GetBroadcasterClassName", process.GetBroadcasterClassName())
-    printFormat("GetPluginName", process.GetPluginName())
-    printFormat("GetShortPluginName", process.GetShortPluginName())
-    printFormat("IsValid", process.IsValid())
-    printFormat("GetTarget", process.GetTarget())  # SBTarget
-    byteOrder = process.GetByteOrder()  # ByteOrder int
-    printFormat("GetByteOrder(raw)", byteOrder)
-    printFormat("GetByteOrder(resolved)", getStringFromByteOrder(byteOrder))
-    printFormat("GetNumThreads", process.GetNumThreads())
-    printFormat("GetSelectedThread", process.GetSelectedThread())  # SBThread
-    printFormat("GetNumQueues", process.GetNumQueues())
-    printFormat("GetState", process.GetState())  # StateType int
-    printFormat("SBDebugger.StateAsCString", lldb.SBDebugger.StateAsCString(process.GetState()))
-    printFormat("GetExitStatus", process.GetExitStatus())
-    printFormat("GetExitDescription", process.GetExitDescription())
-    printFormat("GetProcessID", process.GetProcessID())
-    printFormat("GetUniqueID", process.GetUniqueID())
-    printFormat("GetAddressByteSize", process.GetAddressByteSize())
-    printFormat("GetUnixSignals", process.GetUnixSignals())  # SBUnixSignals
-    printFormat("GetBroadcaster", process.GetBroadcaster())  # SBBroadcaster
-    printFormat("GetExtendedCrashInformation", process.GetExtendedCrashInformation())  # SBStructuredData
-    printFormat("GetNumExtendedBacktraceTypes", process.GetNumExtendedBacktraceTypes())
-    printFormat("GetMemoryRegions", process.GetMemoryRegions())  # SBMemoryRegionInfoList
-    printFormat("GetProcessInfo", process.GetProcessInfo())  # SBProcessInfo
-    printFormat("__get_is_alive__", process.__get_is_alive__())
-    printFormat("__get_is_running__", process.__get_is_running__())
-    printFormat("__get_is_stopped__", process.__get_is_stopped__())
+    print_class_name("SBProcess")
+    print_format("SBProcess", process)
+    print_format("GetBroadcasterClassName", process.GetBroadcasterClassName())
+    print_format("GetPluginName", process.GetPluginName())
+    print_format("GetShortPluginName", process.GetShortPluginName())
+    print_format("IsValid", process.IsValid())
+    print_format("GetTarget", process.GetTarget())  # SBTarget
+    byte_order = process.GetByteOrder()  # ByteOrder int
+    print_format("GetByteOrder(raw)", byte_order)
+    print_format("GetByteOrder(resolved)", get_string_from_byte_order(byte_order))
+    print_format("GetNumThreads", process.GetNumThreads())
+    print_format("GetSelectedThread", process.GetSelectedThread())  # SBThread
+    print_format("GetNumQueues", process.GetNumQueues())
+    print_format("GetState", process.GetState())  # StateType int
+    print_format("SBDebugger.StateAsCString", lldb.SBDebugger.StateAsCString(process.GetState()))
+    print_format("GetExitStatus", process.GetExitStatus())
+    print_format("GetExitDescription", process.GetExitDescription())
+    print_format("GetProcessID", process.GetProcessID())
+    print_format("GetUniqueID", process.GetUniqueID())
+    print_format("GetAddressByteSize", process.GetAddressByteSize())
+    print_format("GetUnixSignals", process.GetUnixSignals())  # SBUnixSignals
+    print_format("GetBroadcaster", process.GetBroadcaster())  # SBBroadcaster
+    print_format("GetExtendedCrashInformation", process.GetExtendedCrashInformation())  # SBStructuredData
+    print_format("GetNumExtendedBacktraceTypes", process.GetNumExtendedBacktraceTypes())
+    print_format("GetMemoryRegions", process.GetMemoryRegions())  # SBMemoryRegionInfoList
+    print_format("GetProcessInfo", process.GetProcessInfo())  # SBProcessInfo
+    print_format("__get_is_alive__", process.__get_is_alive__())
+    print_format("__get_is_running__", process.__get_is_running__())
+    print_format("__get_is_stopped__", process.__get_is_stopped__())
 
-    printTraversal(process, "GetNumThreads", "GetThreadAtIndex")  # [SBThread]
-    printTraversal(process, "GetNumQueues", "GetQueueAtIndex")  # [SBQueue]
-    printTraversal(process, "GetNumExtendedBacktraceTypes", "GetExtendedBacktraceTypeAtIndex")  # [str]
+    print_traversal(process, "GetNumThreads", "GetThreadAtIndex")  # [SBThread]
+    print_traversal(process, "GetNumQueues", "GetQueueAtIndex")  # [SBQueue]
+    print_traversal(process, "GetNumExtendedBacktraceTypes", "GetExtendedBacktraceTypeAtIndex")  # [str]
 
 
 def pSBProcessInfo(obj: Optional[lldb.SBProcessInfo]) -> None:
@@ -456,22 +492,22 @@ def pSBProcessInfo(obj: Optional[lldb.SBProcessInfo]) -> None:
     else:
         info = lldb.debugger.GetSelectedTarget().GetProcess().GetProcessInfo()
 
-    printClassName("SBProcessInfo")
-    printFormat("SBProcessInfo", info)
-    printFormat("IsValid", info.IsValid())
-    printFormat("GetName", info.GetName())
-    printFormat("GetExecutableFile", info.GetExecutableFile())  # SBFileSpec
-    printFormat("GetProcessID", info.GetProcessID())
-    printFormat("GetUserID", info.GetUserID())
-    printFormat("GetGroupID", info.GetGroupID())
-    printFormat("UserIDIsValid", info.UserIDIsValid())
-    printFormat("GroupIDIsValid", info.GroupIDIsValid())
-    printFormat("GetEffectiveUserID", info.GetEffectiveUserID())
-    printFormat("GetEffectiveGroupID", info.GetEffectiveGroupID())
-    printFormat("EffectiveUserIDIsValid", info.EffectiveUserIDIsValid())
-    printFormat("EffectiveGroupIDIsValid", info.EffectiveGroupIDIsValid())
-    printFormat("GetParentProcessID", info.GetParentProcessID())
-    printFormat("GetTriple", info.GetTriple())
+    print_class_name("SBProcessInfo")
+    print_format("SBProcessInfo", info)
+    print_format("IsValid", info.IsValid())
+    print_format("GetName", info.GetName())
+    print_format("GetExecutableFile", info.GetExecutableFile())  # SBFileSpec
+    print_format("GetProcessID", info.GetProcessID())
+    print_format("GetUserID", info.GetUserID())
+    print_format("GetGroupID", info.GetGroupID())
+    print_format("UserIDIsValid", info.UserIDIsValid())
+    print_format("GroupIDIsValid", info.GroupIDIsValid())
+    print_format("GetEffectiveUserID", info.GetEffectiveUserID())
+    print_format("GetEffectiveGroupID", info.GetEffectiveGroupID())
+    print_format("EffectiveUserIDIsValid", info.EffectiveUserIDIsValid())
+    print_format("EffectiveGroupIDIsValid", info.EffectiveGroupIDIsValid())
+    print_format("GetParentProcessID", info.GetParentProcessID())
+    print_format("GetTriple", info.GetTriple())
 
 
 def pSBThread(obj: Optional[lldb.SBThread]) -> None:
@@ -480,35 +516,61 @@ def pSBThread(obj: Optional[lldb.SBThread]) -> None:
     else:
         thread = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread()
 
-    printClassName("SBThread")
-    printFormat("SBThread", thread)
-    printFormat("GetBroadcasterClassName", thread.GetBroadcasterClassName())
-    printFormat("IsValid", thread.IsValid())
-    printFormat("GetStopReason", thread.GetStopReason())  # StopReason int
-    printFormat("GetStopReasonDataCount", thread.GetStopReasonDataCount())
-    printFormat("GetStopReturnValue", thread.GetStopReturnValue())  # SBValue
-    printFormat("GetStopErrorValue", thread.GetStopErrorValue())  # SBValue
-    printFormat("GetThreadID", thread.GetThreadID())
-    printFormat("GetIndexID", thread.GetIndexID())
-    printFormat("GetName", thread.GetName())
-    printFormat("GetQueueName", thread.GetQueueName())
-    printFormat("GetQueueID", thread.GetQueueID())
-    printFormat("GetQueue", thread.GetQueue())  # SBQueue
-    printFormat("IsSuspended", thread.IsSuspended())
-    printFormat("IsStopped", thread.IsStopped())
-    printFormat("GetNumFrames", thread.GetNumFrames())
-    printFormat("GetSelectedFrame", thread.GetSelectedFrame())  # SBFrame
-    printFormat("GetProcess", thread.GetProcess())  # SBProcess
+    print_class_name("SBThread")
+    print_format("SBThread", thread)
+    print_format("GetBroadcasterClassName", thread.GetBroadcasterClassName())
+    print_format("IsValid", thread.IsValid())
+    stop_reason = thread.GetStopReason()  # StopReason int
+    print_format("GetStopReason(raw)", stop_reason)
+    print_format("GetStopReason(resolved)", get_string_from_stop_reason(stop_reason))
+    print_format("GetStopReasonDataCount", thread.GetStopReasonDataCount())
+    print_format("GetStopReturnValue", thread.GetStopReturnValue())  # SBValue
+    print_format("GetStopErrorValue", thread.GetStopErrorValue())  # SBValue
+    print_format("GetThreadID", thread.GetThreadID())
+    print_format("GetIndexID", thread.GetIndexID())
+    print_format("GetName", thread.GetName())
+    print_format("GetQueueName", thread.GetQueueName())
+    print_format("GetQueueID", thread.GetQueueID())
+    print_format("GetQueue", thread.GetQueue())  # SBQueue
+    print_format("IsSuspended", thread.IsSuspended())
+    print_format("IsStopped", thread.IsStopped())
+    print_format("GetNumFrames", thread.GetNumFrames())
+    print_format("GetSelectedFrame", thread.GetSelectedFrame())  # SBFrame
+    print_format("GetProcess", thread.GetProcess())  # SBProcess
     stream = lldb.SBStream()
     thread.GetStatus(stream)
-    printFormat("GetStatus", stream.GetData())
-    printFormat("GetExtendedBacktraceOriginatingIndexID", thread.GetExtendedBacktraceOriginatingIndexID())
-    printFormat("GetCurrentException", thread.GetCurrentException())  # SBValue
-    printFormat("GetCurrentExceptionBacktrace", thread.GetCurrentExceptionBacktrace())  # SBValue
-    printFormat("SafeToCallFunctions", thread.SafeToCallFunctions())
+    print_format("GetStatus", stream.GetData())
+    print_format("GetExtendedBacktraceOriginatingIndexID", thread.GetExtendedBacktraceOriginatingIndexID())
+    print_format("GetCurrentException", thread.GetCurrentException())  # SBValue
+    print_format("GetCurrentExceptionBacktrace", thread.GetCurrentExceptionBacktrace())  # SBValue
+    print_format("SafeToCallFunctions", thread.SafeToCallFunctions())
 
-    printTraversal(thread, "GetStopReasonDataCount", "GetStopReasonDataAtIndex")  # [int]
-    printTraversal(thread, "GetNumFrames", "GetFrameAtIndex")  # [SBFrame]
+    print_traversal(thread, "GetStopReasonDataCount", "GetStopReasonDataAtIndex")  # [int]
+    print_traversal(thread, "GetNumFrames", "GetFrameAtIndex")  # [SBFrame]
+
+
+def pSBThreadPlan(obj: Optional[lldb.SBThreadPlan]) -> None:
+    if obj:
+        plan = obj
+    else:
+        plan = lldb.SBThreadPlan()
+
+    print_class_name("SBThreadPlan")
+    print_format("SBThreadPlan", plan)
+    print_format("IsValid", plan.IsValid())
+    stop_reason = plan.GetStopReason()  # StopReason int
+    print_format("GetStopReason(raw)", stop_reason)
+    print_format("GetStopReason(resolved)", get_string_from_stop_reason(stop_reason))
+    print_format("GetStopReasonDataCount", plan.GetStopReasonDataCount())
+    print_format("GetThread", plan.GetThread())  # SBThread
+    stream = lldb.SBStream()
+    plan.GetDescription(stream)
+    print_format("GetDescription", stream.GetData())
+    print_format("IsPlanComplete", plan.IsPlanComplete())
+    print_format("IsPlanStale", plan.IsPlanStale())
+    print_format("GetStopOthers", plan.GetStopOthers())
+
+    print_traversal(plan, "GetStopReasonDataCount", "GetStopReasonDataAtIndex")  # [int]
 
 
 def pSBFrame(obj: Optional[lldb.SBFrame]) -> None:
@@ -517,41 +579,41 @@ def pSBFrame(obj: Optional[lldb.SBFrame]) -> None:
     else:
         frame = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame()
 
-    printClassName("SBFrame")
-    printFormat("SBFrame", frame)
-    printFormat("IsValid", frame.IsValid())
-    printFormat("GetFrameID", frame.GetFrameID())
-    printFormat("GetCFA", frame.GetCFA())
-    printFormat("GetPC", frame.GetPC())
-    printFormat("GetSP", frame.GetSP())
-    printFormat("GetFP", frame.GetFP())
-    printFormat("GetPCAddress", frame.GetPCAddress())  # SBAddress
-    printFormat("GetSymbolContext", frame.GetSymbolContext(lldb.eSymbolContextEverything))  # SBSymbolContext
-    printFormat("GetModule", frame.GetModule())  # SBModule
-    printFormat("GetCompileUnit", frame.GetCompileUnit())  # SBCompileUnit
-    printFormat("GetFunction", frame.GetFunction())  # SBFunction
-    printFormat("GetSymbol", frame.GetSymbol())  # SBSymbol
-    printFormat("GetBlock", frame.GetBlock())  # SBBlock
-    printFormat("GetDisplayFunctionName", frame.GetDisplayFunctionName())
-    printFormat("GetFunctionName", frame.GetFunctionName())
-    printFormat("GuessLanguage", frame.GuessLanguage())  # LanguageType int
-    printFormat("IsInlined", frame.IsInlined())
-    printFormat("IsArtificial", frame.IsArtificial())
-    printFormat("GetFrameBlock", frame.GetFrameBlock())  # SBBlock
-    printFormat("GetLineEntry", frame.GetLineEntry())  # SBLineEntry
-    printFormat("GetThread", frame.GetThread())  # SBThread
-    printFormat("Disassemble", frame.Disassemble())
+    print_class_name("SBFrame")
+    print_format("SBFrame", frame)
+    print_format("IsValid", frame.IsValid())
+    print_format("GetFrameID", frame.GetFrameID())
+    print_format("GetCFA", frame.GetCFA())
+    print_format("GetPC", frame.GetPC())
+    print_format("GetSP", frame.GetSP())
+    print_format("GetFP", frame.GetFP())
+    print_format("GetPCAddress", frame.GetPCAddress())  # SBAddress
+    print_format("GetSymbolContext", frame.GetSymbolContext(lldb.eSymbolContextEverything))  # SBSymbolContext
+    print_format("GetModule", frame.GetModule())  # SBModule
+    print_format("GetCompileUnit", frame.GetCompileUnit())  # SBCompileUnit
+    print_format("GetFunction", frame.GetFunction())  # SBFunction
+    print_format("GetSymbol", frame.GetSymbol())  # SBSymbol
+    print_format("GetBlock", frame.GetBlock())  # SBBlock
+    print_format("GetDisplayFunctionName", frame.GetDisplayFunctionName())
+    print_format("GetFunctionName", frame.GetFunctionName())
+    print_format("GuessLanguage", frame.GuessLanguage())  # LanguageType int
+    print_format("IsInlined", frame.IsInlined())
+    print_format("IsArtificial", frame.IsArtificial())
+    print_format("GetFrameBlock", frame.GetFrameBlock())  # SBBlock
+    print_format("GetLineEntry", frame.GetLineEntry())  # SBLineEntry
+    print_format("GetThread", frame.GetThread())  # SBThread
+    print_format("Disassemble", frame.Disassemble())
 
-    printFormat("GetVariables", frame.GetVariables(True, True, True, False))  # SBValueList
-    # printFormat("get_arguments", frame.get_arguments())  # SBValueList
-    # printFormat("get_locals", frame.get_locals())  # SBValueList
-    # printFormat("get_statics", frame.get_statics())  # SBValueList
+    print_format("GetVariables", frame.GetVariables(True, True, True, False))  # SBValueList
+    # print_format("get_arguments", frame.get_arguments())  # SBValueList
+    # print_format("get_locals", frame.get_locals())  # SBValueList
+    # print_format("get_statics", frame.get_statics())  # SBValueList
 
-    printFormat("GetRegisters", frame.GetRegisters())  # SBValueList
-    printFormat("FindVariable", frame.FindVariable("self"))  # SBValue
-    printFormat("GetValueForVariablePath", frame.GetValueForVariablePath("self.customVariable"))  # SBValue
-    printFormat("GetLanguageSpecificData", frame.GetLanguageSpecificData())  # SBStructuredData
-    printFormat("get_parent_frame", frame.get_parent_frame())  # SBFrame
+    print_format("GetRegisters", frame.GetRegisters())  # SBValueList
+    print_format("FindVariable", frame.FindVariable("self"))  # SBValue
+    print_format("GetValueForVariablePath", frame.GetValueForVariablePath("self.customVariable"))  # SBValue
+    print_format("GetLanguageSpecificData", frame.GetLanguageSpecificData())  # SBStructuredData
+    print_format("get_parent_frame", frame.get_parent_frame())  # SBFrame
 
 
 def pSBValue(obj: Optional[lldb.SBValue]) -> None:
@@ -560,59 +622,59 @@ def pSBValue(obj: Optional[lldb.SBValue]) -> None:
     else:
         value = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().FindVariable("self")
 
-    printClassName("SBValue")
-    printFormat("SBValue", value)
-    printFormat("IsValid", value.IsValid())
-    printFormat("GetError", value.GetError())  # SBError
-    printFormat("GetID", value.GetID())
-    printFormat("GetName", value.GetName())
-    printFormat("GetTypeName", value.GetTypeName())
-    printFormat("GetDisplayTypeName", value.GetDisplayTypeName())
-    printFormat("GetByteSize", value.GetByteSize())
-    printFormat("IsInScope", value.IsInScope())
-    printFormat("GetFormat", value.GetFormat())  # Format int
-    printFormat("GetValue", value.GetValue())
-    printFormat("GetValueAsSigned", value.GetValueAsSigned())
-    printFormat("GetValueAsUnsigned", value.GetValueAsUnsigned())
-    printFormat("GetValueAsAddress", value.GetValueAsAddress())
-    printFormat("GetValueType", value.GetValueType())  # ValueType int
-    printFormat("GetValueDidChange", value.GetValueDidChange())
-    printFormat("GetSummary", value.GetSummary())
-    printFormat("GetObjectDescription", value.GetObjectDescription())
-    printFormat("GetStaticValue", value.GetStaticValue())  # SBValue
-    printFormat("GetNonSyntheticValue", value.GetNonSyntheticValue())  # SBValue
-    printFormat("GetPreferDynamicValue", value.GetPreferDynamicValue())  # DynamicValueType int
-    printFormat("GetPreferSyntheticValue", value.GetPreferSyntheticValue())
-    printFormat("IsDynamic", value.IsDynamic())
-    printFormat("IsSynthetic", value.IsSynthetic())
-    printFormat("IsSyntheticChildrenGenerated", value.IsSyntheticChildrenGenerated())
-    printFormat("GetLocation", value.GetLocation())
-    printFormat("GetTypeFormat", value.GetTypeFormat())  # SBTypeFormat
-    printFormat("GetTypeSummary", value.GetTypeSummary())  # SBTypeSummary
-    printFormat("GetTypeFilter", value.GetTypeFilter())  # SBTypeFilter
-    printFormat("GetTypeSynthetic", value.GetTypeSynthetic())  # SBTypeSynthetic
-    printFormat("GetType", value.GetType())  # SBType
-    printFormat("GetDeclaration", value.GetDeclaration())  # SBDeclaration
-    printFormat("MightHaveChildren", value.MightHaveChildren())
-    printFormat("IsRuntimeSupportValue", value.IsRuntimeSupportValue())
-    printFormat("GetNumChildren", value.GetNumChildren())
-    printFormat("GetOpaqueType", value.GetOpaqueType())
-    printFormat("Dereference", value.Dereference())  # SBValue
-    printFormat("AddressOf", value.AddressOf())  # SBValue
-    printFormat("TypeIsPointerType", value.TypeIsPointerType())
-    printFormat("GetTarget", value.GetTarget())  # SBTarget
-    printFormat("GetProcess", value.GetProcess())  # SBProcess
-    printFormat("GetThread", value.GetThread())  # SBThread
-    printFormat("GetFrame", value.GetFrame())  # SBFrame
-    printFormat("GetPointeeData", value.GetPointeeData())
-    printFormat("GetData", value.GetData())  # SBData
-    printFormat("GetLoadAddress", value.GetLoadAddress())
-    printFormat("GetAddress", value.GetAddress())  # SBAddress
-    printFormat("Persist", value.Persist())  # SBValue
-    printFormat("__get_dynamic__", value.__get_dynamic__())  # SBValue
-    printFormat("get_expr_path", value.get_expr_path())
+    print_class_name("SBValue")
+    print_format("SBValue", value)
+    print_format("IsValid", value.IsValid())
+    print_format("GetError", value.GetError())  # SBError
+    print_format("GetID", value.GetID())
+    print_format("GetName", value.GetName())
+    print_format("GetTypeName", value.GetTypeName())
+    print_format("GetDisplayTypeName", value.GetDisplayTypeName())
+    print_format("GetByteSize", value.GetByteSize())
+    print_format("IsInScope", value.IsInScope())
+    print_format("GetFormat", value.GetFormat())  # Format int
+    print_format("GetValue", value.GetValue())
+    print_format("GetValueAsSigned", value.GetValueAsSigned())
+    print_format("GetValueAsUnsigned", value.GetValueAsUnsigned())
+    print_format("GetValueAsAddress", value.GetValueAsAddress())
+    print_format("GetValueType", value.GetValueType())  # ValueType int
+    print_format("GetValueDidChange", value.GetValueDidChange())
+    print_format("GetSummary", value.GetSummary())
+    print_format("GetObjectDescription", value.GetObjectDescription())
+    print_format("GetStaticValue", value.GetStaticValue())  # SBValue
+    print_format("GetNonSyntheticValue", value.GetNonSyntheticValue())  # SBValue
+    print_format("GetPreferDynamicValue", value.GetPreferDynamicValue())  # DynamicValueType int
+    print_format("GetPreferSyntheticValue", value.GetPreferSyntheticValue())
+    print_format("IsDynamic", value.IsDynamic())
+    print_format("IsSynthetic", value.IsSynthetic())
+    print_format("IsSyntheticChildrenGenerated", value.IsSyntheticChildrenGenerated())
+    print_format("GetLocation", value.GetLocation())
+    print_format("GetTypeFormat", value.GetTypeFormat())  # SBTypeFormat
+    print_format("GetTypeSummary", value.GetTypeSummary())  # SBTypeSummary
+    print_format("GetTypeFilter", value.GetTypeFilter())  # SBTypeFilter
+    print_format("GetTypeSynthetic", value.GetTypeSynthetic())  # SBTypeSynthetic
+    print_format("GetType", value.GetType())  # SBType
+    print_format("GetDeclaration", value.GetDeclaration())  # SBDeclaration
+    print_format("MightHaveChildren", value.MightHaveChildren())
+    print_format("IsRuntimeSupportValue", value.IsRuntimeSupportValue())
+    print_format("GetNumChildren", value.GetNumChildren())
+    print_format("GetOpaqueType", value.GetOpaqueType())
+    print_format("Dereference", value.Dereference())  # SBValue
+    print_format("AddressOf", value.AddressOf())  # SBValue
+    print_format("TypeIsPointerType", value.TypeIsPointerType())
+    print_format("GetTarget", value.GetTarget())  # SBTarget
+    print_format("GetProcess", value.GetProcess())  # SBProcess
+    print_format("GetThread", value.GetThread())  # SBThread
+    print_format("GetFrame", value.GetFrame())  # SBFrame
+    print_format("GetPointeeData", value.GetPointeeData())
+    print_format("GetData", value.GetData())  # SBData
+    print_format("GetLoadAddress", value.GetLoadAddress())
+    print_format("GetAddress", value.GetAddress())  # SBAddress
+    print_format("Persist", value.Persist())  # SBValue
+    print_format("__get_dynamic__", value.__get_dynamic__())  # SBValue
+    print_format("get_expr_path", value.get_expr_path())
 
-    printTraversal(value, "GetNumChildren", "GetChildAtIndex")  # [SBValue]
+    print_traversal(value, "GetNumChildren", "GetChildAtIndex")  # [SBValue]
 
 
 def pSBSymbolContext(obj: Optional[lldb.SBSymbolContext]) -> None:
@@ -622,18 +684,18 @@ def pSBSymbolContext(obj: Optional[lldb.SBSymbolContext]) -> None:
         ctx = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetSymbolContext(lldb.eSymbolContextEverything)
         # ctx = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")[0]
 
-    printClassName("SBSymbolContext")
-    printFormat("SBSymbolContext", ctx)
-    printFormat("IsValid", ctx.IsValid())
-    printFormat("GetModule", ctx.GetModule())  # SBModule
-    printFormat("GetCompileUnit", ctx.GetCompileUnit())  # SBCompileUnit
-    printFormat("GetFunction", ctx.GetFunction())  # SBFunction
-    printFormat("GetBlock", ctx.GetBlock())  # SBBlock
-    printFormat("GetLineEntry", ctx.GetLineEntry())  # SBLineEntry
-    printFormat("GetSymbol", ctx.GetSymbol())  # SBSymbol
+    print_class_name("SBSymbolContext")
+    print_format("SBSymbolContext", ctx)
+    print_format("IsValid", ctx.IsValid())
+    print_format("GetModule", ctx.GetModule())  # SBModule
+    print_format("GetCompileUnit", ctx.GetCompileUnit())  # SBCompileUnit
+    print_format("GetFunction", ctx.GetFunction())  # SBFunction
+    print_format("GetBlock", ctx.GetBlock())  # SBBlock
+    print_format("GetLineEntry", ctx.GetLineEntry())  # SBLineEntry
+    print_format("GetSymbol", ctx.GetSymbol())  # SBSymbol
     stream = lldb.SBStream()
     ctx.GetDescription(stream)
-    printFormat("GetDescription", stream.GetData())
+    print_format("GetDescription", stream.GetData())
 
 
 def pSBModule(obj: Optional[lldb.SBModule]) -> None:
@@ -647,34 +709,34 @@ def pSBModule(obj: Optional[lldb.SBModule]) -> None:
         module = lldb.debugger.GetSelectedTarget().FindFunctions(functionName)[0].GetModule()
         # module = lldb.debugger.GetSelectedTarget().GetModuleAtIndex(0)
 
-    printClassName("SBModule")
-    printFormat("SBModule", module)
-    printFormat("IsValid", module.IsValid())
-    printFormat("GetFileSpec", module.GetFileSpec())  # SBFileSpec
-    printFormat("GetPlatformFileSpec", module.GetPlatformFileSpec())  # SBFileSpec
-    printFormat("GetRemoteInstallFileSpec", module.GetRemoteInstallFileSpec())  # SBFileSpec
-    printFormat("GetUUIDString", module.GetUUIDString())
-    printFormat("GetNumCompileUnits", module.GetNumCompileUnits())
-    printFormat("GetNumSymbols", module.GetNumSymbols())
-    printFormat("FindSymbol", module.FindSymbol(functionName))  # SBSymbol
-    printFormat("FindSymbols", module.FindSymbols(functionName))  # SBSymbolContextList
-    printFormat("GetNumSections", module.GetNumSections())
-    printFormat("FindFunctions", module.FindFunctions(functionName, lldb.eFunctionNameTypeAny))  # SBSymbolContextList
-    printFormat("GetTypes", module.GetTypes())  # SBTypeList
-    byteOrder = module.GetByteOrder()  # ByteOrder int
-    printFormat("GetByteOrder(raw)", byteOrder)
-    printFormat("GetByteOrder(resolved)", getStringFromByteOrder(byteOrder))
-    printFormat("GetAddressByteSize", module.GetAddressByteSize())
-    printFormat("GetTriple", module.GetTriple())
-    printFormat("GetVersion", module.GetVersion())
-    printFormat("GetSymbolFileSpec", module.GetSymbolFileSpec())  # SBFileSpec
-    printFormat("GetObjectFileHeaderAddress", module.GetObjectFileHeaderAddress())  # SBAddress
-    printFormat("GetObjectFileEntryPointAddress", module.GetObjectFileEntryPointAddress())  # SBAddress
-    printFormat("SBModule.GetNumberAllocatedModules", lldb.SBModule.GetNumberAllocatedModules())
+    print_class_name("SBModule")
+    print_format("SBModule", module)
+    print_format("IsValid", module.IsValid())
+    print_format("GetFileSpec", module.GetFileSpec())  # SBFileSpec
+    print_format("GetPlatformFileSpec", module.GetPlatformFileSpec())  # SBFileSpec
+    print_format("GetRemoteInstallFileSpec", module.GetRemoteInstallFileSpec())  # SBFileSpec
+    print_format("GetUUIDString", module.GetUUIDString())
+    print_format("GetNumCompileUnits", module.GetNumCompileUnits())
+    print_format("GetNumSymbols", module.GetNumSymbols())
+    print_format("FindSymbol", module.FindSymbol(functionName))  # SBSymbol
+    print_format("FindSymbols", module.FindSymbols(functionName))  # SBSymbolContextList
+    print_format("GetNumSections", module.GetNumSections())
+    print_format("FindFunctions", module.FindFunctions(functionName, lldb.eFunctionNameTypeAny))  # SBSymbolContextList
+    print_format("GetTypes", module.GetTypes())  # SBTypeList
+    byte_order = module.GetByteOrder()  # ByteOrder int
+    print_format("GetByteOrder(raw)", byte_order)
+    print_format("GetByteOrder(resolved)", get_string_from_byte_order(byte_order))
+    print_format("GetAddressByteSize", module.GetAddressByteSize())
+    print_format("GetTriple", module.GetTriple())
+    print_format("GetVersion", module.GetVersion())
+    print_format("GetSymbolFileSpec", module.GetSymbolFileSpec())  # SBFileSpec
+    print_format("GetObjectFileHeaderAddress", module.GetObjectFileHeaderAddress())  # SBAddress
+    print_format("GetObjectFileEntryPointAddress", module.GetObjectFileEntryPointAddress())  # SBAddress
+    print_format("SBModule.GetNumberAllocatedModules", lldb.SBModule.GetNumberAllocatedModules())
 
-    printTraversal(module, "GetNumCompileUnits", "GetCompileUnitAtIndex")  # [SBCompileUnit]
-    printTraversal(module, "GetNumSymbols", "GetSymbolAtIndex")  # [SBSymbol]
-    printTraversal(module, "GetNumSections", "GetSectionAtIndex")  # [SBSection]
+    print_traversal(module, "GetNumCompileUnits", "GetCompileUnitAtIndex")  # [SBCompileUnit]
+    print_traversal(module, "GetNumSymbols", "GetSymbolAtIndex")  # [SBSymbol]
+    print_traversal(module, "GetNumSections", "GetSectionAtIndex")  # [SBSection]
 
 
 def pSBSymbol(obj: Optional[lldb.SBSymbol]) -> None:
@@ -684,20 +746,20 @@ def pSBSymbol(obj: Optional[lldb.SBSymbol]) -> None:
         symbol = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetSymbol()
         # symbol = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")[0].GetSymbol()
 
-    printClassName("SBSymbol")
-    printFormat("SBSymbol", symbol)
-    printFormat("IsValid", symbol.IsValid())
-    printFormat("GetName", symbol.GetName())
-    printFormat("GetDisplayName", symbol.GetDisplayName())
-    printFormat("GetMangledName", symbol.GetMangledName())
-    printFormat("GetStartAddress", symbol.GetStartAddress())  # SBAddress
-    printFormat("GetEndAddress", symbol.GetEndAddress())  # SBAddress
-    printFormat("GetPrologueByteSize", symbol.GetPrologueByteSize())
-    printFormat("GetType(raw)", symbol.GetType())  # SymbolType int
-    printFormat("GetType(resolved)", getStringFromSymbolType(symbol.GetType()))
-    printFormat("IsExternal", symbol.IsExternal())
-    printFormat("IsSynthetic", symbol.IsSynthetic())
-    printFormat("GetInstructions", symbol.GetInstructions(lldb.debugger.GetSelectedTarget()))  # SBInstructionList
+    print_class_name("SBSymbol")
+    print_format("SBSymbol", symbol)
+    print_format("IsValid", symbol.IsValid())
+    print_format("GetName", symbol.GetName())
+    print_format("GetDisplayName", symbol.GetDisplayName())
+    print_format("GetMangledName", symbol.GetMangledName())
+    print_format("GetStartAddress", symbol.GetStartAddress())  # SBAddress
+    print_format("GetEndAddress", symbol.GetEndAddress())  # SBAddress
+    print_format("GetPrologueByteSize", symbol.GetPrologueByteSize())
+    print_format("GetType(raw)", symbol.GetType())  # SymbolType int
+    print_format("GetType(resolved)", get_string_from_symbol_type(symbol.GetType()))
+    print_format("IsExternal", symbol.IsExternal())
+    print_format("IsSynthetic", symbol.IsSynthetic())
+    print_format("GetInstructions", symbol.GetInstructions(lldb.debugger.GetSelectedTarget()))  # SBInstructionList
 
 
 def pSBInstruction(obj: Optional[lldb.SBInstruction]) -> None:
@@ -706,22 +768,22 @@ def pSBInstruction(obj: Optional[lldb.SBInstruction]) -> None:
     if obj:
         instruction = obj
     else:
-        instructionList = target.GetProcess().GetSelectedThread().GetSelectedFrame().GetSymbol().GetInstructions(lldb.debugger.GetSelectedTarget())
-        # instructionList = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")[0].GetSymbol().GetInstructions(lldb.debugger.GetSelectedTarget())
-        instruction = instructionList.GetInstructionAtIndex(0)
+        instruction_list = target.GetProcess().GetSelectedThread().GetSelectedFrame().GetSymbol().GetInstructions(lldb.debugger.GetSelectedTarget())
+        # instruction_list = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")[0].GetSymbol().GetInstructions(lldb.debugger.GetSelectedTarget())
+        instruction = instruction_list.GetInstructionAtIndex(0)
 
-    printClassName("SBInstruction")
-    printFormat("SBInstruction", instruction)
-    printFormat("IsValid", instruction.IsValid())
-    printFormat("GetAddress", instruction.GetAddress())  # SBAddress
-    printFormat("GetMnemonic", instruction.GetMnemonic(target))
-    printFormat("GetOperands", instruction.GetOperands(target))
-    printFormat("GetComment", instruction.GetComment(target))
-    printFormat("GetData", instruction.GetData(target))  # SBData
-    printFormat("GetByteSize", instruction.GetByteSize())
-    printFormat("DoesBranch", instruction.DoesBranch())
-    printFormat("HasDelaySlot", instruction.HasDelaySlot())
-    printFormat("CanSetBreakpoint", instruction.CanSetBreakpoint())
+    print_class_name("SBInstruction")
+    print_format("SBInstruction", instruction)
+    print_format("IsValid", instruction.IsValid())
+    print_format("GetAddress", instruction.GetAddress())  # SBAddress
+    print_format("GetMnemonic", instruction.GetMnemonic(target))
+    print_format("GetOperands", instruction.GetOperands(target))
+    print_format("GetComment", instruction.GetComment(target))
+    print_format("GetData", instruction.GetData(target))  # SBData
+    print_format("GetByteSize", instruction.GetByteSize())
+    print_format("DoesBranch", instruction.DoesBranch())
+    print_format("HasDelaySlot", instruction.HasDelaySlot())
+    print_format("CanSetBreakpoint", instruction.CanSetBreakpoint())
 
 
 def pSBFunction(obj: Optional[lldb.SBFunction]) -> None:
@@ -731,22 +793,22 @@ def pSBFunction(obj: Optional[lldb.SBFunction]) -> None:
         func = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetFunction()
         # func = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")[0].GetFunction()
 
-    printClassName("SBFunction")
-    printFormat("SBFunction", func)
-    printFormat("IsValid", func.IsValid())
-    printFormat("GetName", func.GetName())
-    printFormat("GetDisplayName", func.GetDisplayName())
-    printFormat("GetMangledName", func.GetMangledName())
-    printFormat("GetInstructions", func.GetInstructions(lldb.debugger.GetSelectedTarget()))  # SBInstructionList
-    printFormat("GetStartAddress", func.GetStartAddress())  # SBAddress
-    printFormat("GetEndAddress", func.GetEndAddress())  # SBAddress
-    printFormat("GetPrologueByteSize", func.GetPrologueByteSize())
-    printFormat("GetArgumentName", func.GetArgumentName(0))
-    printFormat("GetType", func.GetType())  # SBType
-    printFormat("GetBlock", func.GetBlock())  # SBBlock
-    printFormat("GetLanguage", func.GetLanguage())  # LanguageType int
-    printFormat("GetIsOptimized", func.GetIsOptimized())
-    printFormat("GetCanThrow", func.GetCanThrow())
+    print_class_name("SBFunction")
+    print_format("SBFunction", func)
+    print_format("IsValid", func.IsValid())
+    print_format("GetName", func.GetName())
+    print_format("GetDisplayName", func.GetDisplayName())
+    print_format("GetMangledName", func.GetMangledName())
+    print_format("GetInstructions", func.GetInstructions(lldb.debugger.GetSelectedTarget()))  # SBInstructionList
+    print_format("GetStartAddress", func.GetStartAddress())  # SBAddress
+    print_format("GetEndAddress", func.GetEndAddress())  # SBAddress
+    print_format("GetPrologueByteSize", func.GetPrologueByteSize())
+    print_format("GetArgumentName", func.GetArgumentName(0))
+    print_format("GetType", func.GetType())  # SBType
+    print_format("GetBlock", func.GetBlock())  # SBBlock
+    print_format("GetLanguage", func.GetLanguage())  # LanguageType int
+    print_format("GetIsOptimized", func.GetIsOptimized())
+    print_format("GetCanThrow", func.GetCanThrow())
 
 
 def pSBBlock(obj: Optional[lldb.SBBlock]) -> None:
@@ -758,21 +820,21 @@ def pSBBlock(obj: Optional[lldb.SBBlock]) -> None:
         # block = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetFunction().GetBlock()
         # block = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")[0].GetBlock()
 
-    printClassName("SBBlock")
-    printFormat("SBBlock", block)
-    printFormat("IsInlined", block.IsInlined())
-    printFormat("IsValid", block.IsValid())
-    printFormat("GetInlinedName", block.GetInlinedName())
-    printFormat("GetInlinedCallSiteFile", block.GetInlinedCallSiteFile())  # SBFileSpec
-    printFormat("GetInlinedCallSiteLine", block.GetInlinedCallSiteLine())
-    printFormat("GetInlinedCallSiteColumn", block.GetInlinedCallSiteColumn())
-    printFormat("GetParent", block.GetParent())  # SBBlock
-    printFormat("GetContainingInlinedBlock", block.GetContainingInlinedBlock())  # SBBlock
-    printFormat("GetSibling", block.GetSibling())  # SBBlock
-    printFormat("GetFirstChild", block.GetFirstChild())  # SBBlock
-    printFormat("GetNumRanges", block.GetNumRanges())
-    printFormat("GetRangeStartAddress", block.GetRangeStartAddress(0))  # SBAddress
-    printFormat("GetRangeEndAddress", block.GetRangeEndAddress(0))  # SBAddress
+    print_class_name("SBBlock")
+    print_format("SBBlock", block)
+    print_format("IsInlined", block.IsInlined())
+    print_format("IsValid", block.IsValid())
+    print_format("GetInlinedName", block.GetInlinedName())
+    print_format("GetInlinedCallSiteFile", block.GetInlinedCallSiteFile())  # SBFileSpec
+    print_format("GetInlinedCallSiteLine", block.GetInlinedCallSiteLine())
+    print_format("GetInlinedCallSiteColumn", block.GetInlinedCallSiteColumn())
+    print_format("GetParent", block.GetParent())  # SBBlock
+    print_format("GetContainingInlinedBlock", block.GetContainingInlinedBlock())  # SBBlock
+    print_format("GetSibling", block.GetSibling())  # SBBlock
+    print_format("GetFirstChild", block.GetFirstChild())  # SBBlock
+    print_format("GetNumRanges", block.GetNumRanges())
+    print_format("GetRangeStartAddress", block.GetRangeStartAddress(0))  # SBAddress
+    print_format("GetRangeEndAddress", block.GetRangeEndAddress(0))  # SBAddress
 
 
 def pSBCompileUnit(obj: Optional[lldb.SBCompileUnit]) -> None:
@@ -782,18 +844,18 @@ def pSBCompileUnit(obj: Optional[lldb.SBCompileUnit]) -> None:
         unit = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetCompileUnit()
         # unit = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")[0].GetCompileUnit()
 
-    printClassName("SBCompileUnit")
-    printFormat("SBCompileUnit", unit)
-    printFormat("IsValid", unit.IsValid())
-    printFormat("GetFileSpec", unit.GetFileSpec())  # SBFileSpec
-    printFormat("GetNumLineEntries", unit.GetNumLineEntries())
-    printFormat("GetNumSupportFiles", unit.GetNumSupportFiles())
-    printFormat("GetTypes", unit.GetTypes())  # SBTypeList
-    printFormat("GetLanguage", unit.GetLanguage())  # LanguageType int
+    print_class_name("SBCompileUnit")
+    print_format("SBCompileUnit", unit)
+    print_format("IsValid", unit.IsValid())
+    print_format("GetFileSpec", unit.GetFileSpec())  # SBFileSpec
+    print_format("GetNumLineEntries", unit.GetNumLineEntries())
+    print_format("GetNumSupportFiles", unit.GetNumSupportFiles())
+    print_format("GetTypes", unit.GetTypes())  # SBTypeList
+    print_format("GetLanguage", unit.GetLanguage())  # LanguageType int
 
 
-    printTraversal(unit, "GetNumLineEntries", "GetLineEntryAtIndex")  # [SBLineEntry]
-    printTraversal(unit, "GetNumSupportFiles", "GetSupportFileAtIndex")  # [SBFileSpec]
+    print_traversal(unit, "GetNumLineEntries", "GetLineEntryAtIndex")  # [SBLineEntry]
+    print_traversal(unit, "GetNumSupportFiles", "GetSupportFileAtIndex")  # [SBFileSpec]
 
 
 def pSBLineEntry(obj: Optional[lldb.SBLineEntry]) -> None:
@@ -804,14 +866,14 @@ def pSBLineEntry(obj: Optional[lldb.SBLineEntry]) -> None:
         # le = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")[0].GetLineEntry()
         # le = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetCompileUnit().GetLineEntryAtIndex(0)
 
-    printClassName("SBLineEntry")
-    printFormat("SBLineEntry", le)
-    printFormat("IsValid", le.IsValid())
-    printFormat("GetStartAddress", le.GetStartAddress())  # SBAddress
-    printFormat("GetEndAddress", le.GetEndAddress())  # SBAddress
-    printFormat("GetFileSpec", le.GetFileSpec())  # SBFileSpec
-    printFormat("GetLine", le.GetLine())
-    printFormat("GetColumn", le.GetColumn())
+    print_class_name("SBLineEntry")
+    print_format("SBLineEntry", le)
+    print_format("IsValid", le.IsValid())
+    print_format("GetStartAddress", le.GetStartAddress())  # SBAddress
+    print_format("GetEndAddress", le.GetEndAddress())  # SBAddress
+    print_format("GetFileSpec", le.GetFileSpec())  # SBFileSpec
+    print_format("GetLine", le.GetLine())
+    print_format("GetColumn", le.GetColumn())
 
 
 def pSBFile(obj: Optional[lldb.SBFile]) -> None:
@@ -822,29 +884,29 @@ def pSBFile(obj: Optional[lldb.SBFile]) -> None:
         # file = lldb.debugger.GetOutputFile()
         # file = lldb.debugger.GetErrorFile()
 
-    printClassName("SBFile")
-    printFormat("SBFile", file)
-    printFormat("IsValid", file.IsValid())
-    # printFormat("GetFile", file.GetFile())  # FileSP
+    print_class_name("SBFile")
+    print_format("SBFile", file)
+    print_format("IsValid", file.IsValid())
+    # print_format("GetFile", file.GetFile())  # FileSP
 
 
 def pSBFileSpec(obj: Optional[lldb.SBFileSpec]) -> None:
     if obj:
-        fileSpec = obj
+        file_spec = obj
     else:
-        fileSpec = lldb.debugger.GetSelectedTarget().GetExecutable()
-        # fileSpec = lldb.debugger.GetSelectedTarget().GetLaunchInfo().GetExecutableFile()
-        # fileSpec = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetModule().GetFileSpec()
-        # fileSpec = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetCompileUnit().GetFileSpec()
+        file_spec = lldb.debugger.GetSelectedTarget().GetExecutable()
+        # file_spec = lldb.debugger.GetSelectedTarget().GetLaunchInfo().GetExecutableFile()
+        # file_spec = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetModule().GetFileSpec()
+        # file_spec = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetCompileUnit().GetFileSpec()
 
-    printClassName("SBFileSpec")
-    printFormat("SBFileSpec", fileSpec)
-    printFormat("IsValid", fileSpec.IsValid())
-    printFormat("Exists", fileSpec.Exists())
-    printFormat("ResolveExecutableLocation", fileSpec.ResolveExecutableLocation())
-    printFormat("GetFilename", fileSpec.GetFilename())
-    printFormat("GetDirectory", fileSpec.GetDirectory())
-    printFormat("fullpath", fileSpec.fullpath)
+    print_class_name("SBFileSpec")
+    print_format("SBFileSpec", file_spec)
+    print_format("IsValid", file_spec.IsValid())
+    print_format("Exists", file_spec.Exists())
+    print_format("ResolveExecutableLocation", file_spec.ResolveExecutableLocation())
+    print_format("GetFilename", file_spec.GetFilename())
+    print_format("GetDirectory", file_spec.GetDirectory())
+    print_format("fullpath", file_spec.fullpath)
 
 
 def pSBAddress(obj: Optional[lldb.SBAddress]) -> None:
@@ -858,23 +920,23 @@ def pSBAddress(obj: Optional[lldb.SBAddress]) -> None:
         # address = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetLineEntry().GetStartAddress()
         # address = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetFunction().GetStartAddress()
 
-    printClassName("SBAddress")
-    printFormat("SBAddress", address)
-    printFormat("IsValid", address.IsValid())
-    printFormat("GetFileAddress", address.GetFileAddress())
-    printFormat("GetLoadAddress", address.GetLoadAddress(lldb.debugger.GetSelectedTarget()))
+    print_class_name("SBAddress")
+    print_format("SBAddress", address)
+    print_format("IsValid", address.IsValid())
+    print_format("GetFileAddress", address.GetFileAddress())
+    print_format("GetLoadAddress", address.GetLoadAddress(lldb.debugger.GetSelectedTarget()))
     stream = lldb.SBStream()
     address.GetDescription(stream)
-    printFormat("GetDescription", stream.GetData())
-    printFormat("GetSection", address.GetSection())  # SBSection
-    printFormat("GetOffset", address.GetOffset())
-    printFormat("GetSymbolContext", address.GetSymbolContext(lldb.eSymbolContextEverything))  # SBSymbolContext
-    printFormat("GetModule", address.GetModule())  # SBModule
-    printFormat("GetCompileUnit", address.GetCompileUnit())  # SBCompileUnit
-    printFormat("GetFunction", address.GetFunction())  # SBFunction
-    printFormat("GetBlock", address.GetBlock())  # SBBlock
-    printFormat("GetSymbol", address.GetSymbol())  # SBSymbol
-    printFormat("GetLineEntry", address.GetLineEntry())  # SBLineEntry
+    print_format("GetDescription", stream.GetData())
+    print_format("GetSection", address.GetSection())  # SBSection
+    print_format("GetOffset", address.GetOffset())
+    print_format("GetSymbolContext", address.GetSymbolContext(lldb.eSymbolContextEverything))  # SBSymbolContext
+    print_format("GetModule", address.GetModule())  # SBModule
+    print_format("GetCompileUnit", address.GetCompileUnit())  # SBCompileUnit
+    print_format("GetFunction", address.GetFunction())  # SBFunction
+    print_format("GetBlock", address.GetBlock())  # SBBlock
+    print_format("GetSymbol", address.GetSymbol())  # SBSymbol
+    print_format("GetLineEntry", address.GetLineEntry())  # SBLineEntry
 
 
 def pSBBreakpoint(obj: Optional[lldb.SBBreakpoint]) -> None:
@@ -883,62 +945,62 @@ def pSBBreakpoint(obj: Optional[lldb.SBBreakpoint]) -> None:
     else:
         bp = lldb.debugger.GetSelectedTarget().GetBreakpointAtIndex(0)
 
-    printClassName("SBBreakpoint")
-    printFormat("SBBreakpoint", bp)
-    printFormat("GetID", bp.GetID())
-    printFormat("IsValid", bp.IsValid())
-    printFormat("GetTarget", bp.GetTarget())  # SBTarget
-    printFormat("IsEnabled", bp.IsEnabled())
-    printFormat("IsOneShot", bp.IsOneShot())
-    printFormat("IsInternal", bp.IsInternal())
-    printFormat("GetHitCount", bp.GetHitCount())
-    printFormat("GetIgnoreCount", bp.GetIgnoreCount())
-    printFormat("GetCondition", bp.GetCondition())
-    printFormat("GetAutoContinue", bp.GetAutoContinue())
-    printFormat("GetThreadID", bp.GetThreadID())
-    printFormat("GetThreadIndex", bp.GetThreadIndex())
-    printFormat("GetThreadName", bp.GetThreadName())
-    printFormat("GetQueueName", bp.GetQueueName())
-    stringList = lldb.SBStringList()
-    bp.GetCommandLineCommands(stringList)
-    printFormat("GetCommandLineCommands", getStringFromSBStringList(stringList))
-    stringList.Clear()
-    bp.GetNames(stringList)
-    printFormat("GetNames", getStringFromSBStringList(stringList))
-    printFormat("GetNumResolvedLocations", bp.GetNumResolvedLocations())
-    printFormat("GetNumLocations", bp.GetNumLocations())
-    printFormat("SerializeToStructuredData", bp.SerializeToStructuredData())  # SBStructuredData
-    printFormat("IsHardware", bp.IsHardware())
+    print_class_name("SBBreakpoint")
+    print_format("SBBreakpoint", bp)
+    print_format("GetID", bp.GetID())
+    print_format("IsValid", bp.IsValid())
+    print_format("GetTarget", bp.GetTarget())  # SBTarget
+    print_format("IsEnabled", bp.IsEnabled())
+    print_format("IsOneShot", bp.IsOneShot())
+    print_format("IsInternal", bp.IsInternal())
+    print_format("GetHitCount", bp.GetHitCount())
+    print_format("GetIgnoreCount", bp.GetIgnoreCount())
+    print_format("GetCondition", bp.GetCondition())
+    print_format("GetAutoContinue", bp.GetAutoContinue())
+    print_format("GetThreadID", bp.GetThreadID())
+    print_format("GetThreadIndex", bp.GetThreadIndex())
+    print_format("GetThreadName", bp.GetThreadName())
+    print_format("GetQueueName", bp.GetQueueName())
+    string_list = lldb.SBStringList()
+    bp.GetCommandLineCommands(string_list)
+    print_format("GetCommandLineCommands", get_string_from_SBStringList(string_list))
+    string_list.Clear()
+    bp.GetNames(string_list)
+    print_format("GetNames", get_string_from_SBStringList(string_list))
+    print_format("GetNumResolvedLocations", bp.GetNumResolvedLocations())
+    print_format("GetNumLocations", bp.GetNumLocations())
+    print_format("SerializeToStructuredData", bp.SerializeToStructuredData())  # SBStructuredData
+    print_format("IsHardware", bp.IsHardware())
 
-    printTraversal(bp, "GetNumLocations", "GetLocationAtIndex")  # [SBBreakpointLocation]
+    print_traversal(bp, "GetNumLocations", "GetLocationAtIndex")  # [SBBreakpointLocation]
 
 
 def pSBBreakpointLocation(obj: Optional[lldb.SBBreakpointLocation]) -> None:
     if obj:
-        bpLocation = obj
+        breakpoint_location = obj
     else:
-        bpLocation = lldb.debugger.GetSelectedTarget().GetBreakpointAtIndex(0).GetLocationAtIndex(0)
+        breakpoint_location = lldb.debugger.GetSelectedTarget().GetBreakpointAtIndex(0).GetLocationAtIndex(0)
 
-    printClassName("SBBreakpointLocation")
-    printFormat("SBBreakpointLocation", bpLocation)
-    printFormat("GetID", bpLocation.GetID())
-    printFormat("IsValid", bpLocation.IsValid())
-    printFormat("GetAddress", bpLocation.GetAddress())  # SBAddress
-    printFormat("GetLoadAddress", bpLocation.GetLoadAddress())
-    printFormat("IsEnabled", bpLocation.IsEnabled())
-    printFormat("GetHitCount", bpLocation.GetHitCount())
-    printFormat("GetIgnoreCount", bpLocation.GetIgnoreCount())
-    printFormat("GetCondition", bpLocation.GetCondition())
-    printFormat("GetAutoContinue", bpLocation.GetAutoContinue())
-    stringList = lldb.SBStringList()
-    bpLocation.GetCommandLineCommands(stringList)
-    printFormat("GetCommandLineCommands", getStringFromSBStringList(stringList))
-    printFormat("GetThreadID", bpLocation.GetThreadID())
-    printFormat("GetThreadIndex", bpLocation.GetThreadIndex())
-    printFormat("GetThreadName", bpLocation.GetThreadName())
-    printFormat("GetQueueName", bpLocation.GetQueueName())
-    printFormat("IsResolved", bpLocation.IsResolved())
-    printFormat("GetBreakpoint", bpLocation.GetBreakpoint())  # SBBreakpoint
+    print_class_name("SBBreakpointLocation")
+    print_format("SBBreakpointLocation", breakpoint_location)
+    print_format("GetID", breakpoint_location.GetID())
+    print_format("IsValid", breakpoint_location.IsValid())
+    print_format("GetAddress", breakpoint_location.GetAddress())  # SBAddress
+    print_format("GetLoadAddress", breakpoint_location.GetLoadAddress())
+    print_format("IsEnabled", breakpoint_location.IsEnabled())
+    print_format("GetHitCount", breakpoint_location.GetHitCount())
+    print_format("GetIgnoreCount", breakpoint_location.GetIgnoreCount())
+    print_format("GetCondition", breakpoint_location.GetCondition())
+    print_format("GetAutoContinue", breakpoint_location.GetAutoContinue())
+    string_list = lldb.SBStringList()
+    breakpoint_location.GetCommandLineCommands(string_list)
+    print_format("GetCommandLineCommands", get_string_from_SBStringList(string_list))
+    print_format("GetThreadID", breakpoint_location.GetThreadID())
+    print_format("GetThreadIndex", breakpoint_location.GetThreadIndex())
+    print_format("GetThreadName", breakpoint_location.GetThreadName())
+    print_format("GetQueueName", breakpoint_location.GetQueueName())
+    print_format("IsResolved", breakpoint_location.IsResolved())
+    print_format("GetBreakpoint", breakpoint_location.GetBreakpoint())  # SBBreakpoint
 
 
 def pSBError(obj: Optional[lldb.SBError]) -> None:
@@ -947,14 +1009,14 @@ def pSBError(obj: Optional[lldb.SBError]) -> None:
     else:
         error = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().FindVariable("self").GetError()
 
-    printClassName("SBError")
-    printFormat("SBError", error)
-    printFormat("GetCString", error.GetCString())
-    printFormat("Fail", error.Fail())
-    printFormat("Success", error.Success())
-    printFormat("GetError", error.GetError())
-    printFormat("GetType", error.GetType())  # ErrorType int
-    printFormat("IsValid", error.IsValid())
+    print_class_name("SBError")
+    print_format("SBError", error)
+    print_format("GetCString", error.GetCString())
+    print_format("Fail", error.Fail())
+    print_format("Success", error.Success())
+    print_format("GetError", error.GetError())
+    print_format("GetType", error.GetType())  # ErrorType int
+    print_format("IsValid", error.IsValid())
 
 
 def pSBType(obj: Optional[lldb.SBType]) -> None:
@@ -965,50 +1027,50 @@ def pSBType(obj: Optional[lldb.SBType]) -> None:
         # t = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().FindVariable("self").GetType()
         # t = lldb.debugger.GetSelectedTarget().FindFirstType("UIAlertAction")
 
-    printClassName("SBType")
-    printFormat("SBType", t)
-    printFormat("IsValid", t.IsValid())
-    printFormat("GetByteSize", t.GetByteSize())
-    printFormat("IsPointerType", t.IsPointerType())
-    printFormat("IsReferenceType", t.IsReferenceType())
-    printFormat("IsFunctionType", t.IsFunctionType())
-    printFormat("IsPolymorphicClass", t.IsPolymorphicClass())
-    printFormat("IsArrayType", t.IsArrayType())
-    printFormat("IsVectorType", t.IsVectorType())
-    printFormat("IsTypedefType", t.IsTypedefType())
-    printFormat("IsAnonymousType", t.IsAnonymousType())
-    printFormat("IsScopedEnumerationType", t.IsScopedEnumerationType())
-    printFormat("GetPointerType", t.GetPointerType())  # SBType
-    printFormat("GetPointeeType", t.GetPointeeType())  # SBType
-    printFormat("GetReferenceType", t.GetReferenceType())  # SBType
-    printFormat("GetTypedefedType", t.GetTypedefedType())  # SBType
-    printFormat("GetDereferencedType", t.GetDereferencedType())  # SBType
-    printFormat("GetUnqualifiedType", t.GetUnqualifiedType())  # SBType
-    printFormat("GetCanonicalType", t.GetCanonicalType())  # SBType
-    printFormat("GetEnumerationIntegerType", t.GetEnumerationIntegerType())  # SBType
-    printFormat("GetArrayElementType", t.GetArrayElementType())  # SBType
-    printFormat("GetVectorElementType", t.GetVectorElementType())  # SBType
-    printFormat("GetBasicType", t.GetBasicType())  # BasicType int
-    printFormat("GetNumberOfFields", t.GetNumberOfFields())
-    printFormat("GetNumberOfDirectBaseClasses", t.GetNumberOfDirectBaseClasses())
-    printFormat("GetNumberOfVirtualBaseClasses", t.GetNumberOfVirtualBaseClasses())
-    printFormat("GetEnumMembers", t.GetEnumMembers())  # SBTypeEnumMemberList
-    printFormat("GetModule", t.GetModule())  # SBModule
-    printFormat("GetName", t.GetName())
-    printFormat("GetDisplayTypeName", t.GetDisplayTypeName())
-    printFormat("GetTypeClass", t.GetTypeClass())  # TypeClass int
-    printFormat("GetNumberOfTemplateArguments", t.GetNumberOfTemplateArguments())
-    printFormat("GetFunctionReturnType", t.GetFunctionReturnType())  # SBType
-    printFormat("GetFunctionArgumentTypes", t.GetFunctionArgumentTypes())  # SBTypeList
-    printFormat("GetNumberOfMemberFunctions", t.GetNumberOfMemberFunctions())
-    printFormat("IsTypeComplete", t.IsTypeComplete())
-    printFormat("GetTypeFlags", t.GetTypeFlags())
+    print_class_name("SBType")
+    print_format("SBType", t)
+    print_format("IsValid", t.IsValid())
+    print_format("GetByteSize", t.GetByteSize())
+    print_format("IsPointerType", t.IsPointerType())
+    print_format("IsReferenceType", t.IsReferenceType())
+    print_format("IsFunctionType", t.IsFunctionType())
+    print_format("IsPolymorphicClass", t.IsPolymorphicClass())
+    print_format("IsArrayType", t.IsArrayType())
+    print_format("IsVectorType", t.IsVectorType())
+    print_format("IsTypedefType", t.IsTypedefType())
+    print_format("IsAnonymousType", t.IsAnonymousType())
+    print_format("IsScopedEnumerationType", t.IsScopedEnumerationType())
+    print_format("GetPointerType", t.GetPointerType())  # SBType
+    print_format("GetPointeeType", t.GetPointeeType())  # SBType
+    print_format("GetReferenceType", t.GetReferenceType())  # SBType
+    print_format("GetTypedefedType", t.GetTypedefedType())  # SBType
+    print_format("GetDereferencedType", t.GetDereferencedType())  # SBType
+    print_format("GetUnqualifiedType", t.GetUnqualifiedType())  # SBType
+    print_format("GetCanonicalType", t.GetCanonicalType())  # SBType
+    print_format("GetEnumerationIntegerType", t.GetEnumerationIntegerType())  # SBType
+    print_format("GetArrayElementType", t.GetArrayElementType())  # SBType
+    print_format("GetVectorElementType", t.GetVectorElementType())  # SBType
+    print_format("GetBasicType", t.GetBasicType())  # BasicType int
+    print_format("GetNumberOfFields", t.GetNumberOfFields())
+    print_format("GetNumberOfDirectBaseClasses", t.GetNumberOfDirectBaseClasses())
+    print_format("GetNumberOfVirtualBaseClasses", t.GetNumberOfVirtualBaseClasses())
+    print_format("GetEnumMembers", t.GetEnumMembers())  # SBTypeEnumMemberList
+    print_format("GetModule", t.GetModule())  # SBModule
+    print_format("GetName", t.GetName())
+    print_format("GetDisplayTypeName", t.GetDisplayTypeName())
+    print_format("GetTypeClass", t.GetTypeClass())  # TypeClass int
+    print_format("GetNumberOfTemplateArguments", t.GetNumberOfTemplateArguments())
+    print_format("GetFunctionReturnType", t.GetFunctionReturnType())  # SBType
+    print_format("GetFunctionArgumentTypes", t.GetFunctionArgumentTypes())  # SBTypeList
+    print_format("GetNumberOfMemberFunctions", t.GetNumberOfMemberFunctions())
+    print_format("IsTypeComplete", t.IsTypeComplete())
+    print_format("GetTypeFlags", t.GetTypeFlags())
 
-    printTraversal(t, "GetNumberOfFields", "GetFieldAtIndex")  # [SBTypeMember]
-    printTraversal(t, "GetNumberOfDirectBaseClasses", "GetDirectBaseClassAtIndex")  # [SBTypeMember]
-    printTraversal(t, "GetNumberOfVirtualBaseClasses", "GetVirtualBaseClassAtIndex")  # [SBTypeMember]
-    printTraversal(t, "GetNumberOfTemplateArguments", "GetTemplateArgumentType")  # [SBType]
-    printTraversal(t, "GetNumberOfMemberFunctions", "GetMemberFunctionAtIndex")  # [SBTypeMemberFunction]
+    print_traversal(t, "GetNumberOfFields", "GetFieldAtIndex")  # [SBTypeMember]
+    print_traversal(t, "GetNumberOfDirectBaseClasses", "GetDirectBaseClassAtIndex")  # [SBTypeMember]
+    print_traversal(t, "GetNumberOfVirtualBaseClasses", "GetVirtualBaseClassAtIndex")  # [SBTypeMember]
+    print_traversal(t, "GetNumberOfTemplateArguments", "GetTemplateArgumentType")  # [SBType]
+    print_traversal(t, "GetNumberOfMemberFunctions", "GetMemberFunctionAtIndex")  # [SBTypeMemberFunction]
 
 
 def pSBTypeMemberFunction(obj: Optional[lldb.SBTypeMemberFunction]) -> None:
@@ -1018,18 +1080,18 @@ def pSBTypeMemberFunction(obj: Optional[lldb.SBTypeMemberFunction]) -> None:
         func = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().FindVariable("self").GetType().GetMemberFunctionAtIndex(0)
         # func = lldb.debugger.GetSelectedTarget().FindFirstType("UIAlertAction").GetMemberFunctionAtIndex(0)
 
-    printClassName("SBTypeMemberFunction")
-    printFormat("SBTypeMemberFunction", func)
-    printFormat("IsValid", func.IsValid())
-    printFormat("GetName", func.GetName())
-    printFormat("GetDemangledName", func.GetDemangledName())
-    printFormat("GetMangledName", func.GetMangledName())
-    printFormat("GetType", func.GetType())  # SBType
-    printFormat("GetReturnType", func.GetReturnType())  # SBType
-    printFormat("GetNumberOfArguments", func.GetNumberOfArguments())
-    printFormat("GetKind", func.GetKind())  # MemberFunctionKind int
+    print_class_name("SBTypeMemberFunction")
+    print_format("SBTypeMemberFunction", func)
+    print_format("IsValid", func.IsValid())
+    print_format("GetName", func.GetName())
+    print_format("GetDemangledName", func.GetDemangledName())
+    print_format("GetMangledName", func.GetMangledName())
+    print_format("GetType", func.GetType())  # SBType
+    print_format("GetReturnType", func.GetReturnType())  # SBType
+    print_format("GetNumberOfArguments", func.GetNumberOfArguments())
+    print_format("GetKind", func.GetKind())  # MemberFunctionKind int
 
-    printTraversal(func, "GetNumberOfArguments", "GetArgumentTypeAtIndex")  # [SBType]
+    print_traversal(func, "GetNumberOfArguments", "GetArgumentTypeAtIndex")  # [SBType]
 
 
 def pSBTypeCategory(obj: Optional[lldb.SBTypeCategory]) -> None:
@@ -1038,22 +1100,22 @@ def pSBTypeCategory(obj: Optional[lldb.SBTypeCategory]) -> None:
     else:
         category = lldb.debugger.GetDefaultCategory()
 
-    printClassName("SBTypeCategory")
-    printFormat("SBTypeCategory", category)
-    printFormat("IsValid", category.IsValid())
-    printFormat("GetEnabled", category.GetEnabled())
-    printFormat("GetName", category.GetName())
-    printFormat("GetNumLanguages", category.GetNumLanguages())
-    printFormat("GetNumFormats", category.GetNumFormats())
-    printFormat("GetNumSummaries", category.GetNumSummaries())
-    printFormat("GetNumFilters", category.GetNumFilters())
-    printFormat("GetNumSynthetics", category.GetNumSynthetics())
+    print_class_name("SBTypeCategory")
+    print_format("SBTypeCategory", category)
+    print_format("IsValid", category.IsValid())
+    print_format("GetEnabled", category.GetEnabled())
+    print_format("GetName", category.GetName())
+    print_format("GetNumLanguages", category.GetNumLanguages())
+    print_format("GetNumFormats", category.GetNumFormats())
+    print_format("GetNumSummaries", category.GetNumSummaries())
+    print_format("GetNumFilters", category.GetNumFilters())
+    print_format("GetNumSynthetics", category.GetNumSynthetics())
 
-    printTraversal(category, "GetNumLanguages", "GetLanguageAtIndex")  # [LanguageType] [int]
-    printTraversal(category, "GetNumFormats", "GetFormatAtIndex")  # [SBTypeFormat]
-    printTraversal(category, "GetNumSummaries", "GetSummaryAtIndex")  # [SBTypeSummary]
-    printTraversal(category, "GetNumFilters", "GetFilterAtIndex")  # [SBTypeFilter]
-    printTraversal(category, "GetNumSynthetics", "GetSyntheticAtIndex")  # [SBTypeSynthetic]
+    print_traversal(category, "GetNumLanguages", "GetLanguageAtIndex")  # [LanguageType] [int]
+    print_traversal(category, "GetNumFormats", "GetFormatAtIndex")  # [SBTypeFormat]
+    print_traversal(category, "GetNumSummaries", "GetSummaryAtIndex")  # [SBTypeSummary]
+    print_traversal(category, "GetNumFilters", "GetFilterAtIndex")  # [SBTypeFilter]
+    print_traversal(category, "GetNumSynthetics", "GetSyntheticAtIndex")  # [SBTypeSynthetic]
 
 
 def pSBBroadcaster(obj: Optional[lldb.SBBroadcaster]) -> None:
@@ -1064,10 +1126,10 @@ def pSBBroadcaster(obj: Optional[lldb.SBBroadcaster]) -> None:
         # broadcaster = lldb.debugger.GetSelectedTarget().GetBroadcaster()
         # broadcaster = lldb.debugger.GetSelectedTarget().GetProcess().GetBroadcaster()
 
-    printClassName("SBBroadcaster")
-    printFormat("SBBroadcaster", broadcaster)
-    printFormat("IsValid", broadcaster.IsValid())
-    printFormat("GetName", broadcaster.GetName())
+    print_class_name("SBBroadcaster")
+    print_format("SBBroadcaster", broadcaster)
+    print_format("IsValid", broadcaster.IsValid())
+    print_format("GetName", broadcaster.GetName())
 
 
 def pSBListener(obj: Optional[lldb.SBListener]) -> None:
@@ -1077,9 +1139,9 @@ def pSBListener(obj: Optional[lldb.SBListener]) -> None:
         listener = lldb.debugger.GetListener()
         # listener = lldb.debugger.GetSelectedTarget().GetLaunchInfo().GetListener()
 
-    printClassName("SBListener")
-    printFormat("SBListener", listener)
-    printFormat("IsValid", listener.IsValid())
+    print_class_name("SBListener")
+    print_format("SBListener", listener)
+    print_format("IsValid", listener.IsValid())
 
 
 def pSBEvent(obj: Optional[lldb.SBEvent]) -> None:
@@ -1088,172 +1150,172 @@ def pSBEvent(obj: Optional[lldb.SBEvent]) -> None:
     else:
         event = lldb.SBEvent()
 
-    printClassName("SBEvent")
-    printFormat("IsValid", event.IsValid())
-    printFormat("GetDataFlavor", event.GetDataFlavor())
-    eventType = event.GetType()
-    printFormat("GetType", eventType)
-    printFormat("GetBroadcaster", event.GetBroadcaster())  # SBBroadcaster
-    printFormat("GetBroadcasterClass", event.GetBroadcasterClass())
-    printFormat("GetCStringFromEvent", lldb.SBEvent.GetCStringFromEvent(event))
+    print_class_name("SBEvent")
+    print_format("IsValid", event.IsValid())
+    print_format("GetDataFlavor", event.GetDataFlavor())
+    event_type = event.GetType()
+    print_format("GetType", event_type)
+    print_format("GetBroadcaster", event.GetBroadcaster())  # SBBroadcaster
+    print_format("GetBroadcasterClass", event.GetBroadcasterClass())
+    print_format("GetCStringFromEvent", lldb.SBEvent.GetCStringFromEvent(event))
 
 
-    isProcessEvent = lldb.SBProcess.EventIsProcessEvent(event)
-    printFormat("SBProcess.EventIsProcessEvent", isProcessEvent)
-    if isProcessEvent:
-        # printFormat("SBProcess.GetProcessFromEvent", lldb.SBProcess.GetProcessFromEvent(event))  # SBProcess
-        printFormat("SBProcess.GetRestartedFromEvent", lldb.SBProcess.GetRestartedFromEvent(event))
-        printFormat("SBProcess.GetNumRestartedReasonsFromEvent", lldb.SBProcess.GetNumRestartedReasonsFromEvent(event))
-        printFormat("SBProcess.GetInterruptedFromEvent", lldb.SBProcess.GetInterruptedFromEvent(event))
+    is_process_event = lldb.SBProcess.EventIsProcessEvent(event)
+    print_format("SBProcess.EventIsProcessEvent", is_process_event)
+    if is_process_event:
+        # print_format("SBProcess.GetProcessFromEvent", lldb.SBProcess.GetProcessFromEvent(event))  # SBProcess
+        print_format("SBProcess.GetRestartedFromEvent", lldb.SBProcess.GetRestartedFromEvent(event))
+        print_format("SBProcess.GetNumRestartedReasonsFromEvent", lldb.SBProcess.GetNumRestartedReasonsFromEvent(event))
+        print_format("SBProcess.GetInterruptedFromEvent", lldb.SBProcess.GetInterruptedFromEvent(event))
 
         # StateType https://github.com/llvm/llvm-project/blob/master/lldb/include/lldb/lldb-enumerations.h
         state = lldb.SBProcess.GetStateFromEvent(event)  # lldb::StateType int
-        stateString = lldb.SBDebugger.StateAsCString(state)
-        printFormat("SBProcess.GetStateFromEvent(raw)", state)
-        printFormat("SBProcess.GetStateFromEvent(resolved)", stateString)
+        state_string = lldb.SBDebugger.StateAsCString(state)
+        print_format("SBProcess.GetStateFromEvent(raw)", state)
+        print_format("SBProcess.GetStateFromEvent(resolved)", state_string)
 
-        eventTypeString = 'unknown'
-        if eventType == lldb.SBProcess.eBroadcastBitStateChanged:
-            eventTypeString = 'eBroadcastBitStateChanged'
-        elif eventType == lldb.SBProcess.eBroadcastBitInterrupt:
-            eventTypeString = 'eBroadcastBitInterrupt'
-        elif eventType == lldb.SBProcess.eBroadcastBitSTDOUT:
-            eventTypeString = 'eBroadcastBitSTDOUT'
-        elif eventType == lldb.SBProcess.eBroadcastBitSTDERR:
-            eventTypeString = 'eBroadcastBitSTDERR'
-        elif eventType == lldb.SBProcess.eBroadcastBitProfileData:
-            eventTypeString = 'eBroadcastBitProfileData'
-        elif eventType == lldb.SBProcess.eBroadcastBitStructuredData:
-            eventTypeString = 'eBroadcastBitStructuredData'
-        printFormat("GetType(resolved)", eventTypeString)
+        event_type_string = 'unknown'
+        if event_type == lldb.SBProcess.eBroadcastBitStateChanged:
+            event_type_string = 'eBroadcastBitStateChanged'
+        elif event_type == lldb.SBProcess.eBroadcastBitInterrupt:
+            event_type_string = 'eBroadcastBitInterrupt'
+        elif event_type == lldb.SBProcess.eBroadcastBitSTDOUT:
+            event_type_string = 'eBroadcastBitSTDOUT'
+        elif event_type == lldb.SBProcess.eBroadcastBitSTDERR:
+            event_type_string = 'eBroadcastBitSTDERR'
+        elif event_type == lldb.SBProcess.eBroadcastBitProfileData:
+            event_type_string = 'eBroadcastBitProfileData'
+        elif event_type == lldb.SBProcess.eBroadcastBitStructuredData:
+            event_type_string = 'eBroadcastBitStructuredData'
+        print_format("GetType(resolved)", event_type_string)
 
-    isStructuredDataEvent = lldb.SBProcess.EventIsStructuredDataEvent(event)
-    printFormat("SBProcess.EventIsStructuredDataEvent", isStructuredDataEvent)
-    if isStructuredDataEvent:
+    is_structured_data_event = lldb.SBProcess.EventIsStructuredDataEvent(event)
+    print_format("SBProcess.EventIsStructuredDataEvent", is_structured_data_event)
+    if is_structured_data_event:
         sd = lldb.SBProcess.GetStructuredDataFromEvent(event)  # SBStructuredData
-        printFormat("SBProcess.GetStructuredDataFromEvent", sd)
+        print_format("SBProcess.GetStructuredDataFromEvent", sd)
 
 
-    isTargetEvent = lldb.SBTarget.EventIsTargetEvent(event)
-    printFormat("SBTarget.EventIsTargetEvent", isTargetEvent)
-    if isTargetEvent:
-        printFormat("SBTarget.GetTargetFromEvent", lldb.SBTarget.GetTargetFromEvent(event))  # SBTarget
-        printFormat("SBTarget.GetNumModulesFromEvent", lldb.SBTarget.GetNumModulesFromEvent(event))
-        eventTypeString = 'unknown'
-        if eventType == lldb.SBTarget.eBroadcastBitBreakpointChanged:
-            eventTypeString = 'eBroadcastBitBreakpointChanged'
-        elif eventType == lldb.SBTarget.eBroadcastBitModulesLoaded:
-            eventTypeString = 'eBroadcastBitModulesLoaded'
-        elif eventType == lldb.SBTarget.eBroadcastBitModulesUnloaded:
-            eventTypeString = 'eBroadcastBitModulesUnloaded'
-        elif eventType == lldb.SBTarget.eBroadcastBitWatchpointChanged:
-            eventTypeString = 'eBroadcastBitWatchpointChanged'
-        elif eventType == lldb.SBTarget.eBroadcastBitSymbolsLoaded:
-            eventTypeString = 'eBroadcastBitSymbolsLoaded'
-        printFormat("GetType(resolved)", eventTypeString)
+    is_target_event = lldb.SBTarget.EventIsTargetEvent(event)
+    print_format("SBTarget.EventIsTargetEvent", is_target_event)
+    if is_target_event:
+        print_format("SBTarget.GetTargetFromEvent", lldb.SBTarget.GetTargetFromEvent(event))  # SBTarget
+        print_format("SBTarget.GetNumModulesFromEvent", lldb.SBTarget.GetNumModulesFromEvent(event))
+        event_type_string = 'unknown'
+        if event_type == lldb.SBTarget.eBroadcastBitBreakpointChanged:
+            event_type_string = 'eBroadcastBitBreakpointChanged'
+        elif event_type == lldb.SBTarget.eBroadcastBitModulesLoaded:
+            event_type_string = 'eBroadcastBitModulesLoaded'
+        elif event_type == lldb.SBTarget.eBroadcastBitModulesUnloaded:
+            event_type_string = 'eBroadcastBitModulesUnloaded'
+        elif event_type == lldb.SBTarget.eBroadcastBitWatchpointChanged:
+            event_type_string = 'eBroadcastBitWatchpointChanged'
+        elif event_type == lldb.SBTarget.eBroadcastBitSymbolsLoaded:
+            event_type_string = 'eBroadcastBitSymbolsLoaded'
+        print_format("GetType(resolved)", event_type_string)
 
 
-    isBreakpointEvent = lldb.SBBreakpoint.EventIsBreakpointEvent(event)
-    printFormat("SBBreakpoint.EventIsBreakpointEvent", isBreakpointEvent)
-    if isBreakpointEvent:
-        printFormat("SBBreakpoint.GetBreakpointFromEvent", lldb.SBBreakpoint.GetBreakpointFromEvent(event))  # SBBreakpoint
-        printFormat("SBBreakpoint.GetNumBreakpointLocationsFromEvent", lldb.SBBreakpoint.GetNumBreakpointLocationsFromEvent(event))
-        bpEventType = lldb.SBBreakpoint.GetBreakpointEventTypeFromEvent(event)  # lldb::BreakpointEventType
-        bpEventTypeString = 'unknown'
-        if bpEventType == lldb.eBreakpointEventTypeInvalidType:
-            bpEventTypeString = 'eBreakpointEventTypeInvalidType'
-        elif bpEventType == lldb.eBreakpointEventTypeAdded:
-            bpEventTypeString = 'eBreakpointEventTypeAdded'
-        elif bpEventType == lldb.eBreakpointEventTypeRemoved:
-            bpEventTypeString = 'eBreakpointEventTypeRemoved'
-        elif bpEventType == lldb.eBreakpointEventTypeLocationsAdded:
-            bpEventTypeString = 'eBreakpointEventTypeLocationsAdded'
-        elif bpEventType == lldb.eBreakpointEventTypeLocationsRemoved:
-            bpEventTypeString = 'eBreakpointEventTypeLocationsRemoved'
-        elif bpEventType == lldb.eBreakpointEventTypeLocationsResolved:
-            bpEventTypeString = 'eBreakpointEventTypeLocationsResolved'
-        elif bpEventType == lldb.eBreakpointEventTypeEnabled:
-            bpEventTypeString = 'eBreakpointEventTypeEnabled'
-        elif bpEventType == lldb.eBreakpointEventTypeDisabled:
-            bpEventTypeString = 'eBreakpointEventTypeDisabled'
-        elif bpEventType == lldb.eBreakpointEventTypeCommandChanged:
-            bpEventTypeString = 'eBreakpointEventTypeCommandChanged'
-        elif bpEventType == lldb.eBreakpointEventTypeConditionChanged:
-            bpEventTypeString = 'eBreakpointEventTypeConditionChanged'
-        elif bpEventType == lldb.eBreakpointEventTypeIgnoreChanged:
-            bpEventTypeString = 'eBreakpointEventTypeIgnoreChanged'
-        elif bpEventType == lldb.eBreakpointEventTypeThreadChanged:
-            bpEventTypeString = 'eBreakpointEventTypeThreadChanged'
-        elif bpEventType == lldb.eBreakpointEventTypeAutoContinueChanged:
-            bpEventTypeString = 'eBreakpointEventTypeAutoContinueChanged'
-        printFormat("SBBreakpoint.GetBreakpointEventTypeFromEvent(raw)", bpEventType)
-        printFormat("SBBreakpoint.GetBreakpointEventTypeFromEvent(resolved)", bpEventTypeString)
+    is_breakpoint_event = lldb.SBBreakpoint.EventIsBreakpointEvent(event)
+    print_format("SBBreakpoint.EventIsBreakpointEvent", is_breakpoint_event)
+    if is_breakpoint_event:
+        print_format("SBBreakpoint.GetBreakpointFromEvent", lldb.SBBreakpoint.GetBreakpointFromEvent(event))  # SBBreakpoint
+        print_format("SBBreakpoint.GetNumBreakpointLocationsFromEvent", lldb.SBBreakpoint.GetNumBreakpointLocationsFromEvent(event))
+        bp_event_type = lldb.SBBreakpoint.GetBreakpointEventTypeFromEvent(event)  # lldb::BreakpointEventType
+        bp_event_type_string = 'unknown'
+        if bp_event_type == lldb.eBreakpointEventTypeInvalidType:
+            bp_event_type_string = 'eBreakpointEventTypeInvalidType'
+        elif bp_event_type == lldb.eBreakpointEventTypeAdded:
+            bp_event_type_string = 'eBreakpointEventTypeAdded'
+        elif bp_event_type == lldb.eBreakpointEventTypeRemoved:
+            bp_event_type_string = 'eBreakpointEventTypeRemoved'
+        elif bp_event_type == lldb.eBreakpointEventTypeLocationsAdded:
+            bp_event_type_string = 'eBreakpointEventTypeLocationsAdded'
+        elif bp_event_type == lldb.eBreakpointEventTypeLocationsRemoved:
+            bp_event_type_string = 'eBreakpointEventTypeLocationsRemoved'
+        elif bp_event_type == lldb.eBreakpointEventTypeLocationsResolved:
+            bp_event_type_string = 'eBreakpointEventTypeLocationsResolved'
+        elif bp_event_type == lldb.eBreakpointEventTypeEnabled:
+            bp_event_type_string = 'eBreakpointEventTypeEnabled'
+        elif bp_event_type == lldb.eBreakpointEventTypeDisabled:
+            bp_event_type_string = 'eBreakpointEventTypeDisabled'
+        elif bp_event_type == lldb.eBreakpointEventTypeCommandChanged:
+            bp_event_type_string = 'eBreakpointEventTypeCommandChanged'
+        elif bp_event_type == lldb.eBreakpointEventTypeConditionChanged:
+            bp_event_type_string = 'eBreakpointEventTypeConditionChanged'
+        elif bp_event_type == lldb.eBreakpointEventTypeIgnoreChanged:
+            bp_event_type_string = 'eBreakpointEventTypeIgnoreChanged'
+        elif bp_event_type == lldb.eBreakpointEventTypeThreadChanged:
+            bp_event_type_string = 'eBreakpointEventTypeThreadChanged'
+        elif bp_event_type == lldb.eBreakpointEventTypeAutoContinueChanged:
+            bp_event_type_string = 'eBreakpointEventTypeAutoContinueChanged'
+        print_format("SBBreakpoint.GetBreakpointEventTypeFromEvent(raw)", bp_event_type)
+        print_format("SBBreakpoint.GetBreakpointEventTypeFromEvent(resolved)", bp_event_type_string)
 
 
-    isCommandInterpreterEvent = lldb.SBCommandInterpreter.EventIsCommandInterpreterEvent(event)
-    printFormat("SBCommandInterpreter.EventIsCommandInterpreterEvent", isCommandInterpreterEvent)
-    if isCommandInterpreterEvent:
-        eventTypeString = 'unknown'
-        if eventType == lldb.SBCommandInterpreter.eBroadcastBitThreadShouldExit:
-            eventTypeString = 'eBroadcastBitThreadShouldExit'
-        elif eventType == lldb.SBCommandInterpreter.eBroadcastBitResetPrompt:
-            eventTypeString = 'eBroadcastBitResetPrompt'
-        elif eventType == lldb.SBCommandInterpreter.eBroadcastBitQuitCommandReceived:
-            eventTypeString = 'eBroadcastBitQuitCommandReceived'
-        elif eventType == lldb.SBCommandInterpreter.eBroadcastBitAsynchronousOutputData:
-            eventTypeString = 'eBroadcastBitAsynchronousOutputData'
-        elif eventType == lldb.SBCommandInterpreter.eBroadcastBitAsynchronousErrorData:
-            eventTypeString = 'eBroadcastBitAsynchronousErrorData'
-        printFormat("GetType(resolved)", eventTypeString)
+    is_command_interpreter_event = lldb.SBCommandInterpreter.EventIsCommandInterpreterEvent(event)
+    print_format("SBCommandInterpreter.EventIsCommandInterpreterEvent", is_command_interpreter_event)
+    if is_command_interpreter_event:
+        event_type_string = 'unknown'
+        if event_type == lldb.SBCommandInterpreter.eBroadcastBitThreadShouldExit:
+            event_type_string = 'eBroadcastBitThreadShouldExit'
+        elif event_type == lldb.SBCommandInterpreter.eBroadcastBitResetPrompt:
+            event_type_string = 'eBroadcastBitResetPrompt'
+        elif event_type == lldb.SBCommandInterpreter.eBroadcastBitQuitCommandReceived:
+            event_type_string = 'eBroadcastBitQuitCommandReceived'
+        elif event_type == lldb.SBCommandInterpreter.eBroadcastBitAsynchronousOutputData:
+            event_type_string = 'eBroadcastBitAsynchronousOutputData'
+        elif event_type == lldb.SBCommandInterpreter.eBroadcastBitAsynchronousErrorData:
+            event_type_string = 'eBroadcastBitAsynchronousErrorData'
+        print_format("GetType(resolved)", event_type_string)
 
 
-    isThreadEvent = lldb.SBThread.EventIsThreadEvent(event)
-    printFormat("SBThread.EventIsThreadEvent", isThreadEvent)
-    if isThreadEvent:
-        printFormat("SBThread.GetThreadFromEvent", lldb.SBThread.GetThreadFromEvent(event))  # SBThread
-        printFormat("SBThread.GetStackFrameFromEvent", lldb.SBThread.GetStackFrameFromEvent(event))  # SBFrame
-        eventTypeString = 'unknown'
-        if eventType == lldb.SBThread.eBroadcastBitStackChanged:
-            eventTypeString = 'eBroadcastBitStackChanged'
-        elif eventType == lldb.SBThread.eBroadcastBitThreadSuspended:
-            eventTypeString = 'eBroadcastBitThreadSuspended'
-        elif eventType == lldb.SBThread.eBroadcastBitThreadResumed:
-            eventTypeString = 'eBroadcastBitThreadResumed'
-        elif eventType == lldb.SBThread.eBroadcastBitSelectedFrameChanged:
-            eventTypeString = 'eBroadcastBitSelectedFrameChanged'
-        elif eventType == lldb.SBThread.eBroadcastBitThreadSelected:
-            eventTypeString = 'eBroadcastBitThreadSelected'
-        printFormat("GetType(resolved)", eventTypeString)
+    is_thread_event = lldb.SBThread.EventIsThreadEvent(event)
+    print_format("SBThread.EventIsThreadEvent", is_thread_event)
+    if is_thread_event:
+        print_format("SBThread.GetThreadFromEvent", lldb.SBThread.GetThreadFromEvent(event))  # SBThread
+        print_format("SBThread.GetStackFrameFromEvent", lldb.SBThread.GetStackFrameFromEvent(event))  # SBFrame
+        event_type_string = 'unknown'
+        if event_type == lldb.SBThread.eBroadcastBitStackChanged:
+            event_type_string = 'eBroadcastBitStackChanged'
+        elif event_type == lldb.SBThread.eBroadcastBitThreadSuspended:
+            event_type_string = 'eBroadcastBitThreadSuspended'
+        elif event_type == lldb.SBThread.eBroadcastBitThreadResumed:
+            event_type_string = 'eBroadcastBitThreadResumed'
+        elif event_type == lldb.SBThread.eBroadcastBitSelectedFrameChanged:
+            event_type_string = 'eBroadcastBitSelectedFrameChanged'
+        elif event_type == lldb.SBThread.eBroadcastBitThreadSelected:
+            event_type_string = 'eBroadcastBitThreadSelected'
+        print_format("GetType(resolved)", event_type_string)
 
 
-    isWatchpointEvent = lldb.SBWatchpoint.EventIsWatchpointEvent(event)
-    printFormat("SBWatchpoint.EventIsWatchpointEvent", isWatchpointEvent)
-    if isWatchpointEvent:
-        printFormat("SBWatchpoint.GetWatchpointFromEvent", lldb.SBWatchpoint.GetWatchpointFromEvent(event))  # SBWatchpoint
-        wpEventType = lldb.SBWatchpoint.GetWatchpointEventTypeFromEvent(event)  # lldb::WatchpointEventType
-        wpEventTypeString = 'unknown'
-        if wpEventType == lldb.eWatchpointEventTypeInvalidType:
-            wpEventTypeString = 'eWatchpointEventTypeInvalidType'
-        elif wpEventType == lldb.eWatchpointEventTypeAdded:
-            wpEventTypeString = 'eWatchpointEventTypeAdded'
-        elif wpEventType == lldb.eWatchpointEventTypeRemoved:
-            wpEventTypeString = 'eWatchpointEventTypeRemoved'
-        elif wpEventType == lldb.eWatchpointEventTypeEnabled:
-            wpEventTypeString = 'eWatchpointEventTypeEnabled'
-        elif wpEventType == lldb.eWatchpointEventTypeDisabled:
-            wpEventTypeString = 'eWatchpointEventTypeDisabled'
-        elif wpEventType == lldb.eWatchpointEventTypeCommandChanged:
-            wpEventTypeString = 'eWatchpointEventTypeCommandChanged'
-        elif wpEventType == lldb.eWatchpointEventTypeConditionChanged:
-            wpEventTypeString = 'eWatchpointEventTypeConditionChanged'
-        elif wpEventType == lldb.eWatchpointEventTypeIgnoreChanged:
-            wpEventTypeString = 'eWatchpointEventTypeIgnoreChanged'
-        elif wpEventType == lldb.eWatchpointEventTypeThreadChanged:
-            wpEventTypeString = 'eWatchpointEventTypeThreadChanged'
-        elif wpEventType == lldb.eWatchpointEventTypeTypeChanged:
-            wpEventTypeString = 'eWatchpointEventTypeTypeChanged'
-        printFormat("SBWatchpoint.GetWatchpointEventTypeFromEvent(raw)", wpEventType)
-        printFormat("SBWatchpoint.GetWatchpointEventTypeFromEvent(resolved)", wpEventTypeString)
+    is_watchpoint_event = lldb.SBWatchpoint.EventIsWatchpointEvent(event)
+    print_format("SBWatchpoint.EventIsWatchpointEvent", is_watchpoint_event)
+    if is_watchpoint_event:
+        print_format("SBWatchpoint.GetWatchpointFromEvent", lldb.SBWatchpoint.GetWatchpointFromEvent(event))  # SBWatchpoint
+        wp_event_type = lldb.SBWatchpoint.GetWatchpointEventTypeFromEvent(event)  # lldb::WatchpointEventType
+        wp_event_type_string = 'unknown'
+        if wp_event_type == lldb.eWatchpointEventTypeInvalidType:
+            wp_event_type_string = 'eWatchpointEventTypeInvalidType'
+        elif wp_event_type == lldb.eWatchpointEventTypeAdded:
+            wp_event_type_string = 'eWatchpointEventTypeAdded'
+        elif wp_event_type == lldb.eWatchpointEventTypeRemoved:
+            wp_event_type_string = 'eWatchpointEventTypeRemoved'
+        elif wp_event_type == lldb.eWatchpointEventTypeEnabled:
+            wp_event_type_string = 'eWatchpointEventTypeEnabled'
+        elif wp_event_type == lldb.eWatchpointEventTypeDisabled:
+            wp_event_type_string = 'eWatchpointEventTypeDisabled'
+        elif wp_event_type == lldb.eWatchpointEventTypeCommandChanged:
+            wp_event_type_string = 'eWatchpointEventTypeCommandChanged'
+        elif wp_event_type == lldb.eWatchpointEventTypeConditionChanged:
+            wp_event_type_string = 'eWatchpointEventTypeConditionChanged'
+        elif wp_event_type == lldb.eWatchpointEventTypeIgnoreChanged:
+            wp_event_type_string = 'eWatchpointEventTypeIgnoreChanged'
+        elif wp_event_type == lldb.eWatchpointEventTypeThreadChanged:
+            wp_event_type_string = 'eWatchpointEventTypeThreadChanged'
+        elif wp_event_type == lldb.eWatchpointEventTypeTypeChanged:
+            wp_event_type_string = 'eWatchpointEventTypeTypeChanged'
+        print_format("SBWatchpoint.GetWatchpointEventTypeFromEvent(raw)", wp_event_type)
+        print_format("SBWatchpoint.GetWatchpointEventTypeFromEvent(resolved)", wp_event_type_string)
 
 
 def pSBStructuredData(obj: Optional[lldb.SBStructuredData]) -> None:
@@ -1263,20 +1325,20 @@ def pSBStructuredData(obj: Optional[lldb.SBStructuredData]) -> None:
         sd = lldb.debugger.GetBuildConfiguration()
         # sd = lldb.debugger.GetSelectedTarget().GetStatistics()
 
-    printClassName("SBStructuredData")
-    printFormat("SBStructuredData", sd)
-    printFormat("IsValid", sd.IsValid())
-    printFormat("GetType", sd.GetType())  # StructuredDataType int
-    printFormat("GetSize", sd.GetSize())
-    stringList = lldb.SBStringList()
-    sd.GetKeys(stringList)
-    printFormat("GetKeys", getStringFromSBStringList(stringList))
-    printFormat("GetIntegerValue", sd.GetIntegerValue())
-    printFormat("GetFloatValue", sd.GetFloatValue())
-    printFormat("GetBooleanValue", sd.GetBooleanValue())
+    print_class_name("SBStructuredData")
+    print_format("SBStructuredData", sd)
+    print_format("IsValid", sd.IsValid())
+    print_format("GetType", sd.GetType())  # StructuredDataType int
+    print_format("GetSize", sd.GetSize())
+    string_list = lldb.SBStringList()
+    sd.GetKeys(string_list)
+    print_format("GetKeys", get_string_from_SBStringList(string_list))
+    print_format("GetIntegerValue", sd.GetIntegerValue())
+    print_format("GetFloatValue", sd.GetFloatValue())
+    print_format("GetBooleanValue", sd.GetBooleanValue())
     stream = lldb.SBStream()
     sd.GetAsJSON(stream)
-    printFormat("GetAsJSON", stream.GetData())
+    print_format("GetAsJSON", stream.GetData())
 
 
 def pSBPlatform(obj: Optional[lldb.SBPlatform]) -> None:
@@ -1287,21 +1349,21 @@ def pSBPlatform(obj: Optional[lldb.SBPlatform]) -> None:
         # platform = lldb.debugger.GetSelectedTarget().GetPlatform()
         # platform = lldb.SBPlatform.GetHostPlatform()
 
-    printClassName("SBPlatform")
-    printFormat("SBPlatform", platform)
-    printFormat("SBPlatform.GetHostPlatform", lldb.SBPlatform.GetHostPlatform())  # SBPlatform
-    printFormat("IsValid", platform.IsValid())
-    printFormat("GetWorkingDirectory", platform.GetWorkingDirectory())
-    printFormat("GetName", platform.GetName())
-    printFormat("IsConnected", platform.IsConnected())
-    printFormat("GetTriple", platform.GetTriple())
-    printFormat("GetHostname", platform.GetHostname())
-    printFormat("GetOSBuild", platform.GetOSBuild())
-    printFormat("GetOSDescription", platform.GetOSDescription())
-    printFormat("GetOSMajorVersion", platform.GetOSMajorVersion())
-    printFormat("GetOSMinorVersion", platform.GetOSMinorVersion())
-    printFormat("GetOSUpdateVersion", platform.GetOSUpdateVersion())
-    printFormat("GetUnixSignals", platform.GetUnixSignals())  # SBUnixSignals
+    print_class_name("SBPlatform")
+    print_format("SBPlatform", platform)
+    print_format("SBPlatform.GetHostPlatform", lldb.SBPlatform.GetHostPlatform())  # SBPlatform
+    print_format("IsValid", platform.IsValid())
+    print_format("GetWorkingDirectory", platform.GetWorkingDirectory())
+    print_format("GetName", platform.GetName())
+    print_format("IsConnected", platform.IsConnected())
+    print_format("GetTriple", platform.GetTriple())
+    print_format("GetHostname", platform.GetHostname())
+    print_format("GetOSBuild", platform.GetOSBuild())
+    print_format("GetOSDescription", platform.GetOSDescription())
+    print_format("GetOSMajorVersion", platform.GetOSMajorVersion())
+    print_format("GetOSMinorVersion", platform.GetOSMinorVersion())
+    print_format("GetOSUpdateVersion", platform.GetOSUpdateVersion())
+    print_format("GetUnixSignals", platform.GetUnixSignals())  # SBUnixSignals
 
 
 def pSBSourceManager(obj: Optional[lldb.SBSourceManager]) -> None:
@@ -1311,8 +1373,8 @@ def pSBSourceManager(obj: Optional[lldb.SBSourceManager]) -> None:
         manager = lldb.debugger.GetSourceManager()
         # manager = lldb.debugger.GetSelectedTarget().GetSourceManager()
 
-    printClassName("SBSourceManager")
-    printFormat("SBSourceManager", manager)
+    print_class_name("SBSourceManager")
+    print_format("SBSourceManager", manager)
 
 
 def pSBUnixSignals(obj: Optional[lldb.SBUnixSignals]) -> None:
@@ -1322,12 +1384,12 @@ def pSBUnixSignals(obj: Optional[lldb.SBUnixSignals]) -> None:
         signals = lldb.debugger.GetSelectedPlatform().GetUnixSignals()
         # signals = lldb.debugger.GetSelectedTarget().GetProcess().GetUnixSignals()
 
-    printClassName("SBUnixSignals")
-    printFormat("SBUnixSignals", signals)
-    printFormat("IsValid", signals.IsValid())
-    printFormat("GetNumSignals", signals.GetNumSignals())
+    print_class_name("SBUnixSignals")
+    print_format("SBUnixSignals", signals)
+    print_format("IsValid", signals.IsValid())
+    print_format("GetNumSignals", signals.GetNumSignals())
 
-    printTraversal(signals, "GetNumSignals", "GetSignalAtIndex")  # [int]
+    print_traversal(signals, "GetNumSignals", "GetSignalAtIndex")  # [int]
 
 
 def pSBLaunchInfo(obj: Optional[lldb.SBLaunchInfo]) -> None:
@@ -1336,31 +1398,31 @@ def pSBLaunchInfo(obj: Optional[lldb.SBLaunchInfo]) -> None:
     else:
         info = lldb.debugger.GetSelectedTarget().GetLaunchInfo()
 
-    printClassName("SBLaunchInfo")
-    printFormat("SBLaunchInfo", info)
-    printFormat("GetProcessID", info.GetProcessID())
-    printFormat("GetUserID", info.GetUserID())
-    printFormat("GetGroupID", info.GetGroupID())
-    printFormat("UserIDIsValid", info.UserIDIsValid())
-    printFormat("GroupIDIsValid", info.GroupIDIsValid())
-    printFormat("GetExecutableFile", info.GetExecutableFile())  # SBFileSpec
-    printFormat("GetListener", info.GetListener())  # SBListener
-    printFormat("GetNumArguments", info.GetNumArguments())
-    printFormat("GetNumEnvironmentEntries", info.GetNumEnvironmentEntries())
-    printFormat("GetEnvironment", info.GetEnvironment())  # SBEnvironment
-    printFormat("GetWorkingDirectory", info.GetWorkingDirectory())
-    printFormat("GetLaunchFlags", info.GetLaunchFlags())
-    printFormat("GetProcessPluginName", info.GetProcessPluginName())
-    printFormat("GetShell", info.GetShell())
-    printFormat("GetShellExpandArguments", info.GetShellExpandArguments())
-    printFormat("GetResumeCount", info.GetResumeCount())
-    printFormat("GetLaunchEventData", info.GetLaunchEventData())
-    printFormat("GetDetachOnError", info.GetDetachOnError())
-    printFormat("GetScriptedProcessClassName", info.GetScriptedProcessClassName())
-    printFormat("GetScriptedProcessDictionary", info.GetScriptedProcessDictionary())  # SBStructuredData
+    print_class_name("SBLaunchInfo")
+    print_format("SBLaunchInfo", info)
+    print_format("GetProcessID", info.GetProcessID())
+    print_format("GetUserID", info.GetUserID())
+    print_format("GetGroupID", info.GetGroupID())
+    print_format("UserIDIsValid", info.UserIDIsValid())
+    print_format("GroupIDIsValid", info.GroupIDIsValid())
+    print_format("GetExecutableFile", info.GetExecutableFile())  # SBFileSpec
+    print_format("GetListener", info.GetListener())  # SBListener
+    print_format("GetNumArguments", info.GetNumArguments())
+    print_format("GetNumEnvironmentEntries", info.GetNumEnvironmentEntries())
+    print_format("GetEnvironment", info.GetEnvironment())  # SBEnvironment
+    print_format("GetWorkingDirectory", info.GetWorkingDirectory())
+    print_format("GetLaunchFlags", info.GetLaunchFlags())
+    print_format("GetProcessPluginName", info.GetProcessPluginName())
+    print_format("GetShell", info.GetShell())
+    print_format("GetShellExpandArguments", info.GetShellExpandArguments())
+    print_format("GetResumeCount", info.GetResumeCount())
+    print_format("GetLaunchEventData", info.GetLaunchEventData())
+    print_format("GetDetachOnError", info.GetDetachOnError())
+    print_format("GetScriptedProcessClassName", info.GetScriptedProcessClassName())
+    print_format("GetScriptedProcessDictionary", info.GetScriptedProcessDictionary())  # SBStructuredData
 
-    printTraversal(info, "GetNumArguments", "GetArgumentAtIndex")  # [str]
-    printTraversal(info, "GetNumEnvironmentEntries", "GetEnvironmentEntryAtIndex")  # [str]
+    print_traversal(info, "GetNumArguments", "GetArgumentAtIndex")  # [str]
+    print_traversal(info, "GetNumEnvironmentEntries", "GetEnvironmentEntryAtIndex")  # [str]
 
 
 def pSBEnvironment(obj: Optional[lldb.SBEnvironment]) -> None:
@@ -1370,15 +1432,15 @@ def pSBEnvironment(obj: Optional[lldb.SBEnvironment]) -> None:
         env = lldb.debugger.GetSelectedTarget().GetEnvironment()
         # env = lldb.debugger.GetSelectedTarget().GetLaunchInfo().GetEnvironment()
 
-    printClassName("SBEnvironment")
-    printFormat("SBEnvironment", env)
-    printFormat("GetNumValues", env.GetNumValues())
-    entriesStringList = env.GetEntries()  # SBStringList
-    printFormat("GetEntries", entriesStringList)
-    printFormat("GetEntries(str)", getStringFromSBStringList(entriesStringList))
+    print_class_name("SBEnvironment")
+    print_format("SBEnvironment", env)
+    print_format("GetNumValues", env.GetNumValues())
+    entries_string_list = env.GetEntries()  # SBStringList
+    print_format("GetEntries", entries_string_list)
+    print_format("GetEntries(str)", get_string_from_SBStringList(entries_string_list))
 
-    printTraversal(env, "GetNumValues", "GetNameAtIndex")
-    printTraversal(env, "GetNumValues", "GetValueAtIndex")
+    print_traversal(env, "GetNumValues", "GetNameAtIndex")
+    print_traversal(env, "GetNumValues", "GetValueAtIndex")
 
 
 def pSBCommandInterpreter(obj: Optional[lldb.SBCommandInterpreter]) -> None:
@@ -1387,23 +1449,23 @@ def pSBCommandInterpreter(obj: Optional[lldb.SBCommandInterpreter]) -> None:
     else:
         ci = lldb.debugger.GetCommandInterpreter()
 
-    printClassName("SBCommandInterpreter")
-    printFormat("SBCommandInterpreter", ci)
-    printFormat("IsValid", ci.IsValid())
-    printFormat("GetPromptOnQuit", ci.GetPromptOnQuit())
-    printFormat("HasCustomQuitExitCode", ci.HasCustomQuitExitCode())
-    printFormat("GetQuitStatus", ci.GetQuitStatus())
-    printFormat("CommandExists", ci.CommandExists("breakpoint"))
-    printFormat("AliasExists", ci.AliasExists('bt'))
-    printFormat("GetBroadcaster", ci.GetBroadcaster())  # SBBroadcaster
-    printFormat("GetBroadcasterClass", ci.GetBroadcasterClass())
-    printFormat("HasCommands", ci.HasCommands())
-    printFormat("HasAliases", ci.HasAliases())
-    printFormat("HasAliasOptions", ci.HasAliasOptions())
-    printFormat("GetProcess", ci.GetProcess())  # SBProcess
-    printFormat("GetDebugger", ci.GetDebugger())  # SBDebugger
-    printFormat("IsActive", ci.IsActive())
-    printFormat("WasInterrupted", ci.WasInterrupted())
+    print_class_name("SBCommandInterpreter")
+    print_format("SBCommandInterpreter", ci)
+    print_format("IsValid", ci.IsValid())
+    print_format("GetPromptOnQuit", ci.GetPromptOnQuit())
+    print_format("HasCustomQuitExitCode", ci.HasCustomQuitExitCode())
+    print_format("GetQuitStatus", ci.GetQuitStatus())
+    print_format("CommandExists", ci.CommandExists("breakpoint"))
+    print_format("AliasExists", ci.AliasExists('bt'))
+    print_format("GetBroadcaster", ci.GetBroadcaster())  # SBBroadcaster
+    print_format("GetBroadcasterClass", ci.GetBroadcasterClass())
+    print_format("HasCommands", ci.HasCommands())
+    print_format("HasAliases", ci.HasAliases())
+    print_format("HasAliasOptions", ci.HasAliasOptions())
+    print_format("GetProcess", ci.GetProcess())  # SBProcess
+    print_format("GetDebugger", ci.GetDebugger())  # SBDebugger
+    print_format("IsActive", ci.IsActive())
+    print_format("WasInterrupted", ci.WasInterrupted())
 
 
 def pSBQueue(obj: Optional[lldb.SBQueue]) -> None:
@@ -1413,20 +1475,20 @@ def pSBQueue(obj: Optional[lldb.SBQueue]) -> None:
         queue = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetQueue()
         # queue = lldb.debugger.GetSelectedTarget().GetProcess().GetQueueAtIndex(0)
 
-    printClassName("SBQueue")
-    printFormat("SBQueue", queue)
-    printFormat("IsValid", queue.IsValid())
-    printFormat("GetProcess", queue.GetProcess())  # SBProcess
-    printFormat("GetQueueID", queue.GetQueueID())
-    printFormat("GetName", queue.GetName())
-    printFormat("GetKind", queue.GetKind())
-    printFormat("GetIndexID", queue.GetIndexID())
-    printFormat("GetNumThreads", queue.GetNumThreads())
-    printFormat("GetNumPendingItems", queue.GetNumPendingItems())
-    printFormat("GetNumRunningItems", queue.GetNumRunningItems())
+    print_class_name("SBQueue")
+    print_format("SBQueue", queue)
+    print_format("IsValid", queue.IsValid())
+    print_format("GetProcess", queue.GetProcess())  # SBProcess
+    print_format("GetQueueID", queue.GetQueueID())
+    print_format("GetName", queue.GetName())
+    print_format("GetKind", queue.GetKind())
+    print_format("GetIndexID", queue.GetIndexID())
+    print_format("GetNumThreads", queue.GetNumThreads())
+    print_format("GetNumPendingItems", queue.GetNumPendingItems())
+    print_format("GetNumRunningItems", queue.GetNumRunningItems())
 
-    printTraversal(queue, "GetNumThreads", "GetThreadAtIndex")
-    printTraversal(queue, "GetNumPendingItems", "GetPendingItemAtIndex")  # [SBQueueItem]
+    print_traversal(queue, "GetNumThreads", "GetThreadAtIndex")
+    print_traversal(queue, "GetNumPendingItems", "GetPendingItemAtIndex")  # [SBQueueItem]
 
 
 def pSBSection(obj: Optional[lldb.SBSection]) -> None:
@@ -1435,44 +1497,44 @@ def pSBSection(obj: Optional[lldb.SBSection]) -> None:
     else:
         section = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetModule().FindSection("__TEXT")
 
-    printClassName("SBSection")
-    printFormat("SBSection", section)
-    printFormat("IsValid", section.IsValid())
-    printFormat("GetName", section.GetName())
-    printFormat("GetParent", section.GetParent())  # SBSection
-    printFormat("GetNumSubSections", section.GetNumSubSections())
-    printFormat("GetFileAddress", section.GetFileAddress())
-    printFormat("GetLoadAddress", section.GetLoadAddress(lldb.debugger.GetSelectedTarget()))
-    printFormat("GetByteSize", section.GetByteSize())
-    printFormat("GetFileOffset", section.GetFileOffset())
-    printFormat("GetFileByteSize", section.GetFileByteSize())
-    # printFormat("GetSectionData", section.GetSectionData())  # SBData
-    printFormat("GetSectionType", section.GetSectionType())  # SectionType int
-    printFormat("GetPermissions", section.GetPermissions())
-    printFormat("GetTargetByteSize", section.GetTargetByteSize())
-    printFormat("get_addr", section.get_addr())  # SBAddress
+    print_class_name("SBSection")
+    print_format("SBSection", section)
+    print_format("IsValid", section.IsValid())
+    print_format("GetName", section.GetName())
+    print_format("GetParent", section.GetParent())  # SBSection
+    print_format("GetNumSubSections", section.GetNumSubSections())
+    print_format("GetFileAddress", section.GetFileAddress())
+    print_format("GetLoadAddress", section.GetLoadAddress(lldb.debugger.GetSelectedTarget()))
+    print_format("GetByteSize", section.GetByteSize())
+    print_format("GetFileOffset", section.GetFileOffset())
+    print_format("GetFileByteSize", section.GetFileByteSize())
+    # print_format("GetSectionData", section.GetSectionData())  # SBData
+    print_format("GetSectionType", section.GetSectionType())  # SectionType int
+    print_format("GetPermissions", section.GetPermissions())
+    print_format("GetTargetByteSize", section.GetTargetByteSize())
+    print_format("get_addr", section.get_addr())  # SBAddress
 
-    printTraversal(section, "GetNumSubSections", "GetSubSectionAtIndex")  # [SBSection]
+    print_traversal(section, "GetNumSubSections", "GetSubSectionAtIndex")  # [SBSection]
 
 
 def pSBMemoryRegionInfoList(obj: Optional[lldb.SBMemoryRegionInfoList]) -> None:
     if obj:
-        memoryRegionInfoList = obj
+        memory_region_info_list = obj
     else:
-        memoryRegionInfoList = lldb.debugger.GetSelectedTarget().GetProcess().GetMemoryRegions()
+        memory_region_info_list = lldb.debugger.GetSelectedTarget().GetProcess().GetMemoryRegions()
 
-    printClassName("SBMemoryRegionInfoList")
-    printFormat("SBMemoryRegionInfoList", memoryRegionInfoList)
-    printFormat("GetSize", memoryRegionInfoList.GetSize())
+    print_class_name("SBMemoryRegionInfoList")
+    print_format("SBMemoryRegionInfoList", memory_region_info_list)
+    print_format("GetSize", memory_region_info_list.GetSize())
 
-    size = memoryRegionInfoList.GetSize()
-    global gUnlimited
+    size = memory_region_info_list.GetSize()
+    global g_unlimited
     print(f"\n##### [GetMemoryRegionContainingAddress]({size}) #####")
     for i in range(size):
-        if i == 100 and not gUnlimited:
+        if i == 100 and not g_unlimited:
             break
         info = lldb.SBMemoryRegionInfo()
-        memoryRegionInfoList.GetMemoryRegionAtIndex(i, info)
+        memory_region_info_list.GetMemoryRegionAtIndex(i, info)
         print(type(info))
         print(info)
 
@@ -1485,20 +1547,20 @@ def pSBMemoryRegionInfo(obj: Optional[lldb.SBMemoryRegionInfo]) -> None:
         index = 0
         lldb.debugger.GetSelectedTarget().GetProcess().GetMemoryRegions().GetMemoryRegionAtIndex(index, memoryRegionInfo)
 
-    printClassName("SBMemoryRegionInfo")
-    printFormat("SBMemoryRegionInfo", memoryRegionInfo)
-    printFormat("GetRegionBase", memoryRegionInfo.GetRegionBase())
-    printFormat("GetRegionEnd", memoryRegionInfo.GetRegionEnd())
-    printFormat("IsReadable", memoryRegionInfo.IsReadable())
-    printFormat("IsWritable", memoryRegionInfo.IsWritable())
-    printFormat("IsExecutable", memoryRegionInfo.IsExecutable())
-    printFormat("IsMapped", memoryRegionInfo.IsMapped())
-    printFormat("GetName", memoryRegionInfo.GetName())
-    printFormat("HasDirtyMemoryPageList", memoryRegionInfo.HasDirtyMemoryPageList())
-    printFormat("GetNumDirtyPages", memoryRegionInfo.GetNumDirtyPages())
-    printFormat("GetPageSize", memoryRegionInfo.GetPageSize())
+    print_class_name("SBMemoryRegionInfo")
+    print_format("SBMemoryRegionInfo", memoryRegionInfo)
+    print_format("GetRegionBase", memoryRegionInfo.GetRegionBase())
+    print_format("GetRegionEnd", memoryRegionInfo.GetRegionEnd())
+    print_format("IsReadable", memoryRegionInfo.IsReadable())
+    print_format("IsWritable", memoryRegionInfo.IsWritable())
+    print_format("IsExecutable", memoryRegionInfo.IsExecutable())
+    print_format("IsMapped", memoryRegionInfo.IsMapped())
+    print_format("GetName", memoryRegionInfo.GetName())
+    print_format("HasDirtyMemoryPageList", memoryRegionInfo.HasDirtyMemoryPageList())
+    print_format("GetNumDirtyPages", memoryRegionInfo.GetNumDirtyPages())
+    print_format("GetPageSize", memoryRegionInfo.GetPageSize())
 
-    printTraversal(memoryRegionInfo, "GetNumDirtyPages", "GetDirtyPageAddressAtIndex")  # [int]
+    print_traversal(memoryRegionInfo, "GetNumDirtyPages", "GetDirtyPageAddressAtIndex")  # [int]
 
 
 def pSBExpressionOptions(obj: Optional[lldb.SBExpressionOptions]) -> None:
@@ -1507,23 +1569,23 @@ def pSBExpressionOptions(obj: Optional[lldb.SBExpressionOptions]) -> None:
     else:
         options = lldb.SBExpressionOptions()
 
-    printClassName("SBExpressionOptions")
-    printFormat("SBExpressionOptions", options)
-    printFormat("GetCoerceResultToId", options.GetCoerceResultToId())
-    printFormat("GetUnwindOnError", options.GetUnwindOnError())
-    printFormat("GetIgnoreBreakpoints", options.GetIgnoreBreakpoints())
-    printFormat("GetFetchDynamicValue", options.GetFetchDynamicValue())
-    printFormat("GetTimeoutInMicroSeconds", options.GetTimeoutInMicroSeconds())
-    printFormat("GetOneThreadTimeoutInMicroSeconds", options.GetOneThreadTimeoutInMicroSeconds())
-    printFormat("GetTryAllThreads", options.GetTryAllThreads())
-    printFormat("GetStopOthers", options.GetStopOthers())
-    printFormat("GetTrapExceptions", options.GetTrapExceptions())
-    printFormat("GetPlaygroundTransformEnabled", options.GetPlaygroundTransformEnabled())
-    printFormat("GetREPLMode", options.GetREPLMode())
-    printFormat("GetGenerateDebugInfo", options.GetGenerateDebugInfo())
-    printFormat("GetSuppressPersistentResult", options.GetSuppressPersistentResult())
-    printFormat("GetPrefix", options.GetPrefix())
-    printFormat("GetAutoApplyFixIts", options.GetAutoApplyFixIts())
-    printFormat("GetRetriesWithFixIts", options.GetRetriesWithFixIts())
-    printFormat("GetTopLevel", options.GetTopLevel())
-    printFormat("GetAllowJIT", options.GetAllowJIT())
+    print_class_name("SBExpressionOptions")
+    print_format("SBExpressionOptions", options)
+    print_format("GetCoerceResultToId", options.GetCoerceResultToId())
+    print_format("GetUnwindOnError", options.GetUnwindOnError())
+    print_format("GetIgnoreBreakpoints", options.GetIgnoreBreakpoints())
+    print_format("GetFetchDynamicValue", options.GetFetchDynamicValue())
+    print_format("GetTimeoutInMicroSeconds", options.GetTimeoutInMicroSeconds())
+    print_format("GetOneThreadTimeoutInMicroSeconds", options.GetOneThreadTimeoutInMicroSeconds())
+    print_format("GetTryAllThreads", options.GetTryAllThreads())
+    print_format("GetStopOthers", options.GetStopOthers())
+    print_format("GetTrapExceptions", options.GetTrapExceptions())
+    print_format("GetPlaygroundTransformEnabled", options.GetPlaygroundTransformEnabled())
+    print_format("GetREPLMode", options.GetREPLMode())
+    print_format("GetGenerateDebugInfo", options.GetGenerateDebugInfo())
+    print_format("GetSuppressPersistentResult", options.GetSuppressPersistentResult())
+    print_format("GetPrefix", options.GetPrefix())
+    print_format("GetAutoApplyFixIts", options.GetAutoApplyFixIts())
+    print_format("GetRetriesWithFixIts", options.GetRetriesWithFixIts())
+    print_format("GetTopLevel", options.GetTopLevel())
+    print_format("GetAllowJIT", options.GetAllowJIT())
