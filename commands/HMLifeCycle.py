@@ -29,10 +29,10 @@ import shlex
 
 
 def __lldb_init_module(debugger, internal_dict):
-    debugger.HandleCommand('command script add -f HMLifeCycle.plifecycle plifecycle -h "Print life cycle of UIViewController."')
+    debugger.HandleCommand('command script add -f HMLifeCycle.print_lifecycle plifecycle -h "Print life cycle of UIViewController."')
 
 
-def plifecycle(debugger, command, exe_ctx, result, internal_dict):
+def print_lifecycle(debugger, command, exe_ctx, result, internal_dict):
     """
     Syntax:
         plifecycle [-i/--ignore_system_classes]
@@ -62,32 +62,49 @@ def plifecycle(debugger, command, exe_ctx, result, internal_dict):
         result.SetError(parser.usage)
         return
 
-    selfDescription = HM.evaluateExpressionValue("(id)$arg1").GetObjectDescription()
+    current_registers: lldb.SBValueList = exe_ctx.GetFrame().GetRegisters()
+    general_purpose_registers: lldb.SBValue = current_registers.GetFirstValueByName("General Purpose Registers")
+    children_num = general_purpose_registers.GetNumChildren()
+    self_value: lldb.SBValue = 0
+    selector_value: lldb.SBValue = 0
+    for i in range(children_num):
+        reg_value = general_purpose_registers.GetChildAtIndex(i)
+        reg_name = reg_value.GetName()
+        if reg_name == "x0" or reg_name == "rdi":
+            self_value = reg_value
+        if reg_name == "x1" or reg_name == "rsi":
+            selector_value = reg_value
+        if self_value and selector_value:
+            break
+
+    self_description = self_value.GetObjectDescription()
 
     ignore = False
     if options.ignore_system_classes:
-        ignoreClasses = ["UIAlertController",
-                         "_UIAlertControllerTextFieldViewController",
-                         "UIInputWindowController",
-                         "UICompatibilityInputViewController",
-                         "UIKeyboardCandidateGridCollectionViewController",
-                         "UISystemKeyboardDockController",
-                         "_UIRemoteInputViewController",
-                         "UIApplicationRotationFollowingController",
-                         "UISystemInputAssistantViewController",
-                         "UIPredictionViewController",
-                         "UICandidateViewController",
-                         "_SFAppPasswordSavingViewController",
-                         "SFPasswordSavingRemoteViewController"]
+        ignore_classes = ["UIAlertController",
+                          "_UIAlertControllerTextFieldViewController",
+                          "UIInputWindowController",
+                          "UICompatibilityInputViewController",
+                          "UIKeyboardCandidateGridCollectionViewController",
+                          "UISystemKeyboardDockController",
+                          "_UIRemoteInputViewController",
+                          "UIApplicationRotationFollowingController",
+                          "UISystemInputAssistantViewController",
+                          "UIPredictionViewController",
+                          "UICandidateViewController",
+                          "_SFAppPasswordSavingViewController",
+                          "SFPasswordSavingRemoteViewController"]
 
-        for className in ignoreClasses:
-            if className in selfDescription:
+        for class_name in ignore_classes:
+            if class_name in self_description:
                 ignore = True
                 break
 
     if not ignore:
-        selectorDescription = HM.evaluateExpressionValue("(char *)$arg2").GetSummary().strip('"')
-        HM.DPrint(selfDescription + '  ' + selectorDescription + '\n')
+        return_object = lldb.SBCommandReturnObject()
+        debugger.GetCommandInterpreter().HandleCommand(f"memory read -f s {selector_value.GetValue()}", return_object)
+        selector_description = return_object.GetOutput().split("\"")[1]
+        HM.DPrint(self_description + '  ' + selector_description + '\n')
 
 
 def generate_option_parser() -> optparse.OptionParser:

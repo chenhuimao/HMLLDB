@@ -54,7 +54,7 @@ def register_change(debugger, command, exe_ctx, result, internal_dict):
     This command is implemented in HMRegister.py
     """
 
-    frame = exe_ctx.GetTarget().GetProcess().GetSelectedThread().GetSelectedFrame()
+    frame = exe_ctx.GetFrame()
     global g_last_registers_dict
     if len(g_last_registers_dict) == 0:
         HM.DPrint("Get registers for the first time.")
