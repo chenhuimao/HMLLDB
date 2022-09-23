@@ -23,6 +23,8 @@
 # https://github.com/chenhuimao/HMLLDB
 
 import lldb
+
+import HMLLDBClassInfo
 import HMLLDBHelpers as HM
 import optparse
 import shlex
@@ -101,6 +103,12 @@ def print_lifecycle(debugger, command, exe_ctx, result, internal_dict):
                 break
 
     if not ignore:
+        # address = lldb.SBAddress(selector_value.GetValueAsUnsigned(), exe_ctx.GetTarget())
+        # error = lldb.SBError()
+        # content: bytes = exe_ctx.GetTarget().ReadMemory(address, 128, error)
+        # idx = content.index(b"\x00")
+        # selector_description: str = content[:idx].decode("UTF-8")
+
         return_object = lldb.SBCommandReturnObject()
         debugger.GetCommandInterpreter().HandleCommand(f"memory read -f s {selector_value.GetValue()}", return_object)
         selector_description = return_object.GetOutput().split("\"")[1]
