@@ -23,12 +23,12 @@
 # https://github.com/chenhuimao/HMLLDB
 
 import lldb
-import HMLLDBHelpers as HM
-import HMProgressHUD
-import HMDebugWindow
 import HMDebugBaseViewController
+import HMDebugWindow
 import HMExpressionPrefix
 import HMLLDBClassInfo
+import HMLLDBHelpers as HM
+import HMProgressHUD
 
 
 gClassName = "HMInspectViewController"
@@ -319,7 +319,7 @@ def makeViewDidLoadIMP() -> lldb.SBValue:
 
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeViewDidLayoutSubviewsIMP() -> lldb.SBValue:
@@ -360,7 +360,7 @@ def makeClickExitBtnIMP() -> lldb.SBValue:
         };
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeClickCloseBtnIMP() -> lldb.SBValue:
@@ -375,7 +375,7 @@ def makeClickCloseBtnIMP() -> lldb.SBValue:
         };
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeHandleTapRecognizerIMP() -> lldb.SBValue:
@@ -704,7 +704,7 @@ def makeGetInfoArrayFromTargetViewIMP() -> lldb.SBValue:
     
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def addFunctionMethods() -> bool:
@@ -786,7 +786,7 @@ def makeIvarsActionIMP() -> lldb.SBValue:
         }};
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makePropertiesActionIMP() -> lldb.SBValue:
@@ -801,7 +801,7 @@ def makePropertiesActionIMP() -> lldb.SBValue:
         }};
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeMethodsActionIMP() -> lldb.SBValue:
@@ -816,7 +816,7 @@ def makeMethodsActionIMP() -> lldb.SBValue:
         }};
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeSiblingNextActionIMP() -> lldb.SBValue:
@@ -837,7 +837,7 @@ def makeSiblingNextActionIMP() -> lldb.SBValue:
         };
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeSiblingPreviousActionIMP() -> lldb.SBValue:
@@ -858,7 +858,7 @@ def makeSiblingPreviousActionIMP() -> lldb.SBValue:
         };        
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeSuperviewActionIMP() -> lldb.SBValue:
@@ -873,7 +873,7 @@ def makeSuperviewActionIMP() -> lldb.SBValue:
         };       
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeSubviewActionIMP() -> lldb.SBValue:
@@ -888,5 +888,5 @@ def makeSubviewActionIMP() -> lldb.SBValue:
         };     
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 

@@ -24,9 +24,9 @@
 
 import lldb
 from typing import Optional
-import HMLLDBHelpers as HM
 import HMExpressionPrefix
 import HMLLDBClassInfo
+import HMLLDBHelpers as HM
 
 
 gClassName = "HMProgressHUD"
@@ -101,7 +101,7 @@ def show(text: Optional[str]) -> None:
         command_script += f'(void)[progressHUDCls performSelector:@selector(setText:) withObject:@"{text}"];'
 
     command_script += "(void)[CATransaction flush];"
-    HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def hide() -> None:
@@ -110,7 +110,7 @@ def hide() -> None:
         (UIView *)[progressHUDCls performSelector:@selector(hideHUD)];
         (void)[CATransaction flush];
     '''
-    HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeSharedInstanceIMP() -> lldb.SBValue:
@@ -128,7 +128,7 @@ def makeSharedInstanceIMP() -> lldb.SBValue:
         imp_implementationWithBlock(IMPBlock);    
     '''
 
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeShowHUDIMP() -> lldb.SBValue:
@@ -156,7 +156,7 @@ def makeShowHUDIMP() -> lldb.SBValue:
         imp_implementationWithBlock(IMPBlock);    
     '''
 
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeShowOnlyTextHiddenAfterDelayIMP() -> lldb.SBValue:
@@ -194,7 +194,7 @@ def makeShowOnlyTextHiddenAfterDelayIMP() -> lldb.SBValue:
         imp_implementationWithBlock(IMPBlock);    
     '''
 
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeHideHUDIMP() -> lldb.SBValue:
@@ -216,7 +216,7 @@ def makeHideHUDIMP() -> lldb.SBValue:
         imp_implementationWithBlock(IMPBlock);    
     '''
 
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeSetTextIMP() -> lldb.SBValue:
@@ -234,7 +234,7 @@ def makeSetTextIMP() -> lldb.SBValue:
         imp_implementationWithBlock(IMPBlock);    
     '''
 
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeInitWithFrameIMP() -> lldb.SBValue:
@@ -332,4 +332,4 @@ def makeLayoutSubviewsIMP() -> lldb.SBValue:
         imp_implementationWithBlock(IMPBlock);    
     '''
 
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)

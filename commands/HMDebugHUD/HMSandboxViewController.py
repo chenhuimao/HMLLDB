@@ -23,11 +23,11 @@
 # https://github.com/chenhuimao/HMLLDB
 
 import lldb
-import HMLLDBHelpers as HM
-import HMLLDBClassInfo
-import HMProgressHUD
 import HMDebugBaseViewController
 import HMExpressionPrefix
+import HMLLDBClassInfo
+import HMLLDBHelpers as HM
+import HMProgressHUD
 
 
 gClassName = "HMSandboxViewController"
@@ -121,7 +121,7 @@ def makeInitialPathIMP() -> lldb.SBValue:
         };
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeViewDidLoadIMP() -> lldb.SBValue:
@@ -173,7 +173,7 @@ def makeViewDidLoadIMP() -> lldb.SBValue:
         imp_implementationWithBlock(IMPBlock);
 
      '''
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeLoadPathIMP() -> lldb.SBValue:
@@ -243,7 +243,7 @@ def makeClickBackItemIMP() -> lldb.SBValue:
         imp_implementationWithBlock(IMPBlock);
 
      '''
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeClickPopItemIMP() -> lldb.SBValue:
@@ -258,7 +258,7 @@ def makeClickPopItemIMP() -> lldb.SBValue:
         imp_implementationWithBlock(IMPBlock);
 
      '''
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeAlertAccessPermissionIMP() -> lldb.SBValue:
@@ -271,7 +271,7 @@ def makeAlertAccessPermissionIMP() -> lldb.SBValue:
         };
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeDeleteFileOrDirectoryIMP() -> lldb.SBValue:
@@ -314,7 +314,7 @@ def makeDeleteFileOrDirectoryIMP() -> lldb.SBValue:
         imp_implementationWithBlock(IMPBlock);
 
      '''
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeShareFileOrDirectoryIMP() -> lldb.SBValue:
@@ -347,7 +347,7 @@ def makeShareFileOrDirectoryIMP() -> lldb.SBValue:
         };
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def addTableViewMethods() -> bool:
@@ -405,7 +405,7 @@ def makeNumberOfRowsInSectionIMP() -> lldb.SBValue:
         };
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeCellForRowAtIndexPathIMP() -> lldb.SBValue:
@@ -502,7 +502,7 @@ def makeCellForRowAtIndexPathIMP() -> lldb.SBValue:
         
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeCanEditRowAtIndexPathIMP() -> lldb.SBValue:
@@ -512,7 +512,7 @@ def makeCanEditRowAtIndexPathIMP() -> lldb.SBValue:
         };
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeCommitEditingStyleForRowAtIndexPathIMP() -> lldb.SBValue:
@@ -526,7 +526,7 @@ def makeCommitEditingStyleForRowAtIndexPathIMP() -> lldb.SBValue:
         };
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeDidSelectRowAtIndexPathIMP() -> lldb.SBValue:
@@ -569,7 +569,7 @@ def makeDidSelectRowAtIndexPathIMP() -> lldb.SBValue:
         };
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeViewForHeaderInSectionIMP() -> lldb.SBValue:
@@ -609,7 +609,7 @@ def makeViewForHeaderInSectionIMP() -> lldb.SBValue:
         };
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeEditingStyleForRowAtIndexPathIMP() -> lldb.SBValue:
@@ -619,7 +619,7 @@ def makeEditingStyleForRowAtIndexPathIMP() -> lldb.SBValue:
         };
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeContextMenuConfigurationForRowAtIndexPathIMP() -> lldb.SBValue:
@@ -630,7 +630,7 @@ def makeContextMenuConfigurationForRowAtIndexPathIMP() -> lldb.SBValue:
             };
             imp_implementationWithBlock(IMPBlock);
         '''
-        return HM.evaluateExpressionValue(expression)
+        return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
     command_script = '''
         UIContextMenuConfiguration * (^IMPBlock)(UIViewController *, UITableView *, NSIndexPath *, CGPoint) = ^UIContextMenuConfiguration *(UIViewController *vc, UITableView *tv, NSIndexPath *indexPath, CGPoint point) {
@@ -659,5 +659,5 @@ def makeContextMenuConfigurationForRowAtIndexPathIMP() -> lldb.SBValue:
         };
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
