@@ -23,12 +23,11 @@
 # https://github.com/chenhuimao/HMLLDB
 
 import lldb
-import HMLLDBHelpers as HM
-import HMLLDBClassInfo
-import HMDebugBaseViewController
 import HMDebugMainViewController
-import HMProgressHUD
 import HMExpressionPrefix
+import HMLLDBClassInfo
+import HMLLDBHelpers as HM
+import HMProgressHUD
 
 
 def __lldb_init_module(debugger, internal_dict):
@@ -152,7 +151,7 @@ def removeDebugHUD(debugger, command, exe_ctx, result, internal_dict) -> None:
         objView;
     '''
 
-    val = HM.evaluateExpressionValue(command_script)
+    val = HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
     if HM.judgeSBValueHasValue(val):
         HM.DPrint("remove done!")
     else:
@@ -181,7 +180,7 @@ def isDisplayingHUD() -> bool:
         isDisplaying;
     '''
 
-    val = HM.evaluateExpressionValue(command_script)
+    val = HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
     return HM.boolOfSBValue(val)
 
 
@@ -190,7 +189,7 @@ def showHUDFunc() -> None:
         Class HUD = NSClassFromString(@"{gClassName}");
         (UIView *)[HUD performSelector:@selector(addToKeyWindow)];
     '''
-    HM.evaluateExpressionValue(addToKeyWindowCommand)
+    HM.evaluateExpressionValue(expression=addToKeyWindowCommand, prefix=HMExpressionPrefix.gPrefix)
 
 
 def currentTask() -> lldb.SBValue:
@@ -278,7 +277,7 @@ def makeTapSelfIMP() -> lldb.SBValue:
         imp_implementationWithBlock(tapSelfBlock);
 
     '''
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeDebugHUDtickIMP() -> lldb.SBValue:
@@ -308,7 +307,7 @@ def makeDebugHUDtickIMP() -> lldb.SBValue:
         imp_implementationWithBlock(debugHUDtickBlock);
 
     '''
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeUpdateMemoryFootprintIMP() -> lldb.SBValue:
@@ -347,7 +346,7 @@ def makeUpdateMemoryFootprintIMP() -> lldb.SBValue:
         
     '''
 
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeUpdateCPUUtilizationIMP() -> lldb.SBValue:
@@ -410,7 +409,7 @@ def makeUpdateCPUUtilizationIMP() -> lldb.SBValue:
 
     '''
 
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeUpdateFPSIMP() -> lldb.SBValue:
@@ -438,7 +437,7 @@ def makeUpdateFPSIMP() -> lldb.SBValue:
         imp_implementationWithBlock(updateFPSBlock);
 
     '''
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def addMoveMethods() -> bool:
@@ -524,7 +523,7 @@ def makeTouchesEndedWithEventIMP() -> lldb.SBValue:
         imp_implementationWithBlock(touchesEndedWithEventBlock);
 
     '''
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeTouchesCancelledWithEventIMP() -> lldb.SBValue:
@@ -545,7 +544,7 @@ def makeTouchesCancelledWithEventIMP() -> lldb.SBValue:
         imp_implementationWithBlock(touchesCancelledWithEventBlock);
 
     '''
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeAttachToEdgeIMP() -> lldb.SBValue:

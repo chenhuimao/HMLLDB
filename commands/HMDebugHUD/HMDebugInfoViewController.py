@@ -24,11 +24,12 @@
 
 import lldb
 import sys
-import HMLLDBHelpers as HM
-import HMLLDBClassInfo
-import HMProgressHUD
-import HMEnvironment
 import HMDebugBaseViewController
+import HMEnvironment
+import HMExpressionPrefix
+import HMLLDBClassInfo
+import HMLLDBHelpers as HM
+import HMProgressHUD
 
 
 gClassName = "HMDebugInfoViewController"
@@ -174,7 +175,7 @@ def makeViewDidLoadIMP() -> lldb.SBValue:
         imp_implementationWithBlock(IMPBlock);    
     '''
 
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def addTableViewMethods() -> bool:
@@ -203,7 +204,7 @@ def makeNumberOfRowsInSectionIMP() -> lldb.SBValue:
         imp_implementationWithBlock(IMPBlock);    
     '''
 
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeCellForRowAtIndexPathIMP() -> lldb.SBValue:
@@ -263,4 +264,4 @@ def makeCellForRowAtIndexPathIMP() -> lldb.SBValue:
         imp_implementationWithBlock(IMPBlock);    
     '''
 
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)

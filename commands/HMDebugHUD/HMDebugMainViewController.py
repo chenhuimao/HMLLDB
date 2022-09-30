@@ -23,13 +23,14 @@
 # https://github.com/chenhuimao/HMLLDB
 
 import lldb
-import HMLLDBHelpers as HM
-import HMLLDBClassInfo
-import HMProgressHUD
 import HMDebugBaseViewController
 import HMDebugInfoViewController
-import HMSandboxViewController
+import HMExpressionPrefix
 import HMInspectViewController
+import HMLLDBClassInfo
+import HMLLDBHelpers as HM
+import HMProgressHUD
+import HMSandboxViewController
 
 
 gClassName = "HMDebugMainViewController"
@@ -109,7 +110,7 @@ def makePresentIMP() -> lldb.SBValue:
         imp_implementationWithBlock(presentBlock);
      '''
 
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeViewDidLoadIMP() -> lldb.SBValue:
@@ -145,7 +146,7 @@ def makeViewDidLoadIMP() -> lldb.SBValue:
         imp_implementationWithBlock(IMPBlock);
 
      '''
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeDismissSelfIMP() -> lldb.SBValue:
@@ -157,7 +158,7 @@ def makeDismissSelfIMP() -> lldb.SBValue:
         imp_implementationWithBlock(dismissSelfBlock);
 
      '''
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def addTableViewMethods() -> bool:
@@ -189,7 +190,7 @@ def makeNumberOfRowsInSectionIMP() -> lldb.SBValue:
         imp_implementationWithBlock(IMPBlock);    
     '''
 
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeCellForRowAtIndexPathIMP() -> lldb.SBValue:
@@ -221,7 +222,7 @@ def makeCellForRowAtIndexPathIMP() -> lldb.SBValue:
         imp_implementationWithBlock(IMPBlock);    
     '''
 
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeDidSelectRowAtIndexPathIMP() -> lldb.SBValue:
@@ -240,7 +241,7 @@ def makeDidSelectRowAtIndexPathIMP() -> lldb.SBValue:
         imp_implementationWithBlock(IMPBlock);    
     '''
 
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def addFeatureMethods() -> bool:
@@ -280,7 +281,7 @@ def makeSelectedAPPInfoIMP() -> lldb.SBValue:
         imp_implementationWithBlock(IMPBlock);    
     '''
 
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeSelectedSandboxIMP() -> lldb.SBValue:
@@ -294,7 +295,7 @@ def makeSelectedSandboxIMP() -> lldb.SBValue:
         imp_implementationWithBlock(IMPBlock);    
     '''
 
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeSelectedInspectViewIMP() -> lldb.SBValue:
@@ -311,7 +312,7 @@ def makeSelectedInspectViewIMP() -> lldb.SBValue:
         imp_implementationWithBlock(IMPBlock);    
     '''
 
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def selectedAPPInfoBreakPointHandler(frame, bp_loc, internal_dict) -> bool:

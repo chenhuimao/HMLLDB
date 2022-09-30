@@ -23,8 +23,9 @@
 # https://github.com/chenhuimao/HMLLDB
 
 import lldb
-import HMLLDBHelpers as HM
+import HMExpressionPrefix
 import HMLLDBClassInfo
+import HMLLDBHelpers as HM
 import HMProgressHUD
 
 
@@ -77,4 +78,4 @@ def makeViewDidLoadIMP() -> lldb.SBValue:
 
      '''
 
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
