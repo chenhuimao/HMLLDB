@@ -359,6 +359,7 @@ def pSBDebugger(obj: Optional[lldb.SBDebugger]) -> None:
     print_class_name("SBDebugger")
     print_format("SBDebugger", debugger)
     print_format("IsValid", debugger.IsValid())
+    print_format("GetBroadcaster", debugger.GetBroadcaster())  # SBBroadcaster
     print_format("GetAsync", debugger.GetAsync())
     # print_format("GetInputFileHandle", debugger.GetInputFileHandle())  # FileSP
     # print_format("GetOutputFileHandle", debugger.GetOutputFileHandle())  # FileSP
@@ -712,6 +713,7 @@ def pSBModule(obj: Optional[lldb.SBModule]) -> None:
     print_class_name("SBModule")
     print_format("SBModule", module)
     print_format("IsValid", module.IsValid())
+    print_format("IsFileBacked", module.IsFileBacked())
     print_format("GetFileSpec", module.GetFileSpec())  # SBFileSpec
     print_format("GetPlatformFileSpec", module.GetPlatformFileSpec())  # SBFileSpec
     print_format("GetRemoteInstallFileSpec", module.GetRemoteInstallFileSpec())  # SBFileSpec
@@ -1040,6 +1042,7 @@ def pSBType(obj: Optional[lldb.SBType]) -> None:
     print_format("IsTypedefType", t.IsTypedefType())
     print_format("IsAnonymousType", t.IsAnonymousType())
     print_format("IsScopedEnumerationType", t.IsScopedEnumerationType())
+    print_format("IsAggregateType", t.IsAggregateType())
     print_format("GetPointerType", t.GetPointerType())  # SBType
     print_format("GetPointeeType", t.GetPointeeType())  # SBType
     print_format("GetReferenceType", t.GetReferenceType())  # SBType
@@ -1462,6 +1465,7 @@ def pSBCommandInterpreter(obj: Optional[lldb.SBCommandInterpreter]) -> None:
     print_format("HasCommands", ci.HasCommands())
     print_format("HasAliases", ci.HasAliases())
     print_format("HasAliasOptions", ci.HasAliasOptions())
+    print_format("IsInteractive", ci.IsInteractive())
     print_format("GetProcess", ci.GetProcess())  # SBProcess
     print_format("GetDebugger", ci.GetDebugger())  # SBDebugger
     print_format("IsActive", ci.IsActive())
