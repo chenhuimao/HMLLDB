@@ -40,6 +40,7 @@ For example, this is the command in my computer:
 | bpframe        | Set a breakpoint that stops only when the specified stack keyword is matched |
 | bpmethod       | Set a breakpoint that stops when the next OC method is called(via objc_msgSend) |
 | rc             | Show general purpose registers changes |
+| tracefunction  | Trace functions step by step until the next breakpoint is hit |
 | pfont          | Print all font names supported by the device |
 | plifecycle     | Print life cycle of UIViewController |
 | redirect       | Redirect stdout/stderr |
@@ -264,6 +265,57 @@ Show general purpose registers changes after stepping over instruction.
         x1:0x000000010431aa94 -> 0x000000010490be50
         pc:0x000000010431a3cc -> 0x000000010431a3d0  Demo`-[ViewController clickBtn:] + 20 at ViewController.m:24
 ```
+
+### tracefunction
+Trace functions step by step until the next breakpoint is hit.   
+For example, if you set the following two breakpoints:   
+![tracefunction](./img/tracefunction.jpg)
+
+When you hit the first breakpoint, enter the `tracefunction` command   
+```
+(lldb) tracefunction
+[HMLLDB] ==========Begin========================================================
+Demo`-[ViewController buttonAction] + 24 at ViewController.m:28:25
+Demo`-[ViewController buttonAction] + 24 at ViewController.m:28:25
+Demo`symbol stub for: objc_alloc + 8
+libobjc.A.dylib`objc_alloc + 20
+libobjc.A.dylib`_objc_rootAllocWithZone + 36
+libobjc.A.dylib`symbol stub for: calloc + 12
+libsystem_malloc.dylib`calloc + 20
+libsystem_malloc.dylib`_malloc_zone_calloc + 84
+libsystem_malloc.dylib`default_zone_calloc + 32
+libsystem_malloc.dylib`nanov2_calloc + 156
+libsystem_malloc.dylib`nanov2_allocate + 124
+libsystem_malloc.dylib`nanov2_allocate + 340
+libsystem_malloc.dylib`symbol stub for: _platform_memset + 8
+libsystem_platform.dylib`_platform_memset + 208
+libsystem_malloc.dylib`nanov2_allocate + 460
+libsystem_malloc.dylib`nanov2_calloc + 172
+libsystem_malloc.dylib`_malloc_zone_calloc + 132
+libobjc.A.dylib`_objc_rootAllocWithZone + 100
+Demo`-[ViewController buttonAction] + 40 at ViewController.m:28:24
+Demo`symbol stub for: objc_msgSend + 8
+libobjc.A.dylib`objc_msgSend + 76
+libobjc.A.dylib`-[NSObject init]
+Demo`-[ViewController buttonAction] + 56 at ViewController.m:29:18
+[HMLLDB] ==========End========================================================
+[HMLLDB] Instruction count: 289
+[HMLLDB] Start time: 16:16:31
+[HMLLDB] Stop time: 16:16:32
+Process 2917 stopped
+* thread #1, queue = 'com.apple.main-thread', stop reason = breakpoint 2.1
+    frame #0: 0x0000000104046318 Demo`-[ViewController buttonAction](self=0x0000000145d0b5d0, _cmd="buttonAction") at ViewController.m:29:18
+   26  	
+   27  	- (void)buttonAction {
+   28  	    NSObject *object = [[NSObject alloc] init];
+-> 29  	    NSLog(@"%@", object);
+    	                 ^
+   30  	}
+   31  	
+   32  	
+Target 0: (Demo) stopped.
+```
+
 
 ### pfont
 Print all font names supported by the device.   

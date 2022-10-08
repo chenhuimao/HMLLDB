@@ -23,13 +23,13 @@
 # https://github.com/chenhuimao/HMLLDB
 
 import lldb
-import HMLLDBHelpers as HM
-import HMLLDBClassInfo
 from datetime import datetime
+import HMLLDBClassInfo
+import HMLLDBHelpers as HM
 
 
 def __lldb_init_module(debugger, internal_dict):
-    debugger.HandleCommand('command script add -f HMStep.trace_function tracefunction -h "Trace functions"')
+    debugger.HandleCommand('command script add -f HMStep.trace_function tracefunction -h "Trace functions step by step until the next breakpoint is hit."')
 
 
 def trace_function(debugger, command, exe_ctx, result, internal_dict):
@@ -47,10 +47,11 @@ def trace_function(debugger, command, exe_ctx, result, internal_dict):
 
 class TraceFunctionStep:
 
-    def __init__(self, thread_plan, dict):
+    def __init__(self, thread_plan, dic):
         HM.DPrint("==========Begin========================================================")
         self.start_time = datetime.now().strftime("%H:%M:%S")
         self.thread_plan = thread_plan
+        self.instruction_count = 0
 
         stream = lldb.SBStream()
         self.thread_plan.GetThread().GetFrameAtIndex(0).GetPCAddress().GetDescription(stream)
@@ -58,6 +59,8 @@ class TraceFunctionStep:
         print(self.last_function)  # first address
 
     def explains_stop(self, event: lldb.SBEvent) -> bool:
+        self.instruction_count += 1
+
         stream = lldb.SBStream()
         self.thread_plan.GetThread().GetFrameAtIndex(0).GetPCAddress().GetDescription(stream)
         function_str = stream.GetData().split(" + ")[0]
@@ -74,9 +77,10 @@ class TraceFunctionStep:
             print(stream.GetData())  # current address
 
             HM.DPrint("==========End========================================================")
-            HM.DPrint(f"start time = {self.start_time}")
-            end_time = datetime.now().strftime("%H:%M:%S")
-            HM.DPrint(f"end time = {end_time}")
+            HM.DPrint(f"Instruction count: {self.instruction_count}")
+            HM.DPrint(f"Start time: {self.start_time}")
+            stop_time = datetime.now().strftime("%H:%M:%S")
+            HM.DPrint(f"Stop time: {stop_time}")
             return True
         else:
             return False
