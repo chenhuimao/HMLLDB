@@ -297,22 +297,22 @@ Demo`-[ViewController buttonAction] + 40 at ViewController.m:28:24
 Demo`symbol stub for: objc_msgSend + 8
 libobjc.A.dylib`objc_msgSend + 76
 libobjc.A.dylib`-[NSObject init]
-Demo`-[ViewController buttonAction] + 56 at ViewController.m:29:18
+Demo`-[ViewController buttonAction] + 60 at ViewController.m:29:1
 [HMLLDB] ==========End========================================================
-[HMLLDB] Instruction count: 289
-[HMLLDB] Start time: 16:16:31
-[HMLLDB] Stop time: 16:16:32
-Process 2917 stopped
+[HMLLDB] Instruction count: 285
+[HMLLDB] Start time: 18:35:35
+[HMLLDB] Stop time: 18:35:36
+Process 11646 stopped
 * thread #1, queue = 'com.apple.main-thread', stop reason = breakpoint 2.1
-    frame #0: 0x0000000104046318 Demo`-[ViewController buttonAction](self=0x0000000145d0b5d0, _cmd="buttonAction") at ViewController.m:29:18
-   26  	
-   27  	- (void)buttonAction {
-   28  	    NSObject *object = [[NSObject alloc] init];
--> 29  	    NSLog(@"%@", object);
-    	                 ^
-   30  	}
-   31  	
-   32  	
+    frame #0: 0x0000000104216338 Demo`-[ViewController buttonAction](self=0x0000000104704d70, _cmd="buttonAction") at ViewController.m:29:1
+   26    
+   27    - (void)buttonAction {
+   28        NSObject *object = [[NSObject alloc] init];
+-> 29    }
+      ^
+   30    
+   31    
+   32    
 Target 0: (Demo) stopped.
 ```
 
