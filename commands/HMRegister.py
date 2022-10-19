@@ -23,9 +23,13 @@
 # https://github.com/chenhuimao/HMLLDB
 
 import lldb
+import math
+import optparse
+import shlex
 from typing import Dict, List
-import HMLLDBHelpers as HM
 import HMLLDBClassInfo
+import HMLLDBHelpers as HM
+
 
 # [register_name, register_value]
 g_last_registers_dict: Dict[str, str] = {}
@@ -34,6 +38,7 @@ last_disassemble: str = ""
 
 def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand('command script add -f HMRegister.register_change rc -h "Show general purpose registers changes."')
+    debugger.HandleCommand('command script add -f HMRegister.register_read rr -h "Show the contents of register values from the current frame."')
 
 
 def register_change(debugger, command, exe_ctx, result, internal_dict):
@@ -137,4 +142,63 @@ def print_last_instruction_if_needed(frame: lldb.SBFrame) -> None:
         if int(address, 16) == last_pc_value:
             print(instruction_line_strip)
             break
+
+
+def register_read(debugger, command, exe_ctx, result, internal_dict):
+    """
+    Syntax:
+        rr [-a] [-s <offset>]
+
+    Options:
+        --all/-a; Show all register sets.
+        --sp/-s; Show [(sp - offset), sp] address value.
+
+    Examples:
+        // Alias for 'register read'
+        (lldb) rr
+
+        // Alias for 'register read -a'
+        (lldb) rr -a
+
+        // Show [sp, (sp + offset)] address value after execute 'register read'
+        (lldb) rr -s 64
+
+    This command is implemented in HMRegister.py
+    """
+
+    command_args = shlex.split(command)
+    parser = generate_rr_option_parser()
+    try:
+        # options: optparse.Values
+        # args: list
+        (options, args_list) = parser.parse_args(command_args)
+    except:
+        result.SetError(parser.usage)
+        return
+
+    if options.all:
+        debugger.HandleCommand("register read -all")
+    else:
+        debugger.HandleCommand("register read")
+
+    if options.sp:
+        number_of_address = math.ceil(int(options.sp) / 8) + 1
+        sp_address = exe_ctx.GetFrame().GetSP()
+        debugger.HandleCommand(f"x/{number_of_address}a {sp_address}")
+
+
+def generate_rr_option_parser() -> optparse.OptionParser:
+    usage = "usage: rr [--all] [--sp <offset>]"
+    parser = optparse.OptionParser(usage=usage, prog="rr")
+    parser.add_option("-a", "--all",
+                      action="store_true",
+                      default=False,
+                      dest="all",
+                      help="Show all register sets")
+    parser.add_option("-s", "--sp",
+                      action="store",
+                      default=None,
+                      dest="sp",
+                      help="Show [sp, (sp + offset)] address value")
+    return parser
 

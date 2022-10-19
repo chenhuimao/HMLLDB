@@ -40,6 +40,7 @@ For example, this is the command in my computer:
 | bpframe        | Set a breakpoint that stops only when the specified stack keyword is matched |
 | bpmethod       | Set a breakpoint that stops when the next OC method is called(via objc_msgSend) |
 | rc             | Show general purpose registers changes |
+| rr             | Show the contents of register values from the current frame |
 | tracefunction  | Trace functions step by step until the next breakpoint is hit |
 | pfont          | Print all font names supported by the device |
 | plifecycle     | Print life cycle of UIViewController |
@@ -254,7 +255,7 @@ When debugging the assembly instruction, it is very troublesome to see the `objc
 ```
 
 ### rc
-Show general purpose registers changes after stepping over instruction.
+Show general purpose registers changes after stepping over instruction.    
 ```
 (lldb) rc
 [HMLLDB] Get registers for the first time.
@@ -264,6 +265,64 @@ Show general purpose registers changes after stepping over instruction.
 0x10431a3cc <+16>:  mov    x1, x2
         x1:0x000000010431aa94 -> 0x000000010490be50
         pc:0x000000010431a3cc -> 0x000000010431a3d0  Demo`-[ViewController clickBtn:] + 20 at ViewController.m:24
+```
+
+### rr
+Show the contents of register values from the current frame.   
+```
+// Alias for 'register read'
+(lldb) rr
+
+// Alias for 'register read -a'
+(lldb) rr -a
+
+// Show [sp, (sp + offset)] address value after execute 'register read'
+(lldb) rr -s 64
+General Purpose Registers:
+        x0 = 0x000000016dc24e48
+        x1 = 0x0000000000000000
+        x2 = 0x0000000129d0fd70
+        x3 = 0x0000000281a30000
+        x4 = 0x0000000281a30000
+        x5 = 0x0000000281a30000
+        x6 = 0x0000000000000000
+        x7 = 0x000000016dc24aae
+        x8 = 0x0000000000000006
+        x9 = 0x0000000000000002
+       x10 = 0x000000013a0efd77
+       x11 = 0x01ff00012d00b800
+       x12 = 0x0000000000000042
+       x13 = 0x000000012d00bc10
+       x14 = 0x00000001ba0ec000
+       x15 = 0x0000000213521b88  (void *)0x0000000213521b60: UIButton
+       x16 = 0x00000001d31fa170  libobjc.A.dylib`objc_release
+       x17 = 0x00000002162b2f90  (void *)0x00000001d31fa170: objc_release
+       x18 = 0x0000000000000000
+       x19 = 0x0000000281a30000
+       x20 = 0x0000000129d0fd70
+       x21 = 0x00000001021de9d0  "clickBtn:"
+       x22 = 0x0000000129d0a7a0
+       x23 = 0x00000001021de9d0  "clickBtn:"
+       x24 = 0x0000000213536800  UIKitCore`UIApp
+       x25 = 0x0000000000000000
+       x26 = 0x00000002047c18ff  
+       x27 = 0x0000000281a30000
+       x28 = 0x0000000000000001
+        fp = 0x000000016dc24e60
+        lr = 0x00000001021de170  Demo`-[ViewController clickBtn:] + 52 at ViewController.m:29
+        sp = 0x000000016dc24e30
+        pc = 0x00000001021de178  Demo`-[ViewController clickBtn:] + 60 at ViewController.m:31:1
+      cpsr = 0x80001000
+
+0x16dc24e30: 0x0000000281a30000
+0x16dc24e38: 0x000000016dc24e48
+0x16dc24e40: 0x0000000000000000
+0x16dc24e48: 0x0000000129d0fd70
+0x16dc24e50: 0x00000001021de9d0 "clickBtn:"
+0x16dc24e58: 0x0000000129d0a7a0
+0x16dc24e60: 0x000000016dc24e90
+0x16dc24e68: 0x00000001bcd84f1c UIKitCore`-[UIApplication sendAction:to:from:forEvent:] + 100
+0x16dc24e70: 0x0000000281a30000
 ```
 
 ### tracefunction
