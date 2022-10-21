@@ -30,6 +30,7 @@ import HMLLDBHelpers as HM
 
 def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand('command script add -f HMStep.trace_function tracefunction -h "Trace functions step by step until the next breakpoint is hit."')
+    debugger.HandleCommand('command script add -f HMStep.trace_instruction traceinstruction -h "Trace instructions step by step until the next breakpoint is hit."')
 
 
 def trace_function(debugger, command, exe_ctx, result, internal_dict):
@@ -51,7 +52,7 @@ class TraceFunctionStep:
         HM.DPrint("==========Begin========================================================")
         self.start_time = datetime.now().strftime("%H:%M:%S")
         self.thread_plan = thread_plan
-        self.instruction_count = 0
+        self.instruction_count = 1
 
         stream = lldb.SBStream()
         self.thread_plan.GetThread().GetFrameAtIndex(0).GetPCAddress().GetDescription(stream)
@@ -87,3 +88,66 @@ class TraceFunctionStep:
 
     def should_step(self) -> bool:
         return True
+
+
+def trace_instruction(debugger, command, exe_ctx, result, internal_dict):
+    """
+    Syntax:
+        traceinstruction
+
+    Examples:
+        (lldb) traceinstruction
+
+    This command is implemented in HMStep.py
+    """
+    debugger.HandleCommand('thread step-scripted -C HMStep.TraceInstructionStep')
+
+
+class TraceInstructionStep:
+
+    def __init__(self, thread_plan, dic):
+        HM.DPrint("==========Begin========================================================")
+        self.start_time = datetime.now().strftime("%H:%M:%S")
+        self.thread_plan = thread_plan
+        self.instruction_count = 1
+
+        self.print_instruction()  # first instruction
+
+    def explains_stop(self, event: lldb.SBEvent) -> bool:
+        self.instruction_count += 1
+        self.print_instruction()
+        return True
+
+    def should_stop(self, event: lldb.SBEvent) -> bool:
+        if self.thread_plan.GetThread().GetStopReason() != lldb.eStopReasonTrace:
+            self.thread_plan.SetPlanComplete(True)
+            HM.DPrint("==========End========================================================")
+            HM.DPrint(f"Instruction count: {self.instruction_count}")
+            HM.DPrint(f"Start time: {self.start_time}")
+            stop_time = datetime.now().strftime("%H:%M:%S")
+            HM.DPrint(f"Stop time: {stop_time}")
+            return True
+        else:
+            return False
+
+    def should_step(self) -> bool:
+        return True
+
+    def print_instruction(self) -> None:
+        frame = self.thread_plan.GetThread().GetFrameAtIndex(0)
+        target = self.thread_plan.GetThread().GetProcess().GetTarget()
+        instructions = frame.GetSymbol().GetInstructions(target)
+        instruction_str: str = ""
+        for instruction in instructions:
+            if instruction.GetAddress() == frame.GetPCAddress():
+                comment = instruction.GetComment(target)
+                if len(comment) > 0:
+                    instruction_str = f"{instruction.GetMnemonic(target)}\t{instruction.GetOperands(target)}\t\t\t; {instruction.GetComment(target)}"
+                else:
+                    instruction_str = f"{instruction.GetMnemonic(target)}\t{instruction.GetOperands(target)}"
+                break
+
+        stream = lldb.SBStream()
+        frame.GetPCAddress().GetDescription(stream)
+        print(f"{stream.GetData()}\t\t{instruction_str}")  # first address
+
