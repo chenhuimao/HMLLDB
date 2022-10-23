@@ -29,8 +29,8 @@ import HMLLDBHelpers as HM
 
 
 def __lldb_init_module(debugger, internal_dict):
-    debugger.HandleCommand('command script add -f HMStep.trace_function tracefunction -h "Trace functions step by step until the next breakpoint is hit."')
-    debugger.HandleCommand('command script add -f HMStep.trace_instruction traceinstruction -h "Trace instructions step by step until the next breakpoint is hit."')
+    debugger.HandleCommand('command script add -f HMTrace.trace_function tracefunction -h "Trace functions step by step until the next breakpoint is hit."')
+    debugger.HandleCommand('command script add -f HMTrace.trace_instruction traceinstruction -h "Trace instructions step by step until the next breakpoint is hit."')
 
 
 def trace_function(debugger, command, exe_ctx, result, internal_dict):
@@ -41,9 +41,9 @@ def trace_function(debugger, command, exe_ctx, result, internal_dict):
     Examples:
         (lldb) tracefunction
 
-    This command is implemented in HMStep.py
+    This command is implemented in HMTrace.py
     """
-    debugger.HandleCommand('thread step-scripted -C HMStep.TraceFunctionStep')
+    debugger.HandleCommand('thread step-scripted -C HMTrace.TraceFunctionStep')
 
 
 class TraceFunctionStep:
@@ -53,6 +53,7 @@ class TraceFunctionStep:
         self.start_time = datetime.now().strftime("%H:%M:%S")
         self.thread_plan = thread_plan
         self.instruction_count = 1
+        self.function_count = 1
 
         stream = lldb.SBStream()
         self.thread_plan.GetThread().GetFrameAtIndex(0).GetPCAddress().GetDescription(stream)
@@ -67,6 +68,7 @@ class TraceFunctionStep:
         function_str = stream.GetData().split(" + ")[0]
         if function_str not in self.last_function:
             print(self.last_function)
+            self.function_count += 1
         self.last_function = stream.GetData()
         return True
 
@@ -76,9 +78,11 @@ class TraceFunctionStep:
             stream = lldb.SBStream()
             self.thread_plan.GetThread().GetFrameAtIndex(0).GetPCAddress().GetDescription(stream)
             print(stream.GetData())  # current address
+            self.function_count += 1
 
             HM.DPrint("==========End========================================================")
             HM.DPrint(f"Instruction count: {self.instruction_count}")
+            HM.DPrint(f"Function count: {self.function_count}")
             HM.DPrint(f"Start time: {self.start_time}")
             stop_time = datetime.now().strftime("%H:%M:%S")
             HM.DPrint(f"Stop time: {stop_time}")
@@ -98,9 +102,9 @@ def trace_instruction(debugger, command, exe_ctx, result, internal_dict):
     Examples:
         (lldb) traceinstruction
 
-    This command is implemented in HMStep.py
+    This command is implemented in HMTrace.py
     """
-    debugger.HandleCommand('thread step-scripted -C HMStep.TraceInstructionStep')
+    debugger.HandleCommand('thread step-scripted -C HMTrace.TraceInstructionStep')
 
 
 class TraceInstructionStep:
