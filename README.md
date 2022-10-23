@@ -260,7 +260,7 @@ Show general purpose registers changes after stepping over instruction.
 (lldb) rc
 [HMLLDB] Get registers for the first time.
 
-// Step over instruction
+// After you step over instruction, then execute the 'rc' command 
 (lldb) rc
 0x10431a3cc <+16>:  mov    x1, x2
         x1:0x000000010431aa94 -> 0x000000010490be50
@@ -359,6 +359,7 @@ libobjc.A.dylib`-[NSObject init]
 Demo`-[ViewController buttonAction] + 60 at ViewController.m:29:1
 [HMLLDB] ==========End========================================================
 [HMLLDB] Instruction count: 285
+[HMLLDB] Function count: 23
 [HMLLDB] Start time: 18:35:35
 [HMLLDB] Stop time: 18:35:36
 Process 11646 stopped
@@ -373,6 +374,11 @@ Process 11646 stopped
    31    
    32    
 Target 0: (Demo) stopped.
+
+
+// Up to 500 functions will be printed
+(lldb) tracefunction -m 500
+...
 ```
 
 

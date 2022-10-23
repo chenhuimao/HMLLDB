@@ -24,6 +24,8 @@
 
 import lldb
 from datetime import datetime
+import optparse
+import shlex
 import HMLLDBClassInfo
 import HMLLDBHelpers as HM
 
@@ -33,17 +35,55 @@ def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand('command script add -f HMTrace.trace_instruction traceinstruction -h "Trace instructions step by step until the next breakpoint is hit."')
 
 
+g_function_limit: int = -1
+
+
 def trace_function(debugger, command, exe_ctx, result, internal_dict):
     """
     Syntax:
-        tracefunction
+        tracefunction [-m <count>]
+
+    Options:
+        --max/-m; Maximum number of functions to print
 
     Examples:
         (lldb) tracefunction
+        (lldb) tracefunction -m 500
 
     This command is implemented in HMTrace.py
     """
+
+    command_args = shlex.split(command)
+    parser = generate_trace_function_option_parser()
+    try:
+        # options: optparse.Values
+        # args: list
+        (options, args_list) = parser.parse_args(command_args)
+    except:
+        result.SetError(parser.usage)
+        return
+
+    global g_function_limit
+    if options.max_count:
+        g_function_limit = int(options.max_count)
+        if g_function_limit <= 0:
+            HM.DPrint("Error input, Please enter \"help tracefunction\" for help.")
+            return
+    else:
+        g_function_limit = -1
+
     debugger.HandleCommand('thread step-scripted -C HMTrace.TraceFunctionStep')
+
+
+def generate_trace_function_option_parser() -> optparse.OptionParser:
+    usage = "usage: tracefunction [--max <count>]"
+    parser = optparse.OptionParser(usage=usage, prog="tracefunction")
+    parser.add_option("-m", "--max",
+                      action="store",
+                      default=None,
+                      dest="max_count",
+                      help="")
+    return parser
 
 
 class TraceFunctionStep:
@@ -73,25 +113,33 @@ class TraceFunctionStep:
         return True
 
     def should_stop(self, event: lldb.SBEvent) -> bool:
-        if self.thread_plan.GetThread().GetStopReason() != lldb.eStopReasonTrace:
-            self.thread_plan.SetPlanComplete(True)
-            stream = lldb.SBStream()
-            self.thread_plan.GetThread().GetFrameAtIndex(0).GetPCAddress().GetDescription(stream)
-            print(stream.GetData())  # current address
-            self.function_count += 1
+        global g_function_limit
+        if 0 < g_function_limit <= self.function_count + 1:
+            self.print_before_stop()
+            return True
 
-            HM.DPrint("==========End========================================================")
-            HM.DPrint(f"Instruction count: {self.instruction_count}")
-            HM.DPrint(f"Function count: {self.function_count}")
-            HM.DPrint(f"Start time: {self.start_time}")
-            stop_time = datetime.now().strftime("%H:%M:%S")
-            HM.DPrint(f"Stop time: {stop_time}")
+        if self.thread_plan.GetThread().GetStopReason() != lldb.eStopReasonTrace:
+            self.print_before_stop()
             return True
         else:
             return False
 
     def should_step(self) -> bool:
         return True
+
+    def print_before_stop(self) -> None:
+        self.thread_plan.SetPlanComplete(True)
+        stream = lldb.SBStream()
+        self.thread_plan.GetThread().GetFrameAtIndex(0).GetPCAddress().GetDescription(stream)
+        print(stream.GetData())  # current address
+        self.function_count += 1
+
+        HM.DPrint("==========End========================================================")
+        HM.DPrint(f"Instruction count: {self.instruction_count}")
+        HM.DPrint(f"Function count: {self.function_count}")
+        HM.DPrint(f"Start time: {self.start_time}")
+        stop_time = datetime.now().strftime("%H:%M:%S")
+        HM.DPrint(f"Stop time: {stop_time}")
 
 
 def trace_instruction(debugger, command, exe_ctx, result, internal_dict):
