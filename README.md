@@ -42,6 +42,7 @@ For example, this is the command in my computer:
 | rc             | Show general purpose registers changes |
 | rr             | Show the contents of register values from the current frame |
 | tracefunction  | Trace functions step by step until the next breakpoint is hit |
+| traceinstruction | Trace instructions step by step until the next breakpoint is hit |
 | pfont          | Print all font names supported by the device |
 | plifecycle     | Print life cycle of UIViewController |
 | redirect       | Redirect stdout/stderr |
@@ -381,6 +382,98 @@ Target 0: (Demo) stopped.
 ...
 ```
 
+### traceinstruction
+Trace instructions step by step until the next breakpoint is hit.   
+For example, if you set the following two breakpoints:   
+![tracefunction](./img/tracefunction.jpg)
+
+When you hit the first breakpoint, enter the `traceinstruction` command   
+```
+(lldb) traceinstruction
+[HMLLDB] ==========Begin========================================================
+Demo`-[ViewController buttonAction] + 24 at ViewController.m:28:25		ldr	x0, [x8, #0xe40]
+Demo`symbol stub for: objc_alloc		nop	
+Demo`symbol stub for: objc_alloc + 4		ldr	x16, #0x171c			; (void *)0x00000001b006c918: objc_alloc
+Demo`symbol stub for: objc_alloc + 8		br	x16
+libobjc.A.dylib`objc_alloc		cbz	x0, 0x1b006c930			; <+24>
+libobjc.A.dylib`objc_alloc + 4		ldr	x8, [x0]
+libobjc.A.dylib`objc_alloc + 8		and	x8, x8, #0xffffffff8
+libobjc.A.dylib`objc_alloc + 12		ldrb	w8, [x8, #0x1d]
+libobjc.A.dylib`objc_alloc + 16		tbz	w8, #0x6, 0x1b006c934			; <+28>
+libobjc.A.dylib`objc_alloc + 20		b	0x1b006c3e8			; _objc_rootAllocWithZone
+libobjc.A.dylib`_objc_rootAllocWithZone		pacibsp	
+libobjc.A.dylib`_objc_rootAllocWithZone + 4		stp	x20, x19, [sp, #-0x20]!
+libobjc.A.dylib`_objc_rootAllocWithZone + 8		stp	x29, x30, [sp, #0x10]
+libobjc.A.dylib`_objc_rootAllocWithZone + 12		add	x29, sp, #0x10
+libobjc.A.dylib`_objc_rootAllocWithZone + 16		mov	x19, x0
+libobjc.A.dylib`_objc_rootAllocWithZone + 20		ldrh	w20, [x0, #0x1c]
+libobjc.A.dylib`_objc_rootAllocWithZone + 24		and	x1, x20, #0x1ff0
+libobjc.A.dylib`_objc_rootAllocWithZone + 28		cbz	w1, 0x1b006c450			; <+104>
+libobjc.A.dylib`_objc_rootAllocWithZone + 32		mov	w0, #0x1
+libobjc.A.dylib`_objc_rootAllocWithZone + 36		bl	0x1b0095518			; symbol stub for: calloc
+libobjc.A.dylib`symbol stub for: calloc		adrp	x17, 274573
+libobjc.A.dylib`symbol stub for: calloc + 4		add	x17, x17, #0xe70
+libobjc.A.dylib`symbol stub for: calloc + 8		ldr	x16, [x17]
+libobjc.A.dylib`symbol stub for: calloc + 12		braa	x16, x17
+libsystem_malloc.dylib`calloc		mov	x2, x1
+libsystem_malloc.dylib`calloc + 4		mov	x1, x0
+libsystem_malloc.dylib`calloc + 8		adrp	x0, 292190
+libsystem_malloc.dylib`calloc + 12		add	x0, x0, #0x0
+libsystem_malloc.dylib`calloc + 16		mov	w3, #0x1
+libsystem_malloc.dylib`calloc + 20		b	0x1a9605e04			; _malloc_zone_calloc
+libsystem_malloc.dylib`_malloc_zone_calloc		pacibsp	
+libsystem_malloc.dylib`_malloc_zone_calloc + 4		stp	x24, x23, [sp, #-0x40]!
+...
+...
+...
+libobjc.A.dylib`objc_msgSend		cmp	x0, #0x0
+libobjc.A.dylib`objc_msgSend + 4		b.le	0x1b0068ff0			; <+208>
+libobjc.A.dylib`objc_msgSend + 8		ldr	x13, [x0]
+libobjc.A.dylib`objc_msgSend + 12		and	x16, x13, #0x7ffffffffffff8
+libobjc.A.dylib`objc_msgSend + 16		mov	x10, x0
+libobjc.A.dylib`objc_msgSend + 20		movk	x10, #0x6ae1, lsl #48
+libobjc.A.dylib`objc_msgSend + 24		autda	x16, x10
+libobjc.A.dylib`objc_msgSend + 28		mov	x15, x16
+libobjc.A.dylib`objc_msgSend + 32		ldr	x11, [x16, #0x10]
+libobjc.A.dylib`objc_msgSend + 36		tbnz	w11, #0x0, 0x1b0068fa0			; <+128>
+libobjc.A.dylib`objc_msgSend + 40		and	x10, x11, #0xffffffffffff
+libobjc.A.dylib`objc_msgSend + 44		eor	x12, x1, x1, lsr #7
+libobjc.A.dylib`objc_msgSend + 48		and	x12, x12, x11, lsr #48
+libobjc.A.dylib`objc_msgSend + 52		add	x13, x10, x12, lsl #4
+libobjc.A.dylib`objc_msgSend + 56		ldp	x17, x9, [x13], #-0x10
+libobjc.A.dylib`objc_msgSend + 60		cmp	x9, x1
+libobjc.A.dylib`objc_msgSend + 64		b.ne	0x1b0068f70			; <+80>
+libobjc.A.dylib`objc_msgSend + 68		eor	x10, x10, x1
+libobjc.A.dylib`objc_msgSend + 72		eor	x10, x10, x16
+libobjc.A.dylib`objc_msgSend + 76		brab	x17, x10
+libobjc.A.dylib`-[NSObject init]		ret	
+Demo`-[ViewController buttonAction] + 44 at ViewController.m:28:24		mov	x8, x0
+Demo`-[ViewController buttonAction] + 48 at ViewController.m:28:24		add	x0, sp, #0x8
+Demo`-[ViewController buttonAction] + 52 at ViewController.m:28:15		str	x8, [sp, #0x8]
+Demo`-[ViewController buttonAction] + 56 at ViewController.m:28:15		mov	x1, #0x0
+Demo`-[ViewController buttonAction] + 60 at ViewController.m:29:1		bl	0x104c3e95c			; symbol stub for: objc_storeStrong
+[HMLLDB] ==========End========================================================
+[HMLLDB] Instruction count: 291
+[HMLLDB] Start time: 19:34:59
+[HMLLDB] Stop time: 19:35:00
+Process 30877 stopped
+* thread #1, queue = 'com.apple.main-thread', stop reason = breakpoint 2.1
+    frame #0: 0x0000000104c3e338 Demo`-[ViewController buttonAction](self=0x00000001052092c0, _cmd="buttonAction") at ViewController.m:29:1
+   26  	
+   27  	- (void)buttonAction {
+   28  	    NSObject *object = [[NSObject alloc] init];
+-> 29  	}
+    	^
+   30  	
+   31  	
+   32  	
+Target 0: (Demo) stopped.
+
+
+// Up to 8000 instructions will be printed
+(lldb) traceinstruction -m 8000
+...
+```
 
 ### pfont
 Print all font names supported by the device.   

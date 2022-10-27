@@ -36,6 +36,7 @@ def __lldb_init_module(debugger, internal_dict):
 
 
 g_function_limit: int = -1
+g_instruction_limit: int = -1
 
 
 def trace_function(debugger, command, exe_ctx, result, internal_dict):
@@ -145,14 +146,48 @@ class TraceFunctionStep:
 def trace_instruction(debugger, command, exe_ctx, result, internal_dict):
     """
     Syntax:
-        traceinstruction
+        traceinstruction [-m <count>]
+
+    Options:
+        --max/-m; Maximum number of instructions to print
 
     Examples:
         (lldb) traceinstruction
+        (lldb) traceinstruction -m 6000
 
     This command is implemented in HMTrace.py
     """
+    command_args = shlex.split(command)
+    parser = generate_trace_instruction_option_parser()
+    try:
+        # options: optparse.Values
+        # args: list
+        (options, args_list) = parser.parse_args(command_args)
+    except:
+        result.SetError(parser.usage)
+        return
+
+    global g_instruction_limit
+    if options.max_count:
+        g_instruction_limit = int(options.max_count)
+        if g_instruction_limit <= 0:
+            HM.DPrint("Error input, Please enter \"help traceinstruction\" for help.")
+            return
+    else:
+        g_instruction_limit = -1
+
     debugger.HandleCommand('thread step-scripted -C HMTrace.TraceInstructionStep')
+
+
+def generate_trace_instruction_option_parser() -> optparse.OptionParser:
+    usage = "usage: traceinstruction [--max <count>]"
+    parser = optparse.OptionParser(usage=usage, prog="traceinstruction")
+    parser.add_option("-m", "--max",
+                      action="store",
+                      default=None,
+                      dest="max_count",
+                      help="")
+    return parser
 
 
 class TraceInstructionStep:
@@ -171,13 +206,13 @@ class TraceInstructionStep:
         return True
 
     def should_stop(self, event: lldb.SBEvent) -> bool:
+        global g_instruction_limit
+        if 0 < g_instruction_limit <= self.instruction_count:
+            self.print_before_stop()
+            return True
+
         if self.thread_plan.GetThread().GetStopReason() != lldb.eStopReasonTrace:
-            self.thread_plan.SetPlanComplete(True)
-            HM.DPrint("==========End========================================================")
-            HM.DPrint(f"Instruction count: {self.instruction_count}")
-            HM.DPrint(f"Start time: {self.start_time}")
-            stop_time = datetime.now().strftime("%H:%M:%S")
-            HM.DPrint(f"Stop time: {stop_time}")
+            self.print_before_stop()
             return True
         else:
             return False
@@ -202,4 +237,12 @@ class TraceInstructionStep:
         stream = lldb.SBStream()
         frame.GetPCAddress().GetDescription(stream)
         print(f"{stream.GetData()}\t\t{instruction_str}")  # first address
+
+    def print_before_stop(self) -> None:
+        self.thread_plan.SetPlanComplete(True)
+        HM.DPrint("==========End========================================================")
+        HM.DPrint(f"Instruction count: {self.instruction_count}")
+        HM.DPrint(f"Start time: {self.start_time}")
+        stop_time = datetime.now().strftime("%H:%M:%S")
+        HM.DPrint(f"Stop time: {stop_time}")
 
