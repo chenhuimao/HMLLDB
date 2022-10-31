@@ -69,7 +69,7 @@ def register_change(debugger, command, exe_ctx, result, internal_dict):
         HM.DPrint("Executed repeatedly!")
         return
 
-    # When the pc registers differ by 4
+    # When the pc register differ by 4
     print_last_instruction_if_needed(frame)
 
     # Print and save registers
@@ -151,7 +151,7 @@ def register_read(debugger, command, exe_ctx, result, internal_dict):
 
     Options:
         --all/-a; Show all register sets.
-        --sp/-s; Show [(sp - offset), sp] address value.
+        --sp/-s; Show [sp, (sp + offset)] address value.
 
     Examples:
         // Alias for 'register read'
