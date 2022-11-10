@@ -38,6 +38,8 @@ def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand('command script add -f HMClassInfoCommands.findSuperClass fsuperclass -h "Find the superclass of the input."')
     debugger.HandleCommand('command script add -f HMClassInfoCommands.findMethod fmethod -h "Find the specified method in the method list, you can also find the method list of the specified class."')
 
+    debugger.HandleCommand('command script add -f HMClassInfoCommands.print_ivars_info ivarsinfo -h "Show ivars information of class."')
+
 
 def methods(debugger, command, exe_ctx, result, internal_dict):
     """
@@ -565,3 +567,49 @@ def generate_findMethod_option_parser() -> optparse.OptionParser:
                       help="Find all method in the class")
 
     return parser
+
+
+def print_ivars_info(debugger, command, exe_ctx, result, internal_dict):
+    """
+    Syntax:
+        ivarsinfo <className>
+
+    Examples:
+        (lldb) ivarsinfo UIView
+        (lldb) ivarsinfo MYModel
+
+    This command is implemented in HMClassInfoCommands.py
+    """
+
+    if len(command) == 0:
+        HM.DPrint("Requires a argument, Please enter \"help ivarsinfo\" for help.")
+        return
+
+    if not HM.existClass(command):
+        HM.DPrint(f"{command} does not exist.")
+        return
+
+    command_script = f'''        
+        Class inputClass = objc_lookUpClass("{command}");
+        
+        NSMutableString *result = [[NSMutableString alloc] init];
+        [result appendString:[[NSString alloc] initWithFormat:@"%s (%p)", class_getName(inputClass), inputClass]];
+        
+        unsigned int ivarsCount = 0;
+        Ivar *ivarList = class_copyIvarList(inputClass, &ivarsCount);
+        for (int i = 0; i < ivarsCount; ++i) {{
+            Ivar ivar = ivarList[i];
+            const char *ivarName = ivar_getName(ivar);
+            const char *ivarTypeEncoding = ivar_getTypeEncoding(ivar);
+            long ivarOffset = ivar_getOffset(ivar);
+            
+            NSString *ivarInfo = [[NSString alloc] initWithFormat:@"\\n%s\\n\\ttypeEncoding:%s\\n\\toffset:%ld hex:0x%lx", ivarName, ivarTypeEncoding, ivarOffset, ivarOffset];
+            [result appendString:ivarInfo];
+        }}
+        free(ivarList);
+        (NSMutableString *)result;
+    '''
+
+    result = HM.evaluateExpressionValue(command_script).GetObjectDescription()
+    HM.DPrint(result)
+
