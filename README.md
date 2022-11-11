@@ -8,7 +8,7 @@
 - Some commands provide interactive UI within the APP
 
 ## Requirements
-- Xcode 14.0
+- Xcode 14.1
 - 64-bit simulator or real device, iOS 11.0+
 - Debug configuration (or ***Optimization Level*** set [-O0]/[-Onone])
 
@@ -37,6 +37,7 @@ For example, this is the command in my computer:
 | methods        | Execute `[inputClass _methodDescription]` or `[inputClass _shortMethodDescription]` |
 | properties     | Execute `[inputClass _propertyDescription]` |
 | ivars          | Execute `[instance _ivarDescription]` |
+| ivarsinfo | Show ivars information of class |
 | bpframe        | Set a breakpoint that stops only when the specified stack keyword is matched |
 | bpmethod       | Set a breakpoint that stops when the next OC method is called(via objc_msgSend) |
 | rc             | Show general purpose registers changes |
@@ -219,6 +220,27 @@ in Kingfisher_Demo.NormalLoadingViewController:
 [HMLLDB] KingfisherManager is not a subclass of NSObject
 
 ```
+
+### ivarsinfo
+Show ivars information of class.
+```
+# Syntax:
+ivarsinfo <className>
+
+(lldb) ivarsinfo UIView
+[HMLLDB] UIView (0x22658d3b8)
+_constraintsExceptingSubviewAutoresizingConstraints
+	typeEncoding:@"NSMutableArray"
+	offset:16 hex:0x10
+_cachedTraitCollection
+	typeEncoding:@"UITraitCollection"
+	offset:24 hex:0x18
+_animationInfo
+	typeEncoding:@"UIViewAnimationInfo"
+	offset:32 hex:0x20
+...
+```
+
 
 ### bpframe
 Set a  breakpoint that stops only when the specified stack keyword is matched.    
