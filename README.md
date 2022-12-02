@@ -145,8 +145,8 @@ Kingfisher_Demo.ImageCollectionViewCell (0x1021498e8)
 (lldb) fsubclass UICollectionViewController
 [HMLLDB] Waiting...
 [HMLLDB] Subclass count: 10 
-Kingfisher_Demo.InfinityCollectionViewController
-Kingfisher_Demo.HighResolutionCollectionViewController
+Kingfisher_Demo.InfinityCollectionViewController (0x102cf2c18)
+Kingfisher_Demo.HighResolutionCollectionViewController (0x102cf1ed0)
 ...
 ```
 

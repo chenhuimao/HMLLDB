@@ -115,11 +115,23 @@ def methods(debugger, command, exe_ctx, result, internal_dict):
             }}
         }}
 
-        result;
+        (NSMutableString *)result;
     '''
 
     result = HM.evaluateExpressionValue(command_script).GetObjectDescription()
     HM.DPrint(result)
+
+
+def generate_methods_option_parser() -> optparse.OptionParser:
+    usage = "usage: methods [-s] <className/classInstance>"
+    parser = optparse.OptionParser(usage=usage, prog="fsubclass")
+    parser.add_option("-s", "--short",
+                      action="store_true",
+                      default=False,
+                      dest="short",
+                      help="Use [inputClass _shortMethodDescription] instead of [inputClass _methodDescription]")
+
+    return parser
 
 
 def properties(debugger, command, exe_ctx, result, internal_dict):
@@ -172,7 +184,7 @@ def properties(debugger, command, exe_ctx, result, internal_dict):
             }}
         }}
 
-        result;
+        (NSMutableString *)result;
     '''
 
     result = HM.evaluateExpressionValue(command_script).GetObjectDescription()
@@ -224,7 +236,7 @@ def findClass(debugger, command, exe_ctx, result, internal_dict):
         }} else {{
             [classNames insertString:[[NSString alloc] initWithFormat:@"Count: %u \\n", findCount] atIndex:0];
         }}
-        classNames;
+        (NSMutableString *)classNames;
     '''
 
     classNames = HM.evaluateExpressionValue(command_script).GetObjectDescription()
@@ -267,7 +279,7 @@ def findSubclass(debugger, command, exe_ctx, result, internal_dict):
         compareScript = '''
             if (class_getSuperclass(cls) == inputClass){
                 NSString *name = [[NSString alloc] initWithUTF8String:class_getName(cls)];
-                [result appendFormat:@"%@\\n", name];
+                [result appendFormat:@"%@ (%p)\\n", name, cls];
                 findCount += 1;
             }
         '''
@@ -277,7 +289,7 @@ def findSubclass(debugger, command, exe_ctx, result, internal_dict):
             for (Class superClass = class_getSuperclass(cls); superClass != nil; superClass = class_getSuperclass(superClass)) {
                 if (superClass == inputClass) {
                     NSString *name = [[NSString alloc] initWithUTF8String:class_getName(cls)];
-                    [result appendFormat:@"%@\\n", name];
+                    [result appendFormat:@"%@ (%p)\\n", name, cls];
                     findCount += 1;
 
                     break;
@@ -321,11 +333,23 @@ def findSubclass(debugger, command, exe_ctx, result, internal_dict):
             free(classList);
         }}
 
-        result;
+        (NSMutableString *)result;
     '''
 
     classNames = HM.evaluateExpressionValue(command_script).GetObjectDescription()
     HM.DPrint(classNames)
+
+
+def generate_findSubclass_option_parser() -> optparse.OptionParser:
+    usage = "usage: fsubclass [-n] <className>"
+    parser = optparse.OptionParser(usage=usage, prog="fsubclass")
+    parser.add_option("-n", "--nonrecursively",
+                      action="store_true",
+                      default=False,
+                      dest="nonrecursively",
+                      help="Find subclass non-recursively")
+
+    return parser
 
 
 def findSuperClass(debugger, command, exe_ctx, result, internal_dict):
@@ -368,7 +392,7 @@ def findSuperClass(debugger, command, exe_ctx, result, internal_dict):
             }}
         }}
 
-        result;
+        (NSMutableString *)result;
     '''
 
     classNames = HM.evaluateExpressionValue(command_script).GetObjectDescription()
@@ -435,8 +459,7 @@ def findMethod(debugger, command, exe_ctx, result, internal_dict):
                 Method *instanceMethodList = class_copyMethodList(inputClass, &instanceMethodCount);
                 for (int j = 0; j < instanceMethodCount; ++j) {{
                     Method method = instanceMethodList[j];
-                    SEL sel = method_getName(method);
-                    NSString *selName = [[NSString alloc] initWithUTF8String:sel_getName(sel)];
+                    NSString *selName = [[NSString alloc] initWithUTF8String:sel_getName(method_getName(method))];
                     void (*impl_hm)() = (void (*)())method_getImplementation(method);
                     [result appendFormat:@"(-) %@ (%p)\\n\\tType encoding:%s\\n", selName, impl_hm, method_getTypeEncoding(method)];
                 }}
@@ -448,8 +471,7 @@ def findMethod(debugger, command, exe_ctx, result, internal_dict):
                     Method *classMethodList = class_copyMethodList(metaCls, &classMethodCount);
                     for (int j = 0; j < classMethodCount; ++j) {{
                         Method method = classMethodList[j];
-                        SEL sel = method_getName(method);
-                        NSString *selName = [[NSString alloc] initWithUTF8String:sel_getName(sel)];
+                        NSString *selName = [[NSString alloc] initWithUTF8String:sel_getName(method_getName(method))];
                         void (*impl_hm)() = (void (*)())method_getImplementation(method);
                         [result appendFormat:@"(+) %@ (%p)\\n\\tType encoding:%s\\n", selName, impl_hm, method_getTypeEncoding(method)];
                     }}
@@ -465,7 +487,7 @@ def findMethod(debugger, command, exe_ctx, result, internal_dict):
                 }}
             }}
             
-            result;
+            (NSMutableString *)result;
         '''
 
     else:
@@ -487,8 +509,7 @@ def findMethod(debugger, command, exe_ctx, result, internal_dict):
         
                 for (int j = 0; j < instanceMethodCount; ++j) {{
                     Method method = instanceMethodList[j];
-                    SEL sel = method_getName(method);
-                    NSString *selName = [[NSString alloc] initWithUTF8String:sel_getName(sel)];
+                    NSString *selName = [[NSString alloc] initWithUTF8String:sel_getName(method_getName(method))];
                     if ([[selName lowercaseString] containsString:inputMethodName]) {{
                         NSString *clsName = [[NSString alloc] initWithUTF8String:class_getName(cls)];
                         void (*impl_hm)() = (void (*)())method_getImplementation(method);
@@ -508,8 +529,7 @@ def findMethod(debugger, command, exe_ctx, result, internal_dict):
         
                 for (int j = 0; j < classMethodCount; ++j) {{
                     Method method = classMethodList[j];
-                    SEL sel = method_getName(method);
-                    NSString *selName = [[NSString alloc] initWithUTF8String:sel_getName(sel)];
+                    NSString *selName = [[NSString alloc] initWithUTF8String:sel_getName(method_getName(method))];
                     if ([[selName lowercaseString] containsString:inputMethodName]) {{
                         NSString *clsName = [[NSString alloc] initWithUTF8String:class_getName(cls)];
                         void (*impl_hm)() = (void (*)())method_getImplementation(method);
@@ -526,35 +546,11 @@ def findMethod(debugger, command, exe_ctx, result, internal_dict):
             }}
 
             free(classList);
-            result;
+            (NSMutableString *)result;
         '''
 
     result = HM.evaluateExpressionValue(command_script).GetObjectDescription()
     HM.DPrint(result)
-
-
-def generate_methods_option_parser() -> optparse.OptionParser:
-    usage = "usage: methods [-s] <className/classInstance>"
-    parser = optparse.OptionParser(usage=usage, prog="fsubclass")
-    parser.add_option("-s", "--short",
-                      action="store_true",
-                      default=False,
-                      dest="short",
-                      help="Use [inputClass _shortMethodDescription] instead of [inputClass _methodDescription]")
-
-    return parser
-
-
-def generate_findSubclass_option_parser() -> optparse.OptionParser:
-    usage = "usage: fsubclass [-n] <className>"
-    parser = optparse.OptionParser(usage=usage, prog="fsubclass")
-    parser.add_option("-n", "--nonrecursively",
-                      action="store_true",
-                      default=False,
-                      dest="nonrecursively",
-                      help="Find subclass non-recursively")
-
-    return parser
 
 
 def generate_findMethod_option_parser() -> optparse.OptionParser:
