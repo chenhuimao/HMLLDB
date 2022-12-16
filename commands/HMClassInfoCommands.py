@@ -602,6 +602,9 @@ def print_ivars_info(debugger, command, exe_ctx, result, internal_dict):
             NSString *ivarInfo = [[NSString alloc] initWithFormat:@"\\n%s\\n\\ttypeEncoding:%s\\n\\toffset:%ld hex:0x%lx", ivarName, ivarTypeEncoding, ivarOffset, ivarOffset];
             [result appendString:ivarInfo];
         }}
+        if (ivarsCount == 0) {{
+            [result appendString:@"\\n[HMLLDB] No ivar found."];
+        }}
         free(ivarList);
         (NSMutableString *)result;
     '''
