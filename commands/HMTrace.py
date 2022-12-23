@@ -112,11 +112,18 @@ class TraceFunctionStep:
         pc_address = self.thread_plan.GetThread().GetFrameAtIndex(0).GetPCAddress()
         pc_address.GetDescription(stream)
         function_str = stream.GetData().split(" + ")[0]
+        if len(function_str) == 0:
+            function_str = hex(pc_address.GetLoadAddress(target))
         if function_str not in self.last_function:
-            print(f"{self.last_function}\t({hex(self.last_pc_address_value)})")
+            if self.last_function.startswith("0x"):
+                print(self.last_function)
+            else:
+                print(f"{self.last_function}\t({hex(self.last_pc_address_value)})")
             self.function_count += 1
         self.last_pc_address_value = pc_address.GetLoadAddress(target)
         self.last_function = stream.GetData()
+        if len(self.last_function) == 0:
+            self.last_function = hex(self.last_pc_address_value)
         return True
 
     def should_stop(self, event: lldb.SBEvent) -> bool:
@@ -233,10 +240,9 @@ class TraceInstructionStep:
         target = self.thread_plan.GetThread().GetProcess().GetTarget()
         instructions = frame.GetSymbol().GetInstructions(target)
         instruction_str: str = ""
-        pc_address_value: int = 0
+        pc_address_value: int = frame.GetPCAddress().GetLoadAddress(target)
         for instruction in instructions:
             if instruction.GetAddress() == frame.GetPCAddress():
-                pc_address_value = instruction.GetAddress().GetLoadAddress(target)
                 comment = instruction.GetComment(target)
                 if len(comment) > 0:
                     instruction_str = f"{instruction.GetMnemonic(target)}\t{instruction.GetOperands(target)}\t\t\t; {instruction.GetComment(target)}"
@@ -246,7 +252,10 @@ class TraceInstructionStep:
 
         stream = lldb.SBStream()
         frame.GetPCAddress().GetDescription(stream)
-        print(f"{stream.GetData()}\t\t{instruction_str}\t({hex(pc_address_value)})")
+        if len(instruction_str) == 0:
+            print(hex(pc_address_value))
+        else:
+            print(f"{stream.GetData()}\t\t{instruction_str}\t({hex(pc_address_value)})")
 
     def print_before_stop(self) -> None:
         self.thread_plan.SetPlanComplete(True)
