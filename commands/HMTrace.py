@@ -96,20 +96,26 @@ class TraceFunctionStep:
         self.instruction_count = 1
         self.function_count = 1
 
+        target = self.thread_plan.GetThread().GetProcess().GetTarget()
         stream = lldb.SBStream()
-        self.thread_plan.GetThread().GetFrameAtIndex(0).GetPCAddress().GetDescription(stream)
+        pc_address = self.thread_plan.GetThread().GetFrameAtIndex(0).GetPCAddress()
+        pc_address.GetDescription(stream)
+        self.last_pc_address_value = pc_address.GetLoadAddress(target)
         self.last_function: str = stream.GetData()
-        print(self.last_function)  # first address
+        print(f"{self.last_function}\t({hex(self.last_pc_address_value)})")  # first address
 
     def explains_stop(self, event: lldb.SBEvent) -> bool:
         self.instruction_count += 1
 
+        target = self.thread_plan.GetThread().GetProcess().GetTarget()
         stream = lldb.SBStream()
-        self.thread_plan.GetThread().GetFrameAtIndex(0).GetPCAddress().GetDescription(stream)
+        pc_address = self.thread_plan.GetThread().GetFrameAtIndex(0).GetPCAddress()
+        pc_address.GetDescription(stream)
         function_str = stream.GetData().split(" + ")[0]
         if function_str not in self.last_function:
-            print(self.last_function)
+            print(f"{self.last_function}\t({hex(self.last_pc_address_value)})")
             self.function_count += 1
+        self.last_pc_address_value = pc_address.GetLoadAddress(target)
         self.last_function = stream.GetData()
         return True
 
@@ -130,9 +136,11 @@ class TraceFunctionStep:
 
     def print_before_stop(self) -> None:
         self.thread_plan.SetPlanComplete(True)
+        target = self.thread_plan.GetThread().GetProcess().GetTarget()
         stream = lldb.SBStream()
-        self.thread_plan.GetThread().GetFrameAtIndex(0).GetPCAddress().GetDescription(stream)
-        print(stream.GetData())  # current address
+        pc_address = self.thread_plan.GetThread().GetFrameAtIndex(0).GetPCAddress()
+        pc_address.GetDescription(stream)
+        print(f"{stream.GetData()}\t({hex(pc_address.GetLoadAddress(target))})")  # current address
         self.function_count += 1
 
         HM.DPrint("==========End========================================================")
@@ -225,8 +233,10 @@ class TraceInstructionStep:
         target = self.thread_plan.GetThread().GetProcess().GetTarget()
         instructions = frame.GetSymbol().GetInstructions(target)
         instruction_str: str = ""
+        pc_address_value: int = 0
         for instruction in instructions:
             if instruction.GetAddress() == frame.GetPCAddress():
+                pc_address_value = instruction.GetAddress().GetLoadAddress(target)
                 comment = instruction.GetComment(target)
                 if len(comment) > 0:
                     instruction_str = f"{instruction.GetMnemonic(target)}\t{instruction.GetOperands(target)}\t\t\t; {instruction.GetComment(target)}"
@@ -236,7 +246,7 @@ class TraceInstructionStep:
 
         stream = lldb.SBStream()
         frame.GetPCAddress().GetDescription(stream)
-        print(f"{stream.GetData()}\t\t{instruction_str}")  # first address
+        print(f"{stream.GetData()}\t\t{instruction_str}\t({hex(pc_address_value)})")
 
     def print_before_stop(self) -> None:
         self.thread_plan.SetPlanComplete(True)
