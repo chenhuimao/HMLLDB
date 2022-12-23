@@ -357,37 +357,36 @@ When you hit the first breakpoint, enter the `tracefunction` command
 ```
 (lldb) tracefunction
 [HMLLDB] ==========Begin========================================================
-Demo`-[ViewController buttonAction] + 24 at ViewController.m:28:25
-Demo`-[ViewController buttonAction] + 24 at ViewController.m:28:25
-Demo`symbol stub for: objc_alloc + 8
-libobjc.A.dylib`objc_alloc + 20
-libobjc.A.dylib`_objc_rootAllocWithZone + 36
-libobjc.A.dylib`symbol stub for: calloc + 12
-libsystem_malloc.dylib`calloc + 20
-libsystem_malloc.dylib`_malloc_zone_calloc + 84
-libsystem_malloc.dylib`default_zone_calloc + 32
-libsystem_malloc.dylib`nanov2_calloc + 156
-libsystem_malloc.dylib`nanov2_allocate + 124
-libsystem_malloc.dylib`nanov2_allocate + 340
-libsystem_malloc.dylib`symbol stub for: _platform_memset + 8
-libsystem_platform.dylib`_platform_memset + 208
-libsystem_malloc.dylib`nanov2_allocate + 460
-libsystem_malloc.dylib`nanov2_calloc + 172
-libsystem_malloc.dylib`_malloc_zone_calloc + 132
-libobjc.A.dylib`_objc_rootAllocWithZone + 100
-Demo`-[ViewController buttonAction] + 40 at ViewController.m:28:24
-Demo`symbol stub for: objc_msgSend + 8
-libobjc.A.dylib`objc_msgSend + 76
-libobjc.A.dylib`-[NSObject init]
-Demo`-[ViewController buttonAction] + 60 at ViewController.m:29:1
+Demo`-[ViewController buttonAction] + 24 at ViewController.m:28:24 (0x100c33314)
+Demo`-[ViewController buttonAction] + 24 at ViewController.m:28:24 (0x100c33314)
+Demo`symbol stub for: objc_alloc_init + 8  (0x100c3e7dc)
+libobjc.A.dylib`objc_alloc_init + 32   (0x1a7114f3c)
+libobjc.A.dylib`_objc_rootAllocWithZone + 36 (0x1a711140c)
+libobjc.A.dylib`symbol stub for: calloc + 12 (0x1a713a524)
+libsystem_malloc.dylib`calloc + 20  (0x1a06a7b78)
+libsystem_malloc.dylib`_malloc_zone_calloc + 84 (0x1a06aae58)
+libsystem_malloc.dylib`default_zone_calloc + 32 (0x1a06a79d4)
+libsystem_malloc.dylib`nanov2_calloc + 156   (0x1a06bc74c)
+libsystem_malloc.dylib`nanov2_allocate + 124 (0x1a06bc160)
+libsystem_malloc.dylib`nanov2_allocate + 340 (0x1a06bc238)
+libsystem_malloc.dylib`symbol stub for: _platform_memset + 8   (0x1a06c3448)
+libsystem_platform.dylib`_platform_memset + 208 (0x1ff580e50)
+libsystem_malloc.dylib`nanov2_allocate + 460 (0x1a06bc2b0)
+libsystem_malloc.dylib`nanov2_calloc + 172   (0x1a06bc75c)
+libsystem_malloc.dylib`_malloc_zone_calloc + 132   (0x1a06aae88)
+libobjc.A.dylib`_objc_rootAllocWithZone + 100   (0x1a711144c)
+libobjc.A.dylib`objc_alloc_init + 64   (0x1a7114f5c)
+libobjc.A.dylib`objc_msgSend + 76   (0x1a710df6c)
+libobjc.A.dylib`-[NSObject init] (0x1a711d184)
+Demo`-[ViewController buttonAction] + 48 at ViewController.m:29:1  (0x100c3332c)
 [HMLLDB] ==========End========================================================
-[HMLLDB] Instruction count: 285
-[HMLLDB] Function count: 23
-[HMLLDB] Start time: 18:35:35
-[HMLLDB] Stop time: 18:35:36
-Process 11646 stopped
-* thread #1, queue = 'com.apple.main-thread', stop reason = breakpoint 2.1
-    frame #0: 0x0000000104216338 Demo`-[ViewController buttonAction](self=0x0000000104704d70, _cmd="buttonAction") at ViewController.m:29:1
+[HMLLDB] Instruction count: 295
+[HMLLDB] Function count: 22
+[HMLLDB] Start time: 22:57:10
+[HMLLDB] Stop time: 22:57:11
+Process 18247 stopped
+* thread #1, queue = 'com.apple.main-thread', stop reason = breakpoint 5.1
+    frame #0: 0x0000000100c3332c Demo`-[ViewController buttonAction](self=0x000000010120c9e0, _cmd="buttonAction") at ViewController.m:29:1
    26    
    27    - (void)buttonAction {
    28        NSObject *object = [[NSObject alloc] init];
@@ -413,74 +412,84 @@ When you hit the first breakpoint, enter the `traceinstruction` command
 ```
 (lldb) traceinstruction
 [HMLLDB] ==========Begin========================================================
-Demo`-[ViewController buttonAction] + 24 at ViewController.m:28:25		ldr	x0, [x8, #0xe40]
-Demo`symbol stub for: objc_alloc		nop	
-Demo`symbol stub for: objc_alloc + 4		ldr	x16, #0x171c			; (void *)0x00000001b006c918: objc_alloc
-Demo`symbol stub for: objc_alloc + 8		br	x16
-libobjc.A.dylib`objc_alloc		cbz	x0, 0x1b006c930			; <+24>
-libobjc.A.dylib`objc_alloc + 4		ldr	x8, [x0]
-libobjc.A.dylib`objc_alloc + 8		and	x8, x8, #0xffffffff8
-libobjc.A.dylib`objc_alloc + 12		ldrb	w8, [x8, #0x1d]
-libobjc.A.dylib`objc_alloc + 16		tbz	w8, #0x6, 0x1b006c934			; <+28>
-libobjc.A.dylib`objc_alloc + 20		b	0x1b006c3e8			; _objc_rootAllocWithZone
-libobjc.A.dylib`_objc_rootAllocWithZone		pacibsp	
-libobjc.A.dylib`_objc_rootAllocWithZone + 4		stp	x20, x19, [sp, #-0x20]!
-libobjc.A.dylib`_objc_rootAllocWithZone + 8		stp	x29, x30, [sp, #0x10]
-libobjc.A.dylib`_objc_rootAllocWithZone + 12		add	x29, sp, #0x10
-libobjc.A.dylib`_objc_rootAllocWithZone + 16		mov	x19, x0
-libobjc.A.dylib`_objc_rootAllocWithZone + 20		ldrh	w20, [x0, #0x1c]
-libobjc.A.dylib`_objc_rootAllocWithZone + 24		and	x1, x20, #0x1ff0
-libobjc.A.dylib`_objc_rootAllocWithZone + 28		cbz	w1, 0x1b006c450			; <+104>
-libobjc.A.dylib`_objc_rootAllocWithZone + 32		mov	w0, #0x1
-libobjc.A.dylib`_objc_rootAllocWithZone + 36		bl	0x1b0095518			; symbol stub for: calloc
-libobjc.A.dylib`symbol stub for: calloc		adrp	x17, 274573
-libobjc.A.dylib`symbol stub for: calloc + 4		add	x17, x17, #0xe70
-libobjc.A.dylib`symbol stub for: calloc + 8		ldr	x16, [x17]
-libobjc.A.dylib`symbol stub for: calloc + 12		braa	x16, x17
-libsystem_malloc.dylib`calloc		mov	x2, x1
-libsystem_malloc.dylib`calloc + 4		mov	x1, x0
-libsystem_malloc.dylib`calloc + 8		adrp	x0, 292190
-libsystem_malloc.dylib`calloc + 12		add	x0, x0, #0x0
-libsystem_malloc.dylib`calloc + 16		mov	w3, #0x1
-libsystem_malloc.dylib`calloc + 20		b	0x1a9605e04			; _malloc_zone_calloc
-libsystem_malloc.dylib`_malloc_zone_calloc		pacibsp	
-libsystem_malloc.dylib`_malloc_zone_calloc + 4		stp	x24, x23, [sp, #-0x40]!
+Demo`-[ViewController buttonAction] + 24 at ViewController.m:28:24		ldr	x0, [x8, #0xc58]	(0x104b23314)
+Demo`symbol stub for: objc_alloc_init		nop		(0x104b2e7d4)
+Demo`symbol stub for: objc_alloc_init + 4		ldr	x16, #0x5960			; (void *)0x00000001a7114f1c: objc_alloc_init	(0x104b2e7d8)
+Demo`symbol stub for: objc_alloc_init + 8		br	x16	(0x104b2e7dc)
+libobjc.A.dylib`objc_alloc_init		pacibsp		(0x1a7114f1c)
+libobjc.A.dylib`objc_alloc_init + 4		stp	x29, x30, [sp, #-0x10]!	(0x1a7114f20)
+libobjc.A.dylib`objc_alloc_init + 8		mov	x29, sp	(0x1a7114f24)
+libobjc.A.dylib`objc_alloc_init + 12		cbz	x0, 0x1a7114f40			; <+36>	(0x1a7114f28)
+libobjc.A.dylib`objc_alloc_init + 16		ldr	x8, [x0]	(0x1a7114f2c)
+libobjc.A.dylib`objc_alloc_init + 20		and	x8, x8, #0xffffffff8	(0x1a7114f30)
+libobjc.A.dylib`objc_alloc_init + 24		ldrb	w8, [x8, #0x1d]	(0x1a7114f34)
+libobjc.A.dylib`objc_alloc_init + 28		tbz	w8, #0x6, 0x1a7114f60			; <+68>	(0x1a7114f38)
+libobjc.A.dylib`objc_alloc_init + 32		bl	0x1a71113e8			; _objc_rootAllocWithZone	(0x1a7114f3c)
+libobjc.A.dylib`_objc_rootAllocWithZone		pacibsp		(0x1a71113e8)
+libobjc.A.dylib`_objc_rootAllocWithZone + 4		stp	x20, x19, [sp, #-0x20]!	(0x1a71113ec)
+libobjc.A.dylib`_objc_rootAllocWithZone + 8		stp	x29, x30, [sp, #0x10]	(0x1a71113f0)
+libobjc.A.dylib`_objc_rootAllocWithZone + 12		add	x29, sp, #0x10	(0x1a71113f4)
+libobjc.A.dylib`_objc_rootAllocWithZone + 16		mov	x19, x0	(0x1a71113f8)
+libobjc.A.dylib`_objc_rootAllocWithZone + 20		ldrh	w20, [x0, #0x1c]	(0x1a71113fc)
+libobjc.A.dylib`_objc_rootAllocWithZone + 24		and	x1, x20, #0x1ff0	(0x1a7111400)
+libobjc.A.dylib`_objc_rootAllocWithZone + 28		cbz	w1, 0x1a7111450			; <+104>	(0x1a7111404)
+libobjc.A.dylib`_objc_rootAllocWithZone + 32		mov	w0, #0x1	(0x1a7111408)
+libobjc.A.dylib`_objc_rootAllocWithZone + 36		bl	0x1a713a518			; symbol stub for: calloc	(0x1a711140c)
+libobjc.A.dylib`symbol stub for: calloc		adrp	x17, 274572	(0x1a713a518)
+libobjc.A.dylib`symbol stub for: calloc + 4		add	x17, x17, #0xea0	(0x1a713a51c)
+libobjc.A.dylib`symbol stub for: calloc + 8		ldr	x16, [x17]	(0x1a713a520)
+libobjc.A.dylib`symbol stub for: calloc + 12		braa	x16, x17	(0x1a713a524)
+libsystem_malloc.dylib`calloc		mov	x2, x1	(0x1a06a7b64)
+libsystem_malloc.dylib`calloc + 4		mov	x1, x0	(0x1a06a7b68)
+libsystem_malloc.dylib`calloc + 8		adrp	x0, 292189	(0x1a06a7b6c)
+libsystem_malloc.dylib`calloc + 12		add	x0, x0, #0x0	(0x1a06a7b70)
+libsystem_malloc.dylib`calloc + 16		mov	w3, #0x1	(0x1a06a7b74)
+libsystem_malloc.dylib`calloc + 20		b	0x1a06aae04			; _malloc_zone_calloc	(0x1a06a7b78)
+libsystem_malloc.dylib`_malloc_zone_calloc		pacibsp		(0x1a06aae04)
+libsystem_malloc.dylib`_malloc_zone_calloc + 4		stp	x24, x23, [sp, #-0x40]!	(0x1a06aae08)
 ...
 ...
 ...
-libobjc.A.dylib`objc_msgSend		cmp	x0, #0x0
-libobjc.A.dylib`objc_msgSend + 4		b.le	0x1b0068ff0			; <+208>
-libobjc.A.dylib`objc_msgSend + 8		ldr	x13, [x0]
-libobjc.A.dylib`objc_msgSend + 12		and	x16, x13, #0x7ffffffffffff8
-libobjc.A.dylib`objc_msgSend + 16		mov	x10, x0
-libobjc.A.dylib`objc_msgSend + 20		movk	x10, #0x6ae1, lsl #48
-libobjc.A.dylib`objc_msgSend + 24		autda	x16, x10
-libobjc.A.dylib`objc_msgSend + 28		mov	x15, x16
-libobjc.A.dylib`objc_msgSend + 32		ldr	x11, [x16, #0x10]
-libobjc.A.dylib`objc_msgSend + 36		tbnz	w11, #0x0, 0x1b0068fa0			; <+128>
-libobjc.A.dylib`objc_msgSend + 40		and	x10, x11, #0xffffffffffff
-libobjc.A.dylib`objc_msgSend + 44		eor	x12, x1, x1, lsr #7
-libobjc.A.dylib`objc_msgSend + 48		and	x12, x12, x11, lsr #48
-libobjc.A.dylib`objc_msgSend + 52		add	x13, x10, x12, lsl #4
-libobjc.A.dylib`objc_msgSend + 56		ldp	x17, x9, [x13], #-0x10
-libobjc.A.dylib`objc_msgSend + 60		cmp	x9, x1
-libobjc.A.dylib`objc_msgSend + 64		b.ne	0x1b0068f70			; <+80>
-libobjc.A.dylib`objc_msgSend + 68		eor	x10, x10, x1
-libobjc.A.dylib`objc_msgSend + 72		eor	x10, x10, x16
-libobjc.A.dylib`objc_msgSend + 76		brab	x17, x10
-libobjc.A.dylib`-[NSObject init]		ret	
-Demo`-[ViewController buttonAction] + 44 at ViewController.m:28:24		mov	x8, x0
-Demo`-[ViewController buttonAction] + 48 at ViewController.m:28:24		add	x0, sp, #0x8
-Demo`-[ViewController buttonAction] + 52 at ViewController.m:28:15		str	x8, [sp, #0x8]
-Demo`-[ViewController buttonAction] + 56 at ViewController.m:28:15		mov	x1, #0x0
-Demo`-[ViewController buttonAction] + 60 at ViewController.m:29:1		bl	0x104c3e95c			; symbol stub for: objc_storeStrong
+libobjc.A.dylib`objc_alloc_init + 36		adrp	x8, 202134	(0x1a7114f40)
+libobjc.A.dylib`objc_alloc_init + 40		add	x1, x8, #0x4da	(0x1a7114f44)
+libobjc.A.dylib`objc_alloc_init + 44		ldp	x29, x30, [sp], #0x10	(0x1a7114f48)
+libobjc.A.dylib`objc_alloc_init + 48		autibsp		(0x1a7114f4c)
+libobjc.A.dylib`objc_alloc_init + 52		eor	x16, x30, x30, lsl #1	(0x1a7114f50)
+libobjc.A.dylib`objc_alloc_init + 56		tbz	x16, #0x3e, 0x1a7114f5c			; <+64>	(0x1a7114f54)
+libobjc.A.dylib`objc_alloc_init + 64		b	0x1a710df20			; objc_msgSend	(0x1a7114f5c)
+libobjc.A.dylib`objc_msgSend		cmp	x0, #0x0	(0x1a710df20)
+libobjc.A.dylib`objc_msgSend + 4		b.le	0x1a710dff0			; <+208>	(0x1a710df24)
+libobjc.A.dylib`objc_msgSend + 8		ldr	x13, [x0]	(0x1a710df28)
+libobjc.A.dylib`objc_msgSend + 12		and	x16, x13, #0x7ffffffffffff8	(0x1a710df2c)
+libobjc.A.dylib`objc_msgSend + 16		mov	x10, x0	(0x1a710df30)
+libobjc.A.dylib`objc_msgSend + 20		movk	x10, #0x6ae1, lsl #48	(0x1a710df34)
+libobjc.A.dylib`objc_msgSend + 24		autda	x16, x10	(0x1a710df38)
+libobjc.A.dylib`objc_msgSend + 28		mov	x15, x16	(0x1a710df3c)
+libobjc.A.dylib`objc_msgSend + 32		ldr	x11, [x16, #0x10]	(0x1a710df40)
+libobjc.A.dylib`objc_msgSend + 36		tbnz	w11, #0x0, 0x1a710dfa0			; <+128>	(0x1a710df44)
+libobjc.A.dylib`objc_msgSend + 40		and	x10, x11, #0xffffffffffff	(0x1a710df48)
+libobjc.A.dylib`objc_msgSend + 44		eor	x12, x1, x1, lsr #7	(0x1a710df4c)
+libobjc.A.dylib`objc_msgSend + 48		and	x12, x12, x11, lsr #48	(0x1a710df50)
+libobjc.A.dylib`objc_msgSend + 52		add	x13, x10, x12, lsl #4	(0x1a710df54)
+libobjc.A.dylib`objc_msgSend + 56		ldp	x17, x9, [x13], #-0x10	(0x1a710df58)
+libobjc.A.dylib`objc_msgSend + 60		cmp	x9, x1	(0x1a710df5c)
+libobjc.A.dylib`objc_msgSend + 64		b.ne	0x1a710df70			; <+80>	(0x1a710df60)
+libobjc.A.dylib`objc_msgSend + 68		eor	x10, x10, x1	(0x1a710df64)
+libobjc.A.dylib`objc_msgSend + 72		eor	x10, x10, x16	(0x1a710df68)
+libobjc.A.dylib`objc_msgSend + 76		brab	x17, x10	(0x1a710df6c)
+libobjc.A.dylib`-[NSObject init]		ret		(0x1a711d184)
+Demo`-[ViewController buttonAction] + 32 at ViewController.m:28:24		mov	x8, x0	(0x104b2331c)
+Demo`-[ViewController buttonAction] + 36 at ViewController.m:28:24		add	x0, sp, #0x8	(0x104b23320)
+Demo`-[ViewController buttonAction] + 40 at ViewController.m:28:15		str	x8, [sp, #0x8]	(0x104b23324)
+Demo`-[ViewController buttonAction] + 44 at ViewController.m:28:15		mov	x1, #0x0	(0x104b23328)
+Demo`-[ViewController buttonAction] + 48 at ViewController.m:29:1		bl	0x104b2e8c4			; symbol stub for: objc_storeStrong	(0x104b2332c)
 [HMLLDB] ==========End========================================================
-[HMLLDB] Instruction count: 291
-[HMLLDB] Start time: 19:34:59
-[HMLLDB] Stop time: 19:35:00
-Process 30877 stopped
-* thread #1, queue = 'com.apple.main-thread', stop reason = breakpoint 2.1
-    frame #0: 0x0000000104c3e338 Demo`-[ViewController buttonAction](self=0x00000001052092c0, _cmd="buttonAction") at ViewController.m:29:1
+[HMLLDB] Instruction count: 295
+[HMLLDB] Start time: 22:59:34
+[HMLLDB] Stop time: 22:59:36
+Process 18265 stopped
+* thread #1, queue = 'com.apple.main-thread', stop reason = breakpoint 5.1
+    frame #0: 0x0000000104b2332c Demo`-[ViewController buttonAction](self=0x0000000153d0b5f0, _cmd="buttonAction") at ViewController.m:29:1
    26  	
    27  	- (void)buttonAction {
    28  	    NSObject *object = [[NSObject alloc] init];
