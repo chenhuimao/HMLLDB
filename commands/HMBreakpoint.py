@@ -26,6 +26,7 @@ import lldb
 from typing import List
 import shlex
 import optparse
+import re
 import HMLLDBHelpers as HM
 import HMLLDBClassInfo
 
@@ -33,6 +34,7 @@ import HMLLDBClassInfo
 def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand('command script add -f HMBreakpoint.breakpoint_frame bpframe -h "Set a breakpoint that stops only when the specified stack keyword is matched."')
     debugger.HandleCommand('command script add -f HMBreakpoint.breakpoint_next_oc_method bpmethod -h "Set a breakpoint that stops when the next OC method is called(via objc_msgSend)."')
+    debugger.HandleCommand('command script add -f HMBreakpoint.breakpoint_message bpmessage -h "Set a breakpoint for a selector on a class, even if the class itself doesn\'t override that selector."')
 
 
 def breakpoint_frame(debugger, command, exe_ctx, result, internal_dict):
@@ -266,4 +268,123 @@ def set_breakpoint_with_object_and_selector(object_value: lldb.SBValue, selector
 
 def breakpoint_next_oc_method_implementation_handler(frame, bp_loc, extra_args, internal_dict) -> bool:
     return True
+
+
+# Inspired by "bmessage" command in chisel: https://github.com/facebook/chisel/blob/main/commands/FBDebugCommands.py.
+# "chisel" is implemented by conditional breakpoint. "HMLLDB" is implemented by runtime, it will add the method if the class itself doesn't override that selector.
+def breakpoint_message(debugger, command, exe_ctx, result, internal_dict):
+    """
+    Syntax:
+        bpmessage <class name> <selector>
+
+    Examples:
+        (lldb) bpmessage MyModel release
+
+
+    Notice:
+        "chisel" is implemented by conditional breakpoint. "HMLLDB" is implemented by runtime, it will add the method if the class itself doesn't override that selector.
+
+    This command is implemented in HMBreakpoint.py
+    """
+
+    methodPattern = re.compile(
+        r"""
+  (?P<scope>[-+])?
+  \[
+    (?P<target>.*?)
+    \s+
+    (?P<selector>.*)
+  \]
+""",
+        re.VERBOSE,
+    )
+
+    match = methodPattern.match(command)
+
+    if not match:
+        print("Failed to parse expression. Please enter \"help bpmessage\" for help.")
+        return
+
+    method_type_character = match.group("scope")
+    class_name = match.group("target")
+    method_name = match.group("selector")
+    if method_type_character == '+':
+        is_class_method = 1
+    else:
+        is_class_method = 0
+    HM.DPrint(method_type_character)
+    HM.DPrint(class_name)
+    HM.DPrint(method_name)
+    HM.DPrint(is_class_method)
+
+    command_script = f'''
+        NSMutableDictionary *resultDic = [[NSMutableDictionary alloc] init];
+        NSString *methodName = @"{method_name}";
+        do {{
+            Class cls = NSClassFromString(@"{class_name}");
+            if (!cls) {{
+                [resultDic setObject:@"Can't find {class_name} class." forKey:@"failKey"];
+                break;
+            }}
+            
+            if ({is_class_method}) {{
+                cls = (Class)object_getClass((id)cls);
+                if (!cls) {{
+                    [resultDic setObject:@"Can't find {class_name} meta class." forKey:@"failKey"];
+                    break;
+                }}
+            }}
+            
+            
+            unsigned int instanceMethodCount;
+            void (*originalIMP)(void) = 0;
+    
+            Method *instanceMethodList = class_copyMethodList(cls, &instanceMethodCount);
+            for (int i = 0; i < instanceMethodCount; ++i) {{
+                Method method = instanceMethodList[i];
+            if (strcmp((const char *)[methodName UTF8String], (const char *)sel_getName(method_getName(method))) == 0) {{
+                    originalIMP = (void (*)(void))method_getImplementation(method);
+                    break;
+                }}
+            }}
+            free(instanceMethodList);
+            
+            if (originalIMP) {{
+                NSString *adddressValue = [[NSString alloc] initWithFormat:@"0x%lx", (long)originalIMP];
+                [resultDic setObject:adddressValue forKey:@"addressKey"];
+                [resultDic setObject:@"Find the implementation in the method list." forKey:@"successKey"];
+                break;
+            }}
+            
+
+            SEL originalSelector = NSSelectorFromString(methodName);
+            Method originalMethod = class_getInstanceMethod(cls, originalSelector);
+            if (!originalMethod) {{
+                [resultDic setObject:@"The aaa method does not exist in the xxxx and its super class." forKey:@"failKey"];
+                break;
+            }}
+            
+            originalIMP = (void (*)(void))method_getImplementation(originalMethod);
+    
+            void (^IMPBlock_hm)(id) = ^(id instance_hm) {{
+                ((void (*)(id, SEL)) originalIMP)(instance_hm, originalSelector);
+            }};
+            
+            IMP newIMP = imp_implementationWithBlock(IMPBlock_hm);
+            class_addMethod(cls, originalSelector, newIMP, method_getTypeEncoding(originalMethod));
+            
+            NSString *adddressValue = [[NSString alloc] initWithFormat:@"0x%lx", (long)newIMP];
+            [resultDic setObject:adddressValue forKey:@"addressKey"];
+            [resultDic setObject:@"Find the implementation in the super class." forKey:@"successKey"];
+            
+        }} while (0);
+        
+        
+        (NSMutableDictionary *)resultDic;
+    '''
+
+    HM.DPrint(command_script)
+    result_dic: lldb.SBValue = HM.evaluateExpressionValue(command_script)
+    HMLLDBClassInfo.pSBValue(result_dic)
+
 
