@@ -39,6 +39,7 @@ For example, this is the command in my computer:
 | ivars          | Execute `[instance _ivarDescription]` |
 | ivarsinfo | Show ivars information of class |
 | bpframe        | Set a breakpoint that stops only when the specified stack keyword is matched |
+| bpmessage      | Set a breakpoint for a selector on a class, even if the class itself doesn't override that selector. |
 | bpmethod       | Set a breakpoint that stops when the next OC method is called(via objc_msgSend) |
 | rc             | Show general purpose registers changes |
 | rr             | Show the contents of register values from the current frame |
@@ -260,6 +261,24 @@ bpframe [--one-shot] --address <address> <stack keyword 1> <stack keyword 2> ...
 (lldb) bpframe -o viewDidAppear: customMethod
 (lldb) bpframe -o -a 0x1025df6c0 customMethod
 ```
+
+
+### bpmessage
+Set a breakpoint for a selector on a class, even if the class itself doesn't override that selector.    
+```
+Syntax:
+    bpmessage -[<class_name> <selector>]
+    bpmessage +[<class_name> <selector>]
+
+Examples:
+    (lldb) bpmessage -[MyModel release]
+    (lldb) bpmessage -[MyModel dealloc]
+
+Notice:
+"bmessage"(in "chisel")is implemented by conditional breakpoint.
+"bpmessage"(in "HMLLDB") is implemented by runtime. It will add the method if the class itself doesn't override that selector, which reduces the loss of non-target classes hitting breakpoint.
+```
+
 
 ### bpmethod
 Set a breakpoint that stops when the next OC method is called(via objc_msgSend).    

@@ -275,14 +275,17 @@ def breakpoint_next_oc_method_implementation_handler(frame, bp_loc, extra_args, 
 def breakpoint_message(debugger, command, exe_ctx, result, internal_dict):
     """
     Syntax:
-        bpmessage <class name> <selector>
+        bpmessage -[<class_name> <selector>]
+        bpmessage +[<class_name> <selector>]
 
     Examples:
-        (lldb) bpmessage MyModel release
+        (lldb) bpmessage -[MyModel release]
+        (lldb) bpmessage -[MyModel dealloc]
 
 
     Notice:
-        "chisel" is implemented by conditional breakpoint. "HMLLDB" is implemented by runtime, it will add the method if the class itself doesn't override that selector.
+        "bmessage"(in "chisel")is implemented by conditional breakpoint.
+        "bpmessage"(in "HMLLDB") is implemented by runtime. It will add the method if the class itself doesn't override that selector, which reduces the loss of non-target classes hitting breakpoint.
 
     This command is implemented in HMBreakpoint.py
     """
@@ -312,10 +315,8 @@ def breakpoint_message(debugger, command, exe_ctx, result, internal_dict):
         is_class_method = 1
     else:
         is_class_method = 0
-    HM.DPrint(method_type_character)
-    HM.DPrint(class_name)
-    HM.DPrint(method_name)
-    HM.DPrint(is_class_method)
+
+    HM.DPrint("Waiting...")
 
     command_script = f'''
         NSMutableDictionary *resultDic = [[NSMutableDictionary alloc] init];
@@ -360,7 +361,7 @@ def breakpoint_message(debugger, command, exe_ctx, result, internal_dict):
             SEL originalSelector = NSSelectorFromString(methodName);
             Method originalMethod = class_getInstanceMethod(cls, originalSelector);
             if (!originalMethod) {{
-                [resultDic setObject:@"The aaa method does not exist in the xxxx and its super class." forKey:@"failKey"];
+                [resultDic setObject:@"The {method_name} method does not exist in the {class_name} and its super class." forKey:@"failKey"];
                 break;
             }}
             
@@ -375,7 +376,7 @@ def breakpoint_message(debugger, command, exe_ctx, result, internal_dict):
             
             NSString *adddressValue = [[NSString alloc] initWithFormat:@"0x%lx", (long)newIMP];
             [resultDic setObject:adddressValue forKey:@"addressKey"];
-            [resultDic setObject:@"Find the implementation in the super class." forKey:@"successKey"];
+            [resultDic setObject:@"Find the implementation in the super class. HMLLDB added a new {method_name} method to {class_name} class." forKey:@"successKey"];
             
         }} while (0);
         
@@ -383,8 +384,45 @@ def breakpoint_message(debugger, command, exe_ctx, result, internal_dict):
         (NSMutableDictionary *)resultDic;
     '''
 
-    HM.DPrint(command_script)
-    result_dic: lldb.SBValue = HM.evaluateExpressionValue(command_script)
-    HMLLDBClassInfo.pSBValue(result_dic)
+    result_dic_value: lldb.SBValue = HM.evaluateExpressionValue(command_script)
 
+    # print result string
+    command_get_desc = f'''
+        NSMutableDictionary *resultDic = (NSMutableDictionary *)({result_dic_value.GetValueAsUnsigned()})
+        NSString *desc_hm = (NSString *)[resultDic objectForKey:@"failKey"];
+        if (!desc_hm) {{
+            desc_hm = (NSString *)[resultDic objectForKey:@"successKey"];
+        }}
+        (NSString *)desc_hm; 
+    '''
+
+    desc_value = HM.evaluateExpressionValue(command_get_desc)
+    HM.DPrint(desc_value.GetObjectDescription())
+
+    # get address
+    command_get_address = f'''
+        NSMutableDictionary *resultDic = (NSMutableDictionary *)({result_dic_value.GetValueAsUnsigned()})
+        NSString *address_hm = (NSString *)[resultDic objectForKey:@"addressKey"];
+        (NSString *)address_hm; 
+    '''
+    address_value = HM.evaluateExpressionValue(command_get_address)
+    if not HM.judgeSBValueHasValue(address_value):
+        return
+    target_address: str = address_value.GetObjectDescription()
+
+
+    # add breakpoint
+    HM.DPrint(f"Will add a breakpoint in address:{target_address}")
+
+    target = lldb.debugger.GetSelectedTarget()
+    bp = target.BreakpointCreateByAddress(int(target_address, 16))
+    bp.AddName(f"HMBreakpoint_bpmessage_breakpoint_{target_address}")
+    bp.SetScriptCallbackFunction("HMBreakpoint.bpmessage_breakpoint_handler")
+    bp_id = bp.GetID()
+    debugger.HandleCommand(f"breakpoint list {bp_id}")
+    HM.DPrint("Done!")
+
+
+def bpmessage_breakpoint_handler(frame, bp_loc, internal_dict) -> bool:
+    return True
 
