@@ -324,14 +324,14 @@ def breakpoint_message(debugger, command, exe_ctx, result, internal_dict):
         do {{
             Class cls = NSClassFromString(@"{class_name}");
             if (!cls) {{
-                [resultDic setObject:@"Can't find {class_name} class." forKey:@"failKey"];
+                [resultDic setObject:@"Can't find {class_name} class." forKey:(id)@"failKey"];
                 break;
             }}
             
             if ({is_class_method}) {{
                 cls = (Class)object_getClass((id)cls);
                 if (!cls) {{
-                    [resultDic setObject:@"Can't find {class_name} meta class." forKey:@"failKey"];
+                    [resultDic setObject:@"Can't find {class_name} meta class." forKey:(id)@"failKey"];
                     break;
                 }}
             }}
@@ -352,31 +352,30 @@ def breakpoint_message(debugger, command, exe_ctx, result, internal_dict):
             
             if (originalIMP) {{
                 NSString *adddressValue = [[NSString alloc] initWithFormat:@"0x%lx", (long)originalIMP];
-                [resultDic setObject:adddressValue forKey:@"addressKey"];
-                [resultDic setObject:@"Find the implementation in the method list." forKey:@"successKey"];
+                [resultDic setObject:adddressValue forKey:(id)@"addressKey"];
+                [resultDic setObject:@"Find the implementation in the method list." forKey:(id)@"successKey"];
                 break;
             }}
             
 
-            SEL originalSelector = NSSelectorFromString(methodName);
-            Method originalMethod = class_getInstanceMethod(cls, originalSelector);
+            Method originalMethod = class_getInstanceMethod(cls, NSSelectorFromString(methodName));
             if (!originalMethod) {{
-                [resultDic setObject:@"The {method_name} method does not exist in the {class_name} and its super class." forKey:@"failKey"];
+                [resultDic setObject:@"The {method_name} method does not exist in the {class_name} and its super class." forKey:(id)@"failKey"];
                 break;
             }}
             
             originalIMP = (void (*)(void))method_getImplementation(originalMethod);
     
             void (^IMPBlock_hm)(id) = ^(id instance_hm) {{
-                ((void (*)(id, SEL)) originalIMP)(instance_hm, originalSelector);
+                ((void (*)(id, char *)) originalIMP)(instance_hm, (char *)NSSelectorFromString(methodName));
             }};
             
             IMP newIMP = imp_implementationWithBlock(IMPBlock_hm);
-            class_addMethod(cls, originalSelector, newIMP, method_getTypeEncoding(originalMethod));
+            class_addMethod(cls, NSSelectorFromString(methodName), newIMP, method_getTypeEncoding(originalMethod));
             
             NSString *adddressValue = [[NSString alloc] initWithFormat:@"0x%lx", (long)newIMP];
-            [resultDic setObject:adddressValue forKey:@"addressKey"];
-            [resultDic setObject:@"Find the implementation in the super class. HMLLDB added a new {method_name} method to {class_name} class." forKey:@"successKey"];
+            [resultDic setObject:adddressValue forKey:(id)@"addressKey"];
+            [resultDic setObject:@"Find the implementation in the super class. HMLLDB added a new {method_name} method to {class_name} class." forKey:(id)@"successKey"];
             
         }} while (0);
         
@@ -389,9 +388,9 @@ def breakpoint_message(debugger, command, exe_ctx, result, internal_dict):
     # print result string
     command_get_desc = f'''
         NSMutableDictionary *resultDic = (NSMutableDictionary *)({result_dic_value.GetValueAsUnsigned()})
-        NSString *desc_hm = (NSString *)[resultDic objectForKey:@"failKey"];
+        NSString *desc_hm = (NSString *)[resultDic objectForKey:(id)@"failKey"];
         if (!desc_hm) {{
-            desc_hm = (NSString *)[resultDic objectForKey:@"successKey"];
+            desc_hm = (NSString *)[resultDic objectForKey:(id)@"successKey"];
         }}
         (NSString *)desc_hm; 
     '''
@@ -402,7 +401,7 @@ def breakpoint_message(debugger, command, exe_ctx, result, internal_dict):
     # get address
     command_get_address = f'''
         NSMutableDictionary *resultDic = (NSMutableDictionary *)({result_dic_value.GetValueAsUnsigned()})
-        NSString *address_hm = (NSString *)[resultDic objectForKey:@"addressKey"];
+        NSString *address_hm = (NSString *)[resultDic objectForKey:(id)@"addressKey"];
         (NSString *)address_hm; 
     '''
     address_value = HM.evaluateExpressionValue(command_get_address)
