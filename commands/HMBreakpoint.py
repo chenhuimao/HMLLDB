@@ -33,7 +33,7 @@ import HMLLDBClassInfo
 
 def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand('command script add -f HMBreakpoint.breakpoint_frame bpframe -h "Set a breakpoint that stops only when the specified stack keyword is matched."')
-    debugger.HandleCommand('command script add -f HMBreakpoint.breakpoint_next_oc_method bpmethod -h "Set a breakpoint that stops when the next OC method is called(via objc_msgSend)."')
+    debugger.HandleCommand('command script add -f HMBreakpoint.breakpoint_next_oc_method bpmethod -h "Set a breakpoint that stops when the next OC method is called(via objc_msgSend) in the current thread."')
     debugger.HandleCommand('command script add -f HMBreakpoint.breakpoint_message bpmessage -h "Set a breakpoint for a selector on a class, even if the class itself doesn\'t override that selector."')
 
 
@@ -180,6 +180,9 @@ def breakpoint_next_oc_method(debugger, command, exe_ctx, result, internal_dict)
         (lldb) bpmethod
         (lldb) bpmethod -c
 
+    Notice:
+        The breakpoint stops only for the thread whose TID matches the current thread's ID.
+
     This command is implemented in HMBreakpoint.py
     """
 
@@ -199,11 +202,15 @@ def breakpoint_next_oc_method(debugger, command, exe_ctx, result, internal_dict)
     # 3. Get implementation via runtime.
     # 4. Set breakpoint(OneShot) in implementation.
 
-    target = debugger.GetSelectedTarget()
+    thread = exe_ctx.GetThread()
+    thread_id = thread.GetThreadID()
+    target = exe_ctx.GetTarget()
     bp = target.BreakpointCreateByName("objc_msgSend", "libobjc.A.dylib")
     bp.AddName("HMLLDB_bpmethod_objc_msgSend")
+    bp.SetThreadID(thread_id)
     bp.SetScriptCallbackFunction("HMBreakpoint.breakpoint_next_oc_method_handler")
 
+    HM.DPrint(f"Target thread index:{thread.GetIndexID()}, thread id:{thread_id}.")
     if options.is_continue:
         HM.processContinue()
     else:

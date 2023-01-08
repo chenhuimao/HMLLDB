@@ -39,8 +39,8 @@ For example, this is the command in my computer:
 | ivars          | Execute `[instance _ivarDescription]` |
 | ivarsinfo | Show ivars information of class |
 | bpframe        | Set a breakpoint that stops only when the specified stack keyword is matched |
-| bpmessage      | Set a breakpoint for a selector on a class, even if the class itself doesn't override that selector. |
-| bpmethod       | Set a breakpoint that stops when the next OC method is called(via objc_msgSend) |
+| bpmessage      | Set a breakpoint for a selector on a class, even if the class itself doesn't override that selector |
+| bpmethod       | Set a breakpoint that stops when the next OC method is called(via objc_msgSend) in the current thread |
 | rc             | Show general purpose registers changes |
 | rr             | Show the contents of register values from the current frame |
 | tracefunction  | Trace functions step by step until the next breakpoint is hit |
@@ -281,7 +281,7 @@ Notice:
 
 
 ### bpmethod
-Set a breakpoint that stops when the next OC method is called(via objc_msgSend).    
+Set a breakpoint that stops when the next OC method is called(via objc_msgSend) in the current thread.    
 When debugging the assembly instruction, it is very troublesome to see the `objc_msgSend` instruction. I usually want to jump the implementation of the method, but it is very inconvenient to find it. This command can solve this problem.     
 
 ```
@@ -290,6 +290,7 @@ When debugging the assembly instruction, it is very troublesome to see the `objc
 
 # Solution
 (lldb) bpmethod
+[HMLLDB] Target thread index:1, thread id:1692289.
 [HMLLDB] Done! You can continue program execution.
 
 # --continue/-c; Continue program execution after executing bpmethod
