@@ -23,6 +23,8 @@
 # https://github.com/chenhuimao/HMLLDB
 
 gPrefix = '''
+typedef struct objc_method *Method;
+
 typedef struct CGPoint {
     double x;
     double y;

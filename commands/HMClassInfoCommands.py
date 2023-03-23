@@ -25,6 +25,7 @@
 import lldb
 import shlex
 import optparse
+import HMExpressionPrefix
 import HMLLDBHelpers as HM
 import HMLLDBClassInfo
 
@@ -549,7 +550,7 @@ def findMethod(debugger, command, exe_ctx, result, internal_dict):
             (NSMutableString *)result;
         '''
 
-    result = HM.evaluateExpressionValue(command_script).GetObjectDescription()
+    result = HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix).GetObjectDescription()
     HM.DPrint(result)
 
 
