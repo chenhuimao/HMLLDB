@@ -27,6 +27,7 @@ from typing import List
 import shlex
 import optparse
 import re
+import HMExpressionPrefix
 import HMLLDBHelpers as HM
 import HMLLDBClassInfo
 
@@ -263,7 +264,7 @@ def set_breakpoint_with_object_and_selector(object_value: lldb.SBValue, selector
         Method targetMethod = class_getInstanceMethod(cls, hm_selector);
         (IMP)method_getImplementation(targetMethod);
     '''
-    imp_value = HM.evaluateExpressionValue(command_script)
+    imp_value = HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
     if not HM.judgeSBValueHasValue(imp_value):
         selector_desc = HM.evaluateExpressionValue(f"(char *){selector_value.GetValue()};").GetSummary()
         HM.DPrint(f"Failed to find {selector_desc} implementation in object({object_value.GetValue()})")
@@ -390,7 +391,7 @@ def breakpoint_message(debugger, command, exe_ctx, result, internal_dict):
         (NSMutableDictionary *)resultDic;
     '''
 
-    result_dic_value: lldb.SBValue = HM.evaluateExpressionValue(command_script)
+    result_dic_value: lldb.SBValue = HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
     # print result string
     command_get_desc = f'''

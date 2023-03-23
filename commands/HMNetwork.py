@@ -23,9 +23,11 @@
 # https://github.com/chenhuimao/HMLLDB
 
 import lldb
-import HMLLDBHelpers as HM
 import optparse
 import shlex
+import HMExpressionPrefix
+import HMLLDBHelpers as HM
+
 
 gProtocolName = "HMLLDBURLProtocolObserver"
 gCustomizedSELString = "HMLLDBProtocolClasses"
@@ -115,7 +117,7 @@ def swizzlingProtocolClasses():
         Method m2 = class_getInstanceMethod(cls, NSSelectorFromString(@"{gCustomizedSELString}"));
         method_exchangeImplementations(m1, m2);
     '''
-    HM.evaluateExpressionValue(command_script)
+    HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeHMLLDBProtocolClassesIMP() -> lldb.SBValue:
