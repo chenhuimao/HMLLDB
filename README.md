@@ -27,6 +27,7 @@ For example, this is the command in my computer:
 
 | Command        | Description            |
 | -------------- | ---------------------- |
+| autodsym       | Add a debug symbol file to the target's modules automatically |
 | deletefile     | Delete the specified file in the sandbox |
 | pbundlepath    | Print the path of the main bundle |
 | phomedirectory | Print the path of the home directory("~") |
@@ -81,6 +82,15 @@ Syntax: fmethod
 ## Example
 Some examples use the demo in the [Kingfisher](https://github.com/onevcat/Kingfisher) project.  
 **It is recommended to click `Pause program execution` to enter the LLDB debugging mode to execute commands, instead of executing commands by hitting breakpoints.**
+
+### autodsym
+The `target symbols add [<symfile>]` command needs to specify the address of the symbol, and the `autodsym` command allows you to omit the parameter.    
+```
+# The following two commands have the same effect
+(lldb) autodsym
+(lldb) target symbol add /path/to/dSYM
+```
+
 
 ### deletefile
 It is recommended to re-run the project after executing the command, because some data is still in the memory.
