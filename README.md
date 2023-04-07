@@ -46,6 +46,7 @@ For example, this is the command in my computer:
 | rr             | Show the contents of register values from the current frame |
 | tracefunction  | Trace functions step by step until the next breakpoint is hit |
 | traceinstruction | Trace instructions step by step until the next breakpoint is hit |
+| trace-step-over-instruction | Trace step over instruction |
 | pfont          | Print all font names supported by the device |
 | plifecycle     | Print life cycle of UIViewController |
 | redirect       | Redirect stdout/stderr |
@@ -535,6 +536,17 @@ Target 0: (Demo) stopped.
 (lldb) traceinstruction -m 8000
 ...
 ```
+
+### trace-step-over-instruction
+The lldb command `thread step-inst-over --count 100` cannot see the execution process. I need to know the execution result of the branch instruction in the function, so I need to print the "pc" register address after each "step over instruction". The `trace-step-over-instruction` command solves this problem.    
+```
+Syntax:
+    trace-step-over-instruction <count>
+
+Examples:
+    (lldb) trace-step-over-instruction 20
+```
+
 
 ### pfont
 Print all font names supported by the device.   

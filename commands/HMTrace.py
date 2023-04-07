@@ -33,6 +33,7 @@ import HMLLDBHelpers as HM
 def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand('command script add -f HMTrace.trace_function tracefunction -h "Trace functions step by step until the next breakpoint is hit."')
     debugger.HandleCommand('command script add -f HMTrace.trace_instruction traceinstruction -h "Trace instructions step by step until the next breakpoint is hit."')
+    debugger.HandleCommand('command script add -f HMTrace.trace_step_over_instruction trace-step-over-instruction -h "Trace step over instruction."')
 
 
 g_function_limit: int = -1
@@ -205,6 +206,27 @@ def generate_trace_instruction_option_parser() -> optparse.OptionParser:
     return parser
 
 
+def print_instruction(frame: lldb.SBFrame, target: lldb.SBTarget):
+    instructions = frame.GetSymbol().GetInstructions(target)
+    instruction_str: str = ""
+    pc_address_value: int = frame.GetPCAddress().GetLoadAddress(target)
+    for instruction in instructions:
+        if instruction.GetAddress() == frame.GetPCAddress():
+            comment = instruction.GetComment(target)
+            if len(comment) > 0:
+                instruction_str = f"{instruction.GetMnemonic(target)}\t{instruction.GetOperands(target)}\t\t\t; {comment}"
+            else:
+                instruction_str = f"{instruction.GetMnemonic(target)}\t{instruction.GetOperands(target)}"
+            break
+
+    stream = lldb.SBStream()
+    frame.GetPCAddress().GetDescription(stream)
+    if len(instruction_str) == 0:
+        print(hex(pc_address_value))
+    else:
+        print(f"{stream.GetData()}\t\t{instruction_str}\t({hex(pc_address_value)})")
+
+
 class TraceInstructionStep:
 
     def __init__(self, thread_plan, dic):
@@ -213,11 +235,16 @@ class TraceInstructionStep:
         self.thread_plan = thread_plan
         self.instruction_count = 1
 
-        self.print_instruction()  # first instruction
+        # first instruction
+        frame = self.thread_plan.GetThread().GetFrameAtIndex(0)
+        target = self.thread_plan.GetThread().GetProcess().GetTarget()
+        print_instruction(frame, target)
 
     def explains_stop(self, event: lldb.SBEvent) -> bool:
         self.instruction_count += 1
-        self.print_instruction()
+        frame = self.thread_plan.GetThread().GetFrameAtIndex(0)
+        target = self.thread_plan.GetThread().GetProcess().GetTarget()
+        print_instruction(frame, target)
         return True
 
     def should_stop(self, event: lldb.SBEvent) -> bool:
@@ -235,28 +262,6 @@ class TraceInstructionStep:
     def should_step(self) -> bool:
         return True
 
-    def print_instruction(self) -> None:
-        frame = self.thread_plan.GetThread().GetFrameAtIndex(0)
-        target = self.thread_plan.GetThread().GetProcess().GetTarget()
-        instructions = frame.GetSymbol().GetInstructions(target)
-        instruction_str: str = ""
-        pc_address_value: int = frame.GetPCAddress().GetLoadAddress(target)
-        for instruction in instructions:
-            if instruction.GetAddress() == frame.GetPCAddress():
-                comment = instruction.GetComment(target)
-                if len(comment) > 0:
-                    instruction_str = f"{instruction.GetMnemonic(target)}\t{instruction.GetOperands(target)}\t\t\t; {instruction.GetComment(target)}"
-                else:
-                    instruction_str = f"{instruction.GetMnemonic(target)}\t{instruction.GetOperands(target)}"
-                break
-
-        stream = lldb.SBStream()
-        frame.GetPCAddress().GetDescription(stream)
-        if len(instruction_str) == 0:
-            print(hex(pc_address_value))
-        else:
-            print(f"{stream.GetData()}\t\t{instruction_str}\t({hex(pc_address_value)})")
-
     def print_before_stop(self) -> None:
         self.thread_plan.SetPlanComplete(True)
         HM.DPrint("==========End========================================================")
@@ -265,3 +270,41 @@ class TraceInstructionStep:
         stop_time = datetime.now().strftime("%H:%M:%S")
         HM.DPrint(f"Stop time: {stop_time}")
 
+
+def trace_step_over_instruction(debugger, command, exe_ctx, result, internal_dict):
+    """
+    Syntax:
+        trace-step-over-instruction <count>
+
+    Examples:
+        (lldb) trace-step-over-instruction 20
+
+    This command is implemented in HMTrace.py
+    """
+
+    if len(command) == 0:
+        HM.DPrint("Error input, this command requires an integer parameter.")
+        return
+
+    try:
+        count = int(command)
+    except:
+        HM.DPrint("Error input, this command requires an integer parameter.")
+        return
+
+    if count <= 1:
+        HM.DPrint("Error input, the integer parameter must be greater than or equal to 2.")
+        return
+
+    thread = exe_ctx.GetThread()
+    target = exe_ctx.GetTarget()
+    print_instruction(thread.GetSelectedFrame(), target)
+    for i in range(count - 1):
+        thread.StepInstruction(True)
+        frame = thread.GetSelectedFrame()
+        print_instruction(frame, target)
+
+    async_state = lldb.debugger.GetAsync()
+    lldb.debugger.SetAsync(True)
+    thread.StepInstruction(True)
+    lldb.debugger.SetAsync(async_state)
