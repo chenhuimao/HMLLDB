@@ -44,6 +44,7 @@ For example, this is the command in my computer:
 | bpmethod       | Set a breakpoint that stops when the next OC method is called(via objc_msgSend) in the current thread |
 | rc             | Show general purpose registers changes |
 | rr             | Show the contents of register values from the current frame |
+| adrp           | Get the execution result of the adrp instruction |
 | tracefunction  | Trace functions step by step until the next breakpoint is hit |
 | traceinstruction | Trace instructions step by step until the next breakpoint is hit |
 | trace-step-over-instruction | Trace step over instruction |
@@ -378,6 +379,20 @@ General Purpose Registers:
 0x16dc24e68: 0x00000001bcd84f1c UIKitCore`-[UIApplication sendAction:to:from:forEvent:] + 100
 0x16dc24e70: 0x0000000281a30000
 ```
+
+### adrp
+Get the execution result of the `adrp` instruction.    
+`0x189aef040 <+32>:  adrp   x8, 348413`    
+When I see the above line of assembly code, I want to **quickly** get the value of x8 register.    
+
+```
+Syntax:
+    adrp <immediate> <pc address>
+
+(lldb) adrp 348413 0x189aef040
+[HMLLDB] result: 0x1debec000, 8032010240
+```
+
 
 ### tracefunction
 Trace functions step by step until the next breakpoint is hit.   
