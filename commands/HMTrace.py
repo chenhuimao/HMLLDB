@@ -26,6 +26,7 @@ import lldb
 from datetime import datetime
 import optparse
 import shlex
+import time
 import HMLLDBClassInfo
 import HMLLDBHelpers as HM
 
@@ -207,7 +208,7 @@ def generate_trace_instruction_option_parser() -> optparse.OptionParser:
 
 
 def print_instruction(frame: lldb.SBFrame, target: lldb.SBTarget):
-    instructions = frame.GetSymbol().GetInstructions(target)
+    instructions: lldb.SBInstructionList = frame.GetSymbol().GetInstructions(target)
     instruction_str: str = ""
     pc_address_value: int = frame.GetPCAddress().GetLoadAddress(target)
     for instruction in instructions:
@@ -296,15 +297,48 @@ def trace_step_over_instruction(debugger, command, exe_ctx, result, internal_dic
         HM.DPrint("Error input, the integer parameter must be greater than or equal to 2.")
         return
 
+    breakpoint_name = "HMLLDB_trace_step_over_instruction"
     thread = exe_ctx.GetThread()
     target = exe_ctx.GetTarget()
+
     print_instruction(thread.GetSelectedFrame(), target)
+    last_bp_id: int = set_breakpoint_at_next_pc_address(target, thread.GetSelectedFrame(), breakpoint_name)
+
     for i in range(count - 1):
         thread.StepInstruction(True)
+        delete_breakpoint_with_id(target, last_bp_id)
         frame = thread.GetSelectedFrame()
         print_instruction(frame, target)
+        last_bp_id = set_breakpoint_at_next_pc_address(target, frame, breakpoint_name)
 
-    async_state = lldb.debugger.GetAsync()
-    lldb.debugger.SetAsync(True)
+    async_state = debugger.GetAsync()
+    debugger.SetAsync(True)
     thread.StepInstruction(True)
-    lldb.debugger.SetAsync(async_state)
+    debugger.SetAsync(async_state)
+
+    time.sleep(2)
+    print_instruction(thread.GetSelectedFrame(), target)
+    delete_breakpoint_with_id(target, last_bp_id)
+
+
+def set_breakpoint_at_next_pc_address(target: lldb.SBTarget, frame: lldb.SBFrame, name: str) -> int:
+    instructions: lldb.SBInstructionList = frame.GetSymbol().GetInstructions(target)
+    instructions_count = instructions.GetSize()
+    for i in range(instructions_count - 1):
+        instruction: lldb.SBInstruction = instructions.GetInstructionAtIndex(i)
+        if instruction.GetAddress() == frame.GetPCAddress():
+            next_instruction = instructions.GetInstructionAtIndex(i + 1)
+            next_address: int = next_instruction.GetAddress().GetLoadAddress(target)
+            bp = target.BreakpointCreateByAddress(next_address)
+            bp.AddName(name)
+            return bp.GetID()
+
+    return 0
+
+
+def delete_breakpoint_with_id(target: lldb.SBTarget, bp_id: int) -> bool:
+    if bp_id != 0:
+        return target.BreakpointDelete(bp_id)
+    return False
+
+
