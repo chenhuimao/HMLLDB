@@ -305,15 +305,17 @@ def trace_step_over_instruction(debugger, command, exe_ctx, result, internal_dic
     last_bp_id: int = set_breakpoint_at_next_pc_address(target, thread.GetSelectedFrame(), breakpoint_name)
 
     for i in range(count - 1):
-        thread.StepInstruction(True)
+        is_step_over = should_step_over(target, thread.GetSelectedFrame())
+        thread.StepInstruction(is_step_over)
         delete_breakpoint_with_id(target, last_bp_id)
         frame = thread.GetSelectedFrame()
         print_instruction(frame, target)
         last_bp_id = set_breakpoint_at_next_pc_address(target, frame, breakpoint_name)
 
+    is_step_over = should_step_over(target, thread.GetSelectedFrame())
     async_state = debugger.GetAsync()
     debugger.SetAsync(True)
-    thread.StepInstruction(True)
+    thread.StepInstruction(is_step_over)
     debugger.SetAsync(async_state)
 
     time.sleep(2)
@@ -341,4 +343,14 @@ def delete_breakpoint_with_id(target: lldb.SBTarget, bp_id: int) -> bool:
         return target.BreakpointDelete(bp_id)
     return False
 
+
+def should_step_over(target: lldb.SBTarget, frame: lldb.SBFrame) -> bool:
+    instruction_list: lldb.SBInstructionList = frame.GetSymbol().GetInstructions(target)
+    for instruction in instruction_list:
+        if instruction.GetAddress() == frame.GetPCAddress():
+            opcode = instruction.GetMnemonic(target)
+            if "ret" in opcode:
+                return False
+
+    return True
 
