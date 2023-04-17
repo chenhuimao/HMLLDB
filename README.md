@@ -553,7 +553,11 @@ Target 0: (Demo) stopped.
 ```
 
 ### trace-step-over-instruction
-The lldb command `thread step-inst-over --count 100` cannot see the execution process. I need to know the execution result of the branch instruction in the function, so I need to print the "pc" register address after each "step over instruction". The `trace-step-over-instruction` command solves this problem.    
+There are two problems with the lldb command `thread step-inst-over --count 100`.
+- I only know the result and cannot see the process of command execution. I have to see the current pc register address after each "step over instruction".    
+- When encountering certain instructions such as "bl", "ret", the behavior is not as expected.    
+
+The `trace-step-over-instruction` command solves these problems.    
 ```
 Syntax:
     trace-step-over-instruction <count>
