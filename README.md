@@ -8,7 +8,7 @@
 - Some commands provide interactive UI within the APP
 
 ## Requirements
-- Xcode 14.1
+- Xcode 14.3
 - 64-bit simulator or real device, iOS 11.0+
 - Debug configuration (or ***Optimization Level*** set [-O0]/[-Onone])
 

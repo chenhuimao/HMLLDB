@@ -415,8 +415,10 @@ def pSBTarget(obj: Optional[lldb.SBTarget]) -> None:
     print_format("GetByteOrder(resolved)", get_string_from_byte_order(byte_order))
     print_format("GetAddressByteSize", target.GetAddressByteSize())
     print_format("GetTriple", target.GetTriple())
+    print_format("GetABIName", target.GetABIName())
     print_format("GetDataByteSize", target.GetDataByteSize())
     print_format("GetCodeByteSize", target.GetCodeByteSize())
+    print_format("GetMaximumNumberOfChildrenToDisplay", target.GetMaximumNumberOfChildrenToDisplay())
     print_format("FindFunctions.first", target.FindFunctions("viewDidLoad")[0])  # SBSymbolContext
     print_format("FindFirstType", target.FindFirstType("UIResponder"))  # SBType
     print_format("FindTypes", target.FindTypes("UIView"))  # SBTypeList
@@ -545,6 +547,7 @@ def pSBThread(obj: Optional[lldb.SBThread]) -> None:
     print_format("GetCurrentException", thread.GetCurrentException())  # SBValue
     print_format("GetCurrentExceptionBacktrace", thread.GetCurrentExceptionBacktrace())  # SBValue
     print_format("SafeToCallFunctions", thread.SafeToCallFunctions())
+    print_format("GetSiginfo", thread.GetSiginfo())  # SBValue
 
     print_traversal(thread, "GetStopReasonDataCount", "GetStopReasonDataAtIndex")  # [int]
     print_traversal(thread, "GetNumFrames", "GetFrameAtIndex")  # [SBFrame]
