@@ -351,7 +351,7 @@ def breakpoint_message(debugger, command, exe_ctx, result, internal_dict):
             Method *instanceMethodList = class_copyMethodList(cls, &instanceMethodCount);
             for (int i = 0; i < instanceMethodCount; ++i) {{
                 Method method = instanceMethodList[i];
-            if (strcmp((const char *)[methodName UTF8String], (const char *)sel_getName(method_getName(method))) == 0) {{
+                if (strcmp((const char *)[methodName UTF8String], (const char *)sel_getName(method_getName(method))) == 0) {{
                     originalIMP = (void (*)(void))method_getImplementation(method);
                     break;
                 }}
@@ -423,13 +423,26 @@ def breakpoint_message(debugger, command, exe_ctx, result, internal_dict):
 
     target = lldb.debugger.GetSelectedTarget()
     bp = target.BreakpointCreateByAddress(int(target_address, 16))
-    bp.AddName(f"HMBreakpoint_bpmessage_breakpoint_{target_address}")
-    bp.SetScriptCallbackFunction("HMBreakpoint.bpmessage_breakpoint_handler")
+    bp.AddName(f"bpmessage_{class_name}_{method_name}_{target_address}")
+
+    extra_args = lldb.SBStructuredData()
+    stream = lldb.SBStream()
+    stream.Print(f"\"{command}\"")
+    extra_args.SetFromJSON(stream)
+    bp.SetScriptCallbackFunction("HMBreakpoint.bpmessage_breakpoint_handler", extra_args)
+
     bp_id = bp.GetID()
     debugger.HandleCommand(f"breakpoint list {bp_id}")
     HM.DPrint("Done!")
 
 
-def bpmessage_breakpoint_handler(frame, bp_loc, internal_dict) -> bool:
+def bpmessage_breakpoint_handler(frame, bp_loc, extra_args, internal_dict) -> bool:
+    if not extra_args.IsValid():
+        return True
+    if extra_args.GetType() != lldb.eStructuredDataTypeString:
+        return True
+
+    method: str = extra_args.GetStringValue(1000)
+    HM.DPrint(f"Hit breakpoint in {method}.")
     return True
 

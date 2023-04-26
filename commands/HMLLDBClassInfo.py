@@ -1342,6 +1342,7 @@ def pSBStructuredData(obj: Optional[lldb.SBStructuredData]) -> None:
     print_format("GetIntegerValue", sd.GetIntegerValue())
     print_format("GetFloatValue", sd.GetFloatValue())
     print_format("GetBooleanValue", sd.GetBooleanValue())
+    print_format("GetStringValue", sd.GetStringValue(1000))
     stream = lldb.SBStream()
     sd.GetAsJSON(stream)
     print_format("GetAsJSON", stream.GetData())
