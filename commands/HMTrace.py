@@ -318,7 +318,7 @@ def trace_step_over_instruction(debugger, command, exe_ctx, result, internal_dic
     thread.StepInstruction(is_step_over)
     debugger.SetAsync(async_state)
 
-    time.sleep(2)
+    time.sleep(1)
     print_instruction(thread.GetSelectedFrame(), target)
     delete_breakpoint_with_id(target, last_bp_id)
 
