@@ -321,16 +321,21 @@ def breakpoint_message(debugger, command, exe_ctx, result, internal_dict):
     method_name = match.group("selector")
     if method_type_character == '+':
         is_class_method = 1
-    else:
+        method_type = "class"
+    elif method_type_character == '-':
         is_class_method = 0
+        method_type = "instance"
+    else:
+        print("Failed to parse expression. Please enter \"help bpmessage\" for help.")
+        return
 
     HM.DPrint("Waiting...")
 
     command_script = f'''
         NSMutableDictionary *resultDic = [[NSMutableDictionary alloc] init];
-        NSString *methodName = @"{method_name}";
+        SEL methodSelector = (SEL)sel_registerName("{method_name}");
         do {{
-            Class cls = NSClassFromString(@"{class_name}");
+            Class cls = objc_lookUpClass("{class_name}");
             if (!cls) {{
                 [resultDic setObject:@"Can't find {class_name} class." forKey:(id)@"failKey"];
                 break;
@@ -351,7 +356,7 @@ def breakpoint_message(debugger, command, exe_ctx, result, internal_dict):
             Method *instanceMethodList = class_copyMethodList(cls, &instanceMethodCount);
             for (int i = 0; i < instanceMethodCount; ++i) {{
                 Method method = instanceMethodList[i];
-                if (strcmp((const char *)[methodName UTF8String], (const char *)sel_getName(method_getName(method))) == 0) {{
+                if (strcmp((const char *)methodSelector, (const char *)sel_getName(method_getName(method))) == 0) {{
                     originalIMP = (void (*)(void))method_getImplementation(method);
                     break;
                 }}
@@ -366,24 +371,24 @@ def breakpoint_message(debugger, command, exe_ctx, result, internal_dict):
             }}
             
 
-            Method originalMethod = class_getInstanceMethod(cls, NSSelectorFromString(methodName));
+            Method originalMethod = class_getInstanceMethod(cls, methodSelector);
             if (!originalMethod) {{
-                [resultDic setObject:@"The {method_name} method does not exist in the {class_name} and its super class." forKey:(id)@"failKey"];
+                [resultDic setObject:@"The {method_name} {method_type} method does not exist in the {class_name} and its super class." forKey:(id)@"failKey"];
                 break;
             }}
             
             originalIMP = (void (*)(void))method_getImplementation(originalMethod);
     
             void (^IMPBlock_hm)(id) = ^(id instance_hm) {{
-                ((void (*)(id, char *)) originalIMP)(instance_hm, (char *)NSSelectorFromString(methodName));
+                ((void (*)(id, char *)) originalIMP)(instance_hm, (char *)methodSelector);
             }};
             
             IMP newIMP = imp_implementationWithBlock(IMPBlock_hm);
-            class_addMethod(cls, NSSelectorFromString(methodName), newIMP, method_getTypeEncoding(originalMethod));
+            class_addMethod(cls, methodSelector, newIMP, method_getTypeEncoding(originalMethod));
             
             NSString *adddressValue = [[NSString alloc] initWithFormat:@"0x%lx", (long)newIMP];
             [resultDic setObject:adddressValue forKey:(id)@"addressKey"];
-            [resultDic setObject:@"Find the implementation in the super class. HMLLDB added a new {method_name} method to {class_name} class." forKey:(id)@"successKey"];
+            [resultDic setObject:@"Find the implementation in the super class. HMLLDB added a new {method_name} {method_type} method to {class_name} class." forKey:(id)@"successKey"];
             
         }} while (0);
         
@@ -393,6 +398,7 @@ def breakpoint_message(debugger, command, exe_ctx, result, internal_dict):
 
     result_dic_value: lldb.SBValue = HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
+    HM.DPrint("Waiting......")
     # print result string
     command_get_desc = f'''
         NSMutableDictionary *resultDic = (NSMutableDictionary *)({result_dic_value.GetValueAsUnsigned()})
