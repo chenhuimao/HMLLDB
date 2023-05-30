@@ -313,7 +313,7 @@ def breakpoint_message(debugger, command, exe_ctx, result, internal_dict):
     match = methodPattern.match(command)
 
     if not match:
-        print("Failed to parse expression. Please enter \"help bpmessage\" for help.")
+        HM.DPrint("Failed to parse expression. Please enter \"help bpmessage\" for help.")
         return
 
     method_type_character = match.group("scope")
@@ -326,7 +326,7 @@ def breakpoint_message(debugger, command, exe_ctx, result, internal_dict):
         is_class_method = 0
         method_type = "instance"
     else:
-        print("Failed to parse expression. Please enter \"help bpmessage\" for help.")
+        HM.DPrint("Failed to parse expression. Please enter \"help bpmessage\" for help.")
         return
 
     HM.DPrint("Waiting...")

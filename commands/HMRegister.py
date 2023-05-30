@@ -26,7 +26,7 @@ import lldb
 import math
 import optparse
 import shlex
-from typing import Dict, List
+from typing import Dict, List, Tuple
 import HMLLDBClassInfo
 import HMLLDBHelpers as HM
 
@@ -38,7 +38,7 @@ last_disassemble: str = ""
 
 def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand('command script add -f HMRegister.register_change rc -h "Show general purpose registers changes."')
-    debugger.HandleCommand('command script add -f HMRegister.register_read rr -h "Show the contents of register values from the current frame."')
+    debugger.HandleCommand('command script add -f HMRegister.register_read rr -h "Alias for \'register read\' with additional -s/--sp arguments."')
 
 
 def register_change(debugger, command, exe_ctx, result, internal_dict):
@@ -147,42 +147,74 @@ def print_last_instruction_if_needed(frame: lldb.SBFrame) -> None:
 def register_read(debugger, command, exe_ctx, result, internal_dict):
     """
     Syntax:
-        rr [-a] [-s <offset>]
+        Alias for 'register read' with additional -s/--sp arguments
+        rr [-s <offset>]
 
     Options:
-        --all/-a; Show all register sets.
         --sp/-s; Show [sp, (sp + offset)] address value.
 
     Examples:
         // Alias for 'register read'
-        (lldb) rr
+        (lldb)rr
 
         // Alias for 'register read -a'
-        (lldb) rr -a
+        (lldb)rr -a
 
         // Show [sp, (sp + offset)] address value after execute 'register read'
-        (lldb) rr -s 64
+        (lldb)rr -s 64
+        (lldb)rr -s 0x40
+        (lldb)rr -s 0x40 -a
+
+        (lldb)rr x0 sp -s 0x10
+        [HMLLDB] register read x0 sp!
+            x0 = 0x0000000000000000
+            sp = 0x000000016fb2cdf0
+        0x16fb2cdf0: 0x000000010110b8b0
+        0x16fb2cdf8: 0x00000001002e5008 "clickBtn:"
+        0x16fb2ce00: 0x0000000101137b80
 
     This command is implemented in HMRegister.py
     """
 
-    command_args = shlex.split(command)
-    parser = generate_rr_option_parser()
-    try:
-        # options: optparse.Values
-        # args: list
-        (options, args_list) = parser.parse_args(command_args)
-    except:
-        result.SetError(parser.usage)
-        return
+    command_args: list[str] = shlex.split(command)
+    # Find the offset value of the sp register
+    sp_offset: str = ""
+    for i in range(len(command_args)):
+        if i == 0:
+            continue
+        current_arg = command_args[i]
+        previous_arg = command_args[i-1]
+        if previous_arg == "--sp" or previous_arg == "-s":
+            sp_offset = current_arg
+            if sp_offset.startswith('-'):
+                HM.DPrint("Error input. Please enter \"help rr\" for help.")
+                return
+            break
 
-    if options.all:
-        debugger.HandleCommand("register read -all")
-    else:
-        debugger.HandleCommand("register read")
+    if len(sp_offset) > 0:
+        sp_offset_is_valid, sp_offset_value = HM.int_value_from_string(sp_offset)
+        if not sp_offset_is_valid:
+            HM.DPrint("Error input. The <offset> parameter does not support being converted to an integer. Please enter \"help rr\" for help.")
+            return
 
-    if options.sp:
-        number_of_address = math.ceil(int(options.sp) / 8) + 1
+    # Concatenate other parameters
+    args_for_system: str = ""
+    for i in range(len(command_args)):
+        current_arg = command_args[i]
+        if i == 0 and current_arg != "--sp" and current_arg != "-s":
+            args_for_system += current_arg + ' '
+            continue
+
+        previous_arg = command_args[i-1]
+        if previous_arg == "--sp" or previous_arg == "-s" or current_arg == "--sp" or current_arg == "-s":
+            continue
+        args_for_system += current_arg + ' '
+
+    args_for_system = args_for_system.rstrip()
+    HM.DPrint(f"register read {args_for_system}")
+    debugger.HandleCommand(f"register read {args_for_system}")
+    if len(sp_offset) > 0:
+        number_of_address = math.ceil(sp_offset_value / 8) + 1
         sp_address = exe_ctx.GetFrame().GetSP()
         debugger.HandleCommand(f"x/{number_of_address}a {sp_address}")
 

@@ -43,7 +43,7 @@ For example, this is the command in my computer:
 | bpmessage      | Set a breakpoint for a selector on a class, even if the class itself doesn't override that selector |
 | bpmethod       | Set a breakpoint that stops when the next OC method is called(via objc_msgSend) in the current thread |
 | rc             | Show general purpose registers changes |
-| rr             | Show the contents of register values from the current frame |
+| rr             | Alias for 'register read' with additional -s/--sp arguments |
 | adrp           | Get the execution result of the adrp instruction |
 | tracefunction  | Trace functions step by step until the next breakpoint is hit |
 | traceinstruction | Trace instructions step by step until the next breakpoint is hit |
@@ -323,7 +323,7 @@ Show general purpose registers changes after stepping over instruction.
 ```
 
 ### rr
-Show the contents of register values from the current frame.   
+Alias for `register read` with additional -s/--sp arguments. Dump the contents of one or more register values from the current frame.     
 ```
 // Alias for 'register read'
 (lldb) rr
@@ -333,6 +333,8 @@ Show the contents of register values from the current frame.
 
 // Show [sp, (sp + offset)] address value after execute 'register read'
 (lldb) rr -s 64
+(lldb) rr -s 0x40
+[HMLLDB] register read
 General Purpose Registers:
         x0 = 0x000000016dc24e48
         x1 = 0x0000000000000000
@@ -378,6 +380,14 @@ General Purpose Registers:
 0x16dc24e60: 0x000000016dc24e90
 0x16dc24e68: 0x00000001bcd84f1c UIKitCore`-[UIApplication sendAction:to:from:forEvent:] + 100
 0x16dc24e70: 0x0000000281a30000
+
+(lldb)rr x0 sp -s 0x10
+[HMLLDB] register read x0 sp!
+    x0 = 0x0000000000000000
+    sp = 0x000000016fb2cdf0
+0x16fb2cdf0: 0x000000010110b8b0
+0x16fb2cdf8: 0x00000001002e5008 "clickBtn:"
+0x16fb2ce00: 0x0000000101137b80
 ```
 
 ### adrp
