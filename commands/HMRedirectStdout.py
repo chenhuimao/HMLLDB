@@ -71,13 +71,13 @@ def redirect(debugger, command, exe_ctx, result, internal_dict):
         mode = "a+"
 
     if stream == "stdout" or stream == "stderr":
-        redirectValue = HM.evaluateExpressionValue(f"freopen(\"{path}\", \"{mode}\", {stream})")
+        redirectValue = HM.evaluate_expression_value(f"freopen(\"{path}\", \"{mode}\", {stream})")
         logRedirectResult(redirectValue, stream)
 
     elif stream == "both":
-        stdoutValue = HM.evaluateExpressionValue(f"freopen(\"{path}\", \"{mode}\", stdout)")
+        stdoutValue = HM.evaluate_expression_value(f"freopen(\"{path}\", \"{mode}\", stdout)")
         logRedirectResult(stdoutValue, "stdout")
-        stderrValue = HM.evaluateExpressionValue(f"freopen(\"{path}\", \"{mode}\", stderr)")
+        stderrValue = HM.evaluate_expression_value(f"freopen(\"{path}\", \"{mode}\", stderr)")
         logRedirectResult(stderrValue, "stderr")
 
     else:

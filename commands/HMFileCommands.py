@@ -60,7 +60,7 @@ def pHomeDirectory(debugger, command, exe_ctx, result, internal_dict):
         result.SetError(parser.usage)
         return
 
-    homeDirectoryValue = HM.evaluateExpressionValue('(NSString *)NSHomeDirectory()')
+    homeDirectoryValue = HM.evaluate_expression_value('(NSString *)NSHomeDirectory()')
     path = homeDirectoryValue.GetObjectDescription()
     HM.DPrint(path)
     if options.open:
@@ -92,12 +92,12 @@ def pBundlePath(debugger, command, exe_ctx, result, internal_dict):
         result.SetError(parser.usage)
         return
 
-    bundlePathValue = HM.evaluateExpressionValue('(NSString*)[[NSBundle mainBundle] bundlePath]')
+    bundlePathValue = HM.evaluate_expression_value('(NSString*)[[NSBundle mainBundle] bundlePath]')
     path = bundlePathValue.GetObjectDescription()
     HM.DPrint(path)
     if options.open:
         # Cannot open the bundle, so we open the directory where the bundle is located.
-        directoryValue = HM.evaluateExpressionValue(f'(NSString *)[(NSString *){bundlePathValue.GetValue()} stringByDeletingLastPathComponent]')
+        directoryValue = HM.evaluate_expression_value(f'(NSString *)[(NSString *){bundlePathValue.GetValue()} stringByDeletingLastPathComponent]')
         os.system('open ' + directoryValue.GetObjectDescription())
 
 
@@ -139,37 +139,37 @@ def deleteFile(debugger, command, exe_ctx, result, internal_dict):
     if options.all:
         # Reserve the directory under the Home directory
         hasOption = True
-        subFileArrayValue = HM.evaluateExpressionValue("[[NSFileManager defaultManager] contentsOfDirectoryAtPath:(NSString *)NSHomeDirectory() error:nil]")
+        subFileArrayValue = HM.evaluate_expression_value("[[NSFileManager defaultManager] contentsOfDirectoryAtPath:(NSString *)NSHomeDirectory() error:nil]")
         for i in range(subFileArrayValue.GetNumChildren()):
             subFileValue = subFileArrayValue.GetChildAtIndex(i)
             HM.DPrint("=============" + subFileValue.GetObjectDescription() + "=============")
-            subFilePathValue = HM.evaluateExpressionValue(f"[(NSString *)NSHomeDirectory() stringByAppendingPathComponent:(NSString *){subFileValue.GetValue()}]")
+            subFilePathValue = HM.evaluate_expression_value(f"[(NSString *)NSHomeDirectory() stringByAppendingPathComponent:(NSString *){subFileValue.GetValue()}]")
             deleteAllFileInDirectory(subFilePathValue.GetObjectDescription())
 
     if options.documents:
         hasOption = True
-        documentsDirectoryValue = HM.evaluateExpressionValue("(NSString *)[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject]")
+        documentsDirectoryValue = HM.evaluate_expression_value("(NSString *)[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject]")
         deleteAllFileInDirectory(documentsDirectoryValue.GetObjectDescription())
 
     if options.library:
         hasOption = True
-        libraryDirectoryValue = HM.evaluateExpressionValue("(NSString *)[NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) firstObject]")
+        libraryDirectoryValue = HM.evaluate_expression_value("(NSString *)[NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) firstObject]")
         deleteAllFileInDirectory(libraryDirectoryValue.GetObjectDescription())
 
     if options.tmp:
         hasOption = True
-        tmpDirectoryValue = HM.evaluateExpressionValue("(NSString *)NSTemporaryDirectory()")
+        tmpDirectoryValue = HM.evaluate_expression_value("(NSString *)NSTemporaryDirectory()")
         deleteAllFileInDirectory(tmpDirectoryValue.GetObjectDescription())
 
     if options.caches:
         hasOption = True
-        cachesDirectoryValue = HM.evaluateExpressionValue("(NSString *)[NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) firstObject]")
+        cachesDirectoryValue = HM.evaluate_expression_value("(NSString *)[NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) firstObject]")
         deleteAllFileInDirectory(cachesDirectoryValue.GetObjectDescription())
 
     if options.preferences:
         hasOption = True
-        libraryDirectoryValue = HM.evaluateExpressionValue("(NSString *)[NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) firstObject]")
-        preferencesDirectoryValue = HM.evaluateExpressionValue(f"(NSString *)[(NSString *){libraryDirectoryValue.GetValue()} stringByAppendingPathComponent:@\"Preferences\"]")
+        libraryDirectoryValue = HM.evaluate_expression_value("(NSString *)[NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) firstObject]")
+        preferencesDirectoryValue = HM.evaluate_expression_value(f"(NSString *)[(NSString *){libraryDirectoryValue.GetValue()} stringByAppendingPathComponent:@\"Preferences\"]")
         deleteAllFileInDirectory(preferencesDirectoryValue.GetObjectDescription())
 
     if options.file:
@@ -206,7 +206,7 @@ def deleteAllFileInDirectory(directoryPath: str) -> None:
         result;
     '''
 
-    result = HM.evaluateExpressionValue(command_script).GetObjectDescription()
+    result = HM.evaluate_expression_value(command_script).GetObjectDescription()
     HM.DPrint(result)
 
 
@@ -229,7 +229,7 @@ def deleteFileOrDirectory(filePath: str) -> None:
 
         result;
     '''
-    result = HM.evaluateExpressionValue(command_script).GetObjectDescription()
+    result = HM.evaluate_expression_value(command_script).GetObjectDescription()
     HM.DPrint(result)
 
 

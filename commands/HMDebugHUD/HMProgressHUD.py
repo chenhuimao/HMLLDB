@@ -34,56 +34,56 @@ gClassName = "HMProgressHUD"
 
 def register() -> None:
 
-    if HM.existClass(gClassName):
+    if HM.is_existing_class(gClassName):
         return
 
     # Register class
     HM.DPrint(f"Register {gClassName}...")
-    classValue = HM.allocateClass(gClassName, "UIView")
-    HM.addIvar(classValue.GetValue(), "_contentView", "UIView *")
-    HM.addIvar(classValue.GetValue(), "_indicator", "UIActivityIndicatorView *")
-    HM.addIvar(classValue.GetValue(), "_textLab", "UILabel *")
-    HM.addIvar(classValue.GetValue(), "_hideDelayTimer", "NSTimer *")
-    HM.registerClass(classValue.GetValue())
+    classValue = HM.allocate_class(gClassName, "UIView")
+    HM.add_ivar(classValue.GetValue(), "_contentView", "UIView *")
+    HM.add_ivar(classValue.GetValue(), "_indicator", "UIActivityIndicatorView *")
+    HM.add_ivar(classValue.GetValue(), "_textLab", "UILabel *")
+    HM.add_ivar(classValue.GetValue(), "_hideDelayTimer", "NSTimer *")
+    HM.register_class(classValue.GetValue())
 
     # Add Class methods
     HM.DPrint(f"Add methods to {gClassName}...")
     sharedInstanceIMPValue = makeSharedInstanceIMP()
-    if not HM.judgeSBValueHasValue(sharedInstanceIMPValue):
+    if not HM.is_SBValue_has_value(sharedInstanceIMPValue):
         return
-    HM.addClassMethod(gClassName, "sharedInstance", sharedInstanceIMPValue.GetValue(), "@@:")
+    HM.add_class_method(gClassName, "sharedInstance", sharedInstanceIMPValue.GetValue(), "@@:")
 
     showHUDIMPValue = makeShowHUDIMP()
-    if not HM.judgeSBValueHasValue(showHUDIMPValue):
+    if not HM.is_SBValue_has_value(showHUDIMPValue):
         return
-    HM.addClassMethod(gClassName, "showHUD", showHUDIMPValue.GetValue(), "@@:")
+    HM.add_class_method(gClassName, "showHUD", showHUDIMPValue.GetValue(), "@@:")
 
     showOnlyTextIMPValue = makeShowOnlyTextHiddenAfterDelayIMP()
-    if not HM.judgeSBValueHasValue(showOnlyTextIMPValue):
+    if not HM.is_SBValue_has_value(showOnlyTextIMPValue):
         return
-    HM.addClassMethod(gClassName, "showOnlyText:hiddenAfterDelay:", showOnlyTextIMPValue.GetValue(), "@@:@i")
+    HM.add_class_method(gClassName, "showOnlyText:hiddenAfterDelay:", showOnlyTextIMPValue.GetValue(), "@@:@i")
 
     hideHUDIMPValue = makeHideHUDIMP()
-    if not HM.judgeSBValueHasValue(hideHUDIMPValue):
+    if not HM.is_SBValue_has_value(hideHUDIMPValue):
         return
-    HM.addClassMethod(gClassName, "hideHUD", hideHUDIMPValue.GetValue(), "@@:")
+    HM.add_class_method(gClassName, "hideHUD", hideHUDIMPValue.GetValue(), "@@:")
 
     setTextIMPValue = makeSetTextIMP()
-    if not HM.judgeSBValueHasValue(setTextIMPValue):
+    if not HM.is_SBValue_has_value(setTextIMPValue):
         return
-    HM.addClassMethod(gClassName, "setText:", setTextIMPValue.GetValue(), "v@:@")
+    HM.add_class_method(gClassName, "setText:", setTextIMPValue.GetValue(), "v@:@")
 
     # Add Instance methods
     HM.DPrint(f"Add methods to {gClassName}......")
     initWithFrameIMPValue = makeInitWithFrameIMP()
-    if not HM.judgeSBValueHasValue(initWithFrameIMPValue):
+    if not HM.is_SBValue_has_value(initWithFrameIMPValue):
         return
-    HM.addInstanceMethod(gClassName, "initWithFrame:", initWithFrameIMPValue.GetValue(), "@@:{CGRect={CGPoint=dd}{CGSize=dd}}")
+    HM.add_instance_method(gClassName, "initWithFrame:", initWithFrameIMPValue.GetValue(), "@@:{CGRect={CGPoint=dd}{CGSize=dd}}")
 
     layoutSubviewsIMPValue = makeLayoutSubviewsIMP()
-    if not HM.judgeSBValueHasValue(layoutSubviewsIMPValue):
+    if not HM.is_SBValue_has_value(layoutSubviewsIMPValue):
         return
-    HM.addInstanceMethod(gClassName, "layoutSubviews", layoutSubviewsIMPValue.GetValue(), "v@:")
+    HM.add_instance_method(gClassName, "layoutSubviews", layoutSubviewsIMPValue.GetValue(), "v@:")
 
     HM.DPrint(f"Register {gClassName} done!")
 
@@ -101,7 +101,7 @@ def show(text: Optional[str]) -> None:
         command_script += f'(void)[progressHUDCls performSelector:@selector(setText:) withObject:@"{text}"];'
 
     command_script += "(void)[CATransaction flush];"
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def hide() -> None:
@@ -110,7 +110,7 @@ def hide() -> None:
         (UIView *)[progressHUDCls performSelector:@selector(hideHUD)];
         (void)[CATransaction flush];
     '''
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeSharedInstanceIMP() -> lldb.SBValue:
@@ -128,7 +128,7 @@ def makeSharedInstanceIMP() -> lldb.SBValue:
         imp_implementationWithBlock(IMPBlock);    
     '''
 
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeShowHUDIMP() -> lldb.SBValue:
@@ -156,7 +156,7 @@ def makeShowHUDIMP() -> lldb.SBValue:
         imp_implementationWithBlock(IMPBlock);    
     '''
 
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeShowOnlyTextHiddenAfterDelayIMP() -> lldb.SBValue:
@@ -194,7 +194,7 @@ def makeShowOnlyTextHiddenAfterDelayIMP() -> lldb.SBValue:
         imp_implementationWithBlock(IMPBlock);    
     '''
 
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeHideHUDIMP() -> lldb.SBValue:
@@ -216,7 +216,7 @@ def makeHideHUDIMP() -> lldb.SBValue:
         imp_implementationWithBlock(IMPBlock);    
     '''
 
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeSetTextIMP() -> lldb.SBValue:
@@ -234,7 +234,7 @@ def makeSetTextIMP() -> lldb.SBValue:
         imp_implementationWithBlock(IMPBlock);    
     '''
 
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeInitWithFrameIMP() -> lldb.SBValue:
@@ -277,7 +277,7 @@ def makeInitWithFrameIMP() -> lldb.SBValue:
         imp_implementationWithBlock(IMPBlock);    
     '''
 
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeLayoutSubviewsIMP() -> lldb.SBValue:
@@ -332,4 +332,4 @@ def makeLayoutSubviewsIMP() -> lldb.SBValue:
         imp_implementationWithBlock(IMPBlock);    
     '''
 
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)

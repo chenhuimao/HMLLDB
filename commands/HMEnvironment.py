@@ -63,15 +63,15 @@ def environment(debugger, command, exe_ctx, result, internal_dict):
 
     HM.DPrint('[Optimized] ' + getOptimizedStr())
 
-    XcodeVersionValue = HM.evaluateExpressionValue('(NSString *)([NSBundle mainBundle].infoDictionary[@"DTXcode"] ?: @"-")')
+    XcodeVersionValue = HM.evaluate_expression_value('(NSString *)([NSBundle mainBundle].infoDictionary[@"DTXcode"] ?: @"-")')
     HM.DPrint('[Xcode version] ' + XcodeVersionValue.GetObjectDescription())
 
-    XcodeBuildVersionValue = HM.evaluateExpressionValue('(NSString *)([NSBundle mainBundle].infoDictionary[@"DTXcodeBuild"] ?: @"-")')
+    XcodeBuildVersionValue = HM.evaluate_expression_value('(NSString *)([NSBundle mainBundle].infoDictionary[@"DTXcodeBuild"] ?: @"-")')
     HM.DPrint('[Xcode build version] ' + XcodeBuildVersionValue.GetObjectDescription())
 
     HM.DPrint('[Model identifier] ' + getModelIdentifier())
 
-    SystemVersionValue = HM.evaluateExpressionValue('(NSString *)[[NSString alloc] initWithFormat:@"%@ %@", [[UIDevice currentDevice] systemName], [[UIDevice currentDevice] systemVersion]]')
+    SystemVersionValue = HM.evaluate_expression_value('(NSString *)[[NSString alloc] initWithFormat:@"%@ %@", [[UIDevice currentDevice] systemName], [[UIDevice currentDevice] systemVersion]]')
     HM.DPrint('[System version] ' + SystemVersionValue.GetObjectDescription())
 
 
@@ -106,5 +106,5 @@ def getModelIdentifier() -> str:
         NSString *modelIdentifier = [NSString stringWithCString:systemInfo.machine encoding:(NSStringEncoding)4];
         modelIdentifier;
     '''
-    modelIDValue = HM.evaluateExpressionValue(command_script)
+    modelIDValue = HM.evaluate_expression_value(command_script)
     return modelIDValue.GetObjectDescription()

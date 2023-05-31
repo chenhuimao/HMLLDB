@@ -59,6 +59,6 @@ def printFont(debugger, command, exe_ctx, result, internal_dict):
         (NSMutableString *)result;
     '''
 
-    fontNames = HM.evaluateExpressionValue(command_script).GetObjectDescription()
+    fontNames = HM.evaluate_expression_value(command_script).GetObjectDescription()
     HM.DPrint(fontNames)
 

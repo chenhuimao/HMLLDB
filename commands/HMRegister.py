@@ -166,7 +166,7 @@ def register_read(debugger, command, exe_ctx, result, internal_dict):
         (lldb)rr -s 0x40 -a
 
         (lldb)rr x0 sp -s 0x10
-        [HMLLDB] register read x0 sp!
+        [HMLLDB] register read x0 sp
             x0 = 0x0000000000000000
             sp = 0x000000016fb2cdf0
         0x16fb2cdf0: 0x000000010110b8b0

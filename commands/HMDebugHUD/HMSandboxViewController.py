@@ -35,7 +35,7 @@ gClassName = "HMSandboxViewController"
 
 def register() -> None:
 
-    if HM.existClass(gClassName):
+    if HM.is_existing_class(gClassName):
         return
 
     HMProgressHUD.register()
@@ -45,63 +45,63 @@ def register() -> None:
     HMProgressHUD.show(f"Register {gClassName}...")
     HM.DPrint(f"Register {gClassName}...")
 
-    classValue = HM.allocateClass(gClassName, HMDebugBaseViewController.gClassName)
-    HM.addIvar(classValue.GetValue(), "_tableView", "UITableView *")
-    HM.addIvar(classValue.GetValue(), "_currentPath", "NSString *")
-    HM.addIvar(classValue.GetValue(), "_childPaths", "NSMutableArray *")
-    HM.addIvar(classValue.GetValue(), "_documentController", "UIDocumentInteractionController *")
-    HM.registerClass(classValue.GetValue())
+    classValue = HM.allocate_class(gClassName, HMDebugBaseViewController.gClassName)
+    HM.add_ivar(classValue.GetValue(), "_tableView", "UITableView *")
+    HM.add_ivar(classValue.GetValue(), "_currentPath", "NSString *")
+    HM.add_ivar(classValue.GetValue(), "_childPaths", "NSMutableArray *")
+    HM.add_ivar(classValue.GetValue(), "_documentController", "UIDocumentInteractionController *")
+    HM.register_class(classValue.GetValue())
 
     # Add methods
     HM.DPrint(f"Add methods to {gClassName}...")
 
     initialPathIMPValue = makeInitialPathIMP()
-    if not HM.judgeSBValueHasValue(initialPathIMPValue):
+    if not HM.is_SBValue_has_value(initialPathIMPValue):
         HMProgressHUD.hide()
         return
-    HM.addClassMethod(gClassName, "initialPath", initialPathIMPValue.GetValue(), "@@:")
+    HM.add_class_method(gClassName, "initialPath", initialPathIMPValue.GetValue(), "@@:")
 
     viewDidLoadIMPValue = makeViewDidLoadIMP()
-    if not HM.judgeSBValueHasValue(viewDidLoadIMPValue):
+    if not HM.is_SBValue_has_value(viewDidLoadIMPValue):
         HMProgressHUD.hide()
         return
-    HM.addInstanceMethod(gClassName, "viewDidLoad", viewDidLoadIMPValue.GetValue(), "v@:")
+    HM.add_instance_method(gClassName, "viewDidLoad", viewDidLoadIMPValue.GetValue(), "v@:")
 
     loadPathIMPValue = makeLoadPathIMP()
-    if not HM.judgeSBValueHasValue(loadPathIMPValue):
+    if not HM.is_SBValue_has_value(loadPathIMPValue):
         HMProgressHUD.hide()
         return
-    HM.addInstanceMethod(gClassName, "loadPath:", loadPathIMPValue.GetValue(), "v@:@")
+    HM.add_instance_method(gClassName, "loadPath:", loadPathIMPValue.GetValue(), "v@:@")
 
     clickBackItemIMPValue = makeClickBackItemIMP()
-    if not HM.judgeSBValueHasValue(clickBackItemIMPValue):
+    if not HM.is_SBValue_has_value(clickBackItemIMPValue):
         HMProgressHUD.hide()
         return
-    HM.addInstanceMethod(gClassName, "clickBackItem", clickBackItemIMPValue.GetValue(), "v@:")
+    HM.add_instance_method(gClassName, "clickBackItem", clickBackItemIMPValue.GetValue(), "v@:")
 
     clickPopItemIMPValue = makeClickPopItemIMP()
-    if not HM.judgeSBValueHasValue(clickPopItemIMPValue):
+    if not HM.is_SBValue_has_value(clickPopItemIMPValue):
         HMProgressHUD.hide()
         return
-    HM.addInstanceMethod(gClassName, "clickPopItem", clickPopItemIMPValue.GetValue(), "v@:")
+    HM.add_instance_method(gClassName, "clickPopItem", clickPopItemIMPValue.GetValue(), "v@:")
 
     alertAccessPermissionIMPValue = makeAlertAccessPermissionIMP()
-    if not HM.judgeSBValueHasValue(alertAccessPermissionIMPValue):
+    if not HM.is_SBValue_has_value(alertAccessPermissionIMPValue):
         HMProgressHUD.hide()
         return
-    HM.addInstanceMethod(gClassName, "alertAccessPermission:", alertAccessPermissionIMPValue.GetValue(), "v@:@")
+    HM.add_instance_method(gClassName, "alertAccessPermission:", alertAccessPermissionIMPValue.GetValue(), "v@:@")
 
     deleteFileOrDirectoryIMPValue = makeDeleteFileOrDirectoryIMP()
-    if not HM.judgeSBValueHasValue(deleteFileOrDirectoryIMPValue):
+    if not HM.is_SBValue_has_value(deleteFileOrDirectoryIMPValue):
         HMProgressHUD.hide()
         return
-    HM.addInstanceMethod(gClassName, "deleteFileOrDirectory:", deleteFileOrDirectoryIMPValue.GetValue(), "v@:@")
+    HM.add_instance_method(gClassName, "deleteFileOrDirectory:", deleteFileOrDirectoryIMPValue.GetValue(), "v@:@")
 
     shareFileOrDirectoryIMPValue = makeShareFileOrDirectoryIMP()
-    if not HM.judgeSBValueHasValue(shareFileOrDirectoryIMPValue):
+    if not HM.is_SBValue_has_value(shareFileOrDirectoryIMPValue):
         HMProgressHUD.hide()
         return
-    HM.addInstanceMethod(gClassName, "shareFileOrDirectory:", shareFileOrDirectoryIMPValue.GetValue(), "v@:@")
+    HM.add_instance_method(gClassName, "shareFileOrDirectory:", shareFileOrDirectoryIMPValue.GetValue(), "v@:@")
 
     # Methods related to tableView.
     HM.DPrint(f"Add methods to {gClassName}......")
@@ -121,7 +121,7 @@ def makeInitialPathIMP() -> lldb.SBValue:
         };
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeViewDidLoadIMP() -> lldb.SBValue:
@@ -173,7 +173,7 @@ def makeViewDidLoadIMP() -> lldb.SBValue:
         imp_implementationWithBlock(IMPBlock);
 
      '''
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeLoadPathIMP() -> lldb.SBValue:
@@ -218,7 +218,7 @@ def makeLoadPathIMP() -> lldb.SBValue:
         imp_implementationWithBlock(IMPBlock);
 
      '''
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeClickBackItemIMP() -> lldb.SBValue:
@@ -243,7 +243,7 @@ def makeClickBackItemIMP() -> lldb.SBValue:
         imp_implementationWithBlock(IMPBlock);
 
      '''
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeClickPopItemIMP() -> lldb.SBValue:
@@ -258,7 +258,7 @@ def makeClickPopItemIMP() -> lldb.SBValue:
         imp_implementationWithBlock(IMPBlock);
 
      '''
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeAlertAccessPermissionIMP() -> lldb.SBValue:
@@ -271,7 +271,7 @@ def makeAlertAccessPermissionIMP() -> lldb.SBValue:
         };
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeDeleteFileOrDirectoryIMP() -> lldb.SBValue:
@@ -314,7 +314,7 @@ def makeDeleteFileOrDirectoryIMP() -> lldb.SBValue:
         imp_implementationWithBlock(IMPBlock);
 
      '''
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeShareFileOrDirectoryIMP() -> lldb.SBValue:
@@ -347,7 +347,7 @@ def makeShareFileOrDirectoryIMP() -> lldb.SBValue:
         };
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def addTableViewMethods() -> bool:
@@ -355,45 +355,45 @@ def addTableViewMethods() -> bool:
 
     # data source
     numberOfRowsInSectionIMPValue = makeNumberOfRowsInSectionIMP()
-    if not HM.judgeSBValueHasValue(numberOfRowsInSectionIMPValue):
+    if not HM.is_SBValue_has_value(numberOfRowsInSectionIMPValue):
         return False
-    HM.addInstanceMethod(gClassName, "tableView:numberOfRowsInSection:", numberOfRowsInSectionIMPValue.GetValue(), "q@:@q")
+    HM.add_instance_method(gClassName, "tableView:numberOfRowsInSection:", numberOfRowsInSectionIMPValue.GetValue(), "q@:@q")
 
     cellForRowAtIndexPathIMPValue = makeCellForRowAtIndexPathIMP()
-    if not HM.judgeSBValueHasValue(cellForRowAtIndexPathIMPValue):
+    if not HM.is_SBValue_has_value(cellForRowAtIndexPathIMPValue):
         return False
-    HM.addInstanceMethod(gClassName, "tableView:cellForRowAtIndexPath:", cellForRowAtIndexPathIMPValue.GetValue(), "@@:@@")
+    HM.add_instance_method(gClassName, "tableView:cellForRowAtIndexPath:", cellForRowAtIndexPathIMPValue.GetValue(), "@@:@@")
 
     canEditRowAtIndexPathIMPValue = makeCanEditRowAtIndexPathIMP()
-    if not HM.judgeSBValueHasValue(canEditRowAtIndexPathIMPValue):
+    if not HM.is_SBValue_has_value(canEditRowAtIndexPathIMPValue):
         return False
-    HM.addInstanceMethod(gClassName, "tableView:canEditRowAtIndexPath:", canEditRowAtIndexPathIMPValue.GetValue(), "B@:@@")
+    HM.add_instance_method(gClassName, "tableView:canEditRowAtIndexPath:", canEditRowAtIndexPathIMPValue.GetValue(), "B@:@@")
 
     commitEditingStyleForRowAtIndexPathIMPValue = makeCommitEditingStyleForRowAtIndexPathIMP()
-    if not HM.judgeSBValueHasValue(commitEditingStyleForRowAtIndexPathIMPValue):
+    if not HM.is_SBValue_has_value(commitEditingStyleForRowAtIndexPathIMPValue):
         return False
-    HM.addInstanceMethod(gClassName, "tableView:commitEditingStyle:forRowAtIndexPath:", commitEditingStyleForRowAtIndexPathIMPValue.GetValue(), "v@:@q@")
+    HM.add_instance_method(gClassName, "tableView:commitEditingStyle:forRowAtIndexPath:", commitEditingStyleForRowAtIndexPathIMPValue.GetValue(), "v@:@q@")
 
     # delegate
     didSelectRowAtIndexPathIMPValue = makeDidSelectRowAtIndexPathIMP()
-    if not HM.judgeSBValueHasValue(didSelectRowAtIndexPathIMPValue):
+    if not HM.is_SBValue_has_value(didSelectRowAtIndexPathIMPValue):
         return False
-    HM.addInstanceMethod(gClassName, "tableView:didSelectRowAtIndexPath:", didSelectRowAtIndexPathIMPValue.GetValue(), "v@:@@")
+    HM.add_instance_method(gClassName, "tableView:didSelectRowAtIndexPath:", didSelectRowAtIndexPathIMPValue.GetValue(), "v@:@@")
 
     viewForHeaderInSectionIMPValue = makeViewForHeaderInSectionIMP()
-    if not HM.judgeSBValueHasValue(viewForHeaderInSectionIMPValue):
+    if not HM.is_SBValue_has_value(viewForHeaderInSectionIMPValue):
         return False
-    HM.addInstanceMethod(gClassName, "tableView:viewForHeaderInSection:", viewForHeaderInSectionIMPValue.GetValue(), "@@:@q")
+    HM.add_instance_method(gClassName, "tableView:viewForHeaderInSection:", viewForHeaderInSectionIMPValue.GetValue(), "@@:@q")
 
     editingStyleForRowAtIndexPathIMPValue = makeEditingStyleForRowAtIndexPathIMP()
-    if not HM.judgeSBValueHasValue(editingStyleForRowAtIndexPathIMPValue):
+    if not HM.is_SBValue_has_value(editingStyleForRowAtIndexPathIMPValue):
         return False
-    HM.addInstanceMethod(gClassName, "tableView:editingStyleForRowAtIndexPath:", editingStyleForRowAtIndexPathIMPValue.GetValue(), "q@:@@")
+    HM.add_instance_method(gClassName, "tableView:editingStyleForRowAtIndexPath:", editingStyleForRowAtIndexPathIMPValue.GetValue(), "q@:@@")
 
     contextMenuConfigurationForRowAtIndexPathIMPValue = makeContextMenuConfigurationForRowAtIndexPathIMP()
-    if not HM.judgeSBValueHasValue(contextMenuConfigurationForRowAtIndexPathIMPValue):
+    if not HM.is_SBValue_has_value(contextMenuConfigurationForRowAtIndexPathIMPValue):
         return False
-    HM.addInstanceMethod(gClassName, "tableView:contextMenuConfigurationForRowAtIndexPath:point:", contextMenuConfigurationForRowAtIndexPathIMPValue.GetValue(), "@@:@@{CGPoint=dd}")
+    HM.add_instance_method(gClassName, "tableView:contextMenuConfigurationForRowAtIndexPath:point:", contextMenuConfigurationForRowAtIndexPathIMPValue.GetValue(), "@@:@@{CGPoint=dd}")
     return True
 
 
@@ -405,7 +405,7 @@ def makeNumberOfRowsInSectionIMP() -> lldb.SBValue:
         };
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeCellForRowAtIndexPathIMP() -> lldb.SBValue:
@@ -502,7 +502,7 @@ def makeCellForRowAtIndexPathIMP() -> lldb.SBValue:
         
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeCanEditRowAtIndexPathIMP() -> lldb.SBValue:
@@ -512,7 +512,7 @@ def makeCanEditRowAtIndexPathIMP() -> lldb.SBValue:
         };
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeCommitEditingStyleForRowAtIndexPathIMP() -> lldb.SBValue:
@@ -526,7 +526,7 @@ def makeCommitEditingStyleForRowAtIndexPathIMP() -> lldb.SBValue:
         };
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeDidSelectRowAtIndexPathIMP() -> lldb.SBValue:
@@ -569,7 +569,7 @@ def makeDidSelectRowAtIndexPathIMP() -> lldb.SBValue:
         };
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeViewForHeaderInSectionIMP() -> lldb.SBValue:
@@ -609,7 +609,7 @@ def makeViewForHeaderInSectionIMP() -> lldb.SBValue:
         };
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeEditingStyleForRowAtIndexPathIMP() -> lldb.SBValue:
@@ -619,18 +619,18 @@ def makeEditingStyleForRowAtIndexPathIMP() -> lldb.SBValue:
         };
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeContextMenuConfigurationForRowAtIndexPathIMP() -> lldb.SBValue:
-    if not HM.existClass('UIContextMenuConfiguration'):
+    if not HM.is_existing_class('UIContextMenuConfiguration'):
         expression = '''
             NSObject * (^IMPBlock)(NSObject *, NSObject *, NSObject *, CGPoint) = ^NSObject *(NSObject *vc, NSObject *tv, NSObject *indexPath, CGPoint point) {
                 return [[NSObject alloc] init];
             };
             imp_implementationWithBlock(IMPBlock);
         '''
-        return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+        return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
     command_script = '''
         UIContextMenuConfiguration * (^IMPBlock)(UIViewController *, UITableView *, NSIndexPath *, CGPoint) = ^UIContextMenuConfiguration *(UIViewController *vc, UITableView *tv, NSIndexPath *indexPath, CGPoint point) {
@@ -659,5 +659,5 @@ def makeContextMenuConfigurationForRowAtIndexPathIMP() -> lldb.SBValue:
         };
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 

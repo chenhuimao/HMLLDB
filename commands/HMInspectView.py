@@ -55,7 +55,7 @@ def inspect(debugger, command, exe_ctx, result, internal_dict):
             (void)[objClass performSelector:@selector(start)];
         }}
     '''
-    HM.evaluateExpressionValue(command_script)
+    HM.evaluate_expression_value(command_script)
 
-    HM.processContinue()
+    HM.process_continue()
 

@@ -33,22 +33,22 @@ gClassName = "HMDebugBaseViewController"
 
 
 def register() -> None:
-    if HM.existClass(gClassName):
+    if HM.is_existing_class(gClassName):
         return
 
     # Register class
     HMProgressHUD.show(f"Register {gClassName}...")
     HM.DPrint(f"Register {gClassName}...")
 
-    classValue = HM.allocateClass(gClassName, "UIViewController")
-    HM.registerClass(classValue.GetValue())
+    classValue = HM.allocate_class(gClassName, "UIViewController")
+    HM.register_class(classValue.GetValue())
 
     # Add methods
     HM.DPrint(f"Add methods to {gClassName}...")
     viewDidLoadIMPValue = makeViewDidLoadIMP()
-    if not HM.judgeSBValueHasValue(viewDidLoadIMPValue):
+    if not HM.is_SBValue_has_value(viewDidLoadIMPValue):
         return
-    HM.addInstanceMethod(gClassName, "viewDidLoad", viewDidLoadIMPValue.GetValue(), "v@:")
+    HM.add_instance_method(gClassName, "viewDidLoad", viewDidLoadIMPValue.GetValue(), "v@:")
 
     HM.DPrint(f"Register {gClassName} done!")
 
@@ -78,4 +78,4 @@ def makeViewDidLoadIMP() -> lldb.SBValue:
 
      '''
 
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)

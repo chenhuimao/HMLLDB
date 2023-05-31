@@ -50,17 +50,15 @@ def adrp(debugger, command, exe_ctx, result, internal_dict):
     command_args: List[str] = command.split()
 
     if len(command_args) == 2:
-        try:
-            immediate_value: int = int_value_from_string(command_args[0])
-            pc_address_value: int = int_value_from_string(command_args[1])
-        except:
+        immediate_is_valid, immediate_value = HM.int_value_from_string(command_args[0])
+        pc_address_is_valid, pc_address_value = HM.int_value_from_string(command_args[1])
+        if (not immediate_is_valid) or (not pc_address_is_valid):
             HM.DPrint("Error input, Some input arguments do not support conversion to integers. Please enter \"help adrp\" for help.")
             return
     elif len(command_args) == 5:
-        try:
-            immediate_value: int = int_value_from_string(command_args[4])
-            pc_address_value: int = int_value_from_string(command_args[0])
-        except:
+        immediate_is_valid, immediate_value = HM.int_value_from_string(command_args[4])
+        pc_address_is_valid, pc_address_value = HM.int_value_from_string(command_args[0])
+        if (not immediate_is_valid) or (not pc_address_is_valid):
             HM.DPrint("Error input, Some input arguments do not support conversion to integers. Please enter \"help adrp\" for help.")
             return
     else:
@@ -81,11 +79,4 @@ def calculate_adrp_result_with_immediate_and_pc_address(immediate: int, pc_addre
 
     result_value: int = immediate_value_temp + pc_address_value_temp
     return result_value, hex(result_value)
-
-
-def int_value_from_string(integer_str: str) -> int:
-    if integer_str.startswith("0x"):
-        return int(integer_str, 16)
-
-    return int(integer_str)
 

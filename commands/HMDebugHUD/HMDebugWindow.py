@@ -32,14 +32,14 @@ gClassName = "HMDebugWindow"
 
 def register() -> None:
 
-    if HM.existClass(gClassName):
+    if HM.is_existing_class(gClassName):
         return
 
     # Register class
     HMProgressHUD.show(f"Register {gClassName}...")
     HM.DPrint(f"Register {gClassName}...")
 
-    classValue = HM.allocateClass(gClassName, "UIWindow")
-    HM.registerClass(classValue.GetValue())
+    classValue = HM.allocate_class(gClassName, "UIWindow")
+    HM.register_class(classValue.GetValue())
 
     HM.DPrint(f"Register {gClassName} done!")

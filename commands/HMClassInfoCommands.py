@@ -86,12 +86,12 @@ def methods(debugger, command, exe_ctx, result, internal_dict):
     else:
         selName = "_methodDescription"
 
-    value = HM.evaluateExpressionValue(expression=f'(NSString *)[{inputStr} performSelector:NSSelectorFromString(@"{selName}")]', printErrors=False)
-    if HM.successOfSBError(value.GetError()):
+    value = HM.evaluate_expression_value(expression=f'(NSString *)[{inputStr} performSelector:NSSelectorFromString(@"{selName}")]', print_errors=False)
+    if HM.is_successful_of_SBError(value.GetError()):
         HM.DPrint(value.GetObjectDescription())
         return
 
-    clsPrefixesValue = HM.getClassPrefixes()[1]
+    clsPrefixesValue = HM.get_class_prefixes()[1]
     command_script = f'''
         Class inputClass = objc_lookUpClass("{inputStr}");
 
@@ -119,7 +119,7 @@ def methods(debugger, command, exe_ctx, result, internal_dict):
         (NSMutableString *)result;
     '''
 
-    result = HM.evaluateExpressionValue(command_script).GetObjectDescription()
+    result = HM.evaluate_expression_value(command_script).GetObjectDescription()
     HM.DPrint(result)
 
 
@@ -155,12 +155,12 @@ def properties(debugger, command, exe_ctx, result, internal_dict):
         HM.DPrint("Requires a argument, Please enter \"help properties\" for help.")
         return
 
-    value = HM.evaluateExpressionValue(expression=f'(NSString *)[{command} performSelector:NSSelectorFromString(@"_propertyDescription")]', printErrors=False)
-    if HM.successOfSBError(value.GetError()):
+    value = HM.evaluate_expression_value(expression=f'(NSString *)[{command} performSelector:NSSelectorFromString(@"_propertyDescription")]', print_errors=False)
+    if HM.is_successful_of_SBError(value.GetError()):
         HM.DPrint(value.GetObjectDescription())
         return
 
-    clsPrefixesValue = HM.getClassPrefixes()[1]
+    clsPrefixesValue = HM.get_class_prefixes()[1]
     command_script = f'''
         Class inputClass = objc_lookUpClass("{command}");
 
@@ -188,7 +188,7 @@ def properties(debugger, command, exe_ctx, result, internal_dict):
         (NSMutableString *)result;
     '''
 
-    result = HM.evaluateExpressionValue(command_script).GetObjectDescription()
+    result = HM.evaluate_expression_value(command_script).GetObjectDescription()
     HM.DPrint(result)
 
 
@@ -240,7 +240,7 @@ def findClass(debugger, command, exe_ctx, result, internal_dict):
         (NSMutableString *)classNames;
     '''
 
-    classNames = HM.evaluateExpressionValue(command_script).GetObjectDescription()
+    classNames = HM.evaluate_expression_value(command_script).GetObjectDescription()
     HM.DPrint(classNames)
 
 
@@ -298,7 +298,7 @@ def findSubclass(debugger, command, exe_ctx, result, internal_dict):
             }
         '''
 
-    clsPrefixesValue = HM.getClassPrefixes()[1]
+    clsPrefixesValue = HM.get_class_prefixes()[1]
     command_script = f'''
         Class inputClass = objc_lookUpClass("{args[0]}");
 
@@ -337,7 +337,7 @@ def findSubclass(debugger, command, exe_ctx, result, internal_dict):
         (NSMutableString *)result;
     '''
 
-    classNames = HM.evaluateExpressionValue(command_script).GetObjectDescription()
+    classNames = HM.evaluate_expression_value(command_script).GetObjectDescription()
     HM.DPrint(classNames)
 
 
@@ -368,7 +368,7 @@ def findSuperClass(debugger, command, exe_ctx, result, internal_dict):
         HM.DPrint("Requires a argument, Please enter \"help fsuperclass\" for help.")
         return
 
-    clsPrefixesValue = HM.getClassPrefixes()[1]
+    clsPrefixesValue = HM.get_class_prefixes()[1]
     command_script = f'''
         Class inputClass = objc_lookUpClass("{command}");
 
@@ -396,7 +396,7 @@ def findSuperClass(debugger, command, exe_ctx, result, internal_dict):
         (NSMutableString *)result;
     '''
 
-    classNames = HM.evaluateExpressionValue(command_script).GetObjectDescription()
+    classNames = HM.evaluate_expression_value(command_script).GetObjectDescription()
     HM.DPrint(classNames)
 
 
@@ -439,7 +439,7 @@ def findMethod(debugger, command, exe_ctx, result, internal_dict):
     HM.DPrint("Waiting...")
 
     if options.cls:
-        clsPrefixesValue = HM.getClassPrefixes()[1]
+        clsPrefixesValue = HM.get_class_prefixes()[1]
         command_script = f'''
             NSMutableString *result = [[NSMutableString alloc] init];
             Class inputClass = objc_lookUpClass("{options.cls}");
@@ -550,7 +550,7 @@ def findMethod(debugger, command, exe_ctx, result, internal_dict):
             (NSMutableString *)result;
         '''
 
-    result = HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix).GetObjectDescription()
+    result = HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix).GetObjectDescription()
     HM.DPrint(result)
 
 
@@ -582,7 +582,7 @@ def print_ivars_info(debugger, command, exe_ctx, result, internal_dict):
         HM.DPrint("Requires a argument, Please enter \"help ivarsinfo\" for help.")
         return
 
-    if not HM.existClass(command):
+    if not HM.is_existing_class(command):
         HM.DPrint(f"{command} does not exist.")
         return
 
@@ -610,6 +610,6 @@ def print_ivars_info(debugger, command, exe_ctx, result, internal_dict):
         (NSMutableString *)result;
     '''
 
-    result = HM.evaluateExpressionValue(command_script).GetObjectDescription()
+    result = HM.evaluate_expression_value(command_script).GetObjectDescription()
     HM.DPrint(result)
 

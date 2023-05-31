@@ -213,7 +213,7 @@ def breakpoint_next_oc_method(debugger, command, exe_ctx, result, internal_dict)
 
     HM.DPrint(f"Target thread index:{thread.GetIndexID()}, thread id:{thread_id}.")
     if options.is_continue:
-        HM.processContinue()
+        HM.process_continue()
     else:
         HM.DPrint("Done! You can continue program execution.")
 
@@ -264,14 +264,14 @@ def set_breakpoint_with_object_and_selector(object_value: lldb.SBValue, selector
         Method targetMethod = class_getInstanceMethod(cls, hm_selector);
         (IMP)method_getImplementation(targetMethod);
     '''
-    imp_value = HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
-    if not HM.judgeSBValueHasValue(imp_value):
-        selector_desc = HM.evaluateExpressionValue(f"(char *){selector_value.GetValue()};").GetSummary()
+    imp_value = HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    if not HM.is_SBValue_has_value(imp_value):
+        selector_desc = HM.evaluate_expression_value(f"(char *){selector_value.GetValue()};").GetSummary()
         HM.DPrint(f"Failed to find {selector_desc} implementation in object({object_value.GetValue()})")
         return
 
     HM.DPrint(f"Set a breakpoint on the implemented address:{imp_value.GetValue()}")
-    HM.addOneShotBreakPointInIMP(imp_value, "HMBreakpoint.breakpoint_next_oc_method_implementation_handler", "HMLLDB_bpmethod_implementation")
+    HM.add_one_shot_breakpoint_in_imp(imp_value, "HMBreakpoint.breakpoint_next_oc_method_implementation_handler", "HMLLDB_bpmethod_implementation")
 
 
 def breakpoint_next_oc_method_implementation_handler(frame, bp_loc, extra_args, internal_dict) -> bool:
@@ -396,7 +396,7 @@ def breakpoint_message(debugger, command, exe_ctx, result, internal_dict):
         (NSMutableDictionary *)resultDic;
     '''
 
-    result_dic_value: lldb.SBValue = HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    result_dic_value: lldb.SBValue = HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
     HM.DPrint("Waiting......")
     # print result string
@@ -409,7 +409,7 @@ def breakpoint_message(debugger, command, exe_ctx, result, internal_dict):
         (NSString *)desc_hm; 
     '''
 
-    desc_value = HM.evaluateExpressionValue(command_get_desc)
+    desc_value = HM.evaluate_expression_value(command_get_desc)
     HM.DPrint(desc_value.GetObjectDescription())
 
     # get address
@@ -418,8 +418,8 @@ def breakpoint_message(debugger, command, exe_ctx, result, internal_dict):
         NSString *address_hm = (NSString *)[resultDic objectForKey:(id)@"addressKey"];
         (NSString *)address_hm; 
     '''
-    address_value = HM.evaluateExpressionValue(command_get_address)
-    if not HM.judgeSBValueHasValue(address_value):
+    address_value = HM.evaluate_expression_value(command_get_address)
+    if not HM.is_SBValue_has_value(address_value):
         return
     target_address: str = address_value.GetObjectDescription()
 

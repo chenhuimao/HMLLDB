@@ -37,7 +37,7 @@ gWindowTag = 10100
 
 def register() -> None:
 
-    if HM.existClass(gClassName):
+    if HM.is_existing_class(gClassName):
         return
 
     HMProgressHUD.register()
@@ -48,72 +48,72 @@ def register() -> None:
     HMProgressHUD.show(f"Register {gClassName}...")
     HM.DPrint(f"Register {gClassName}...")
 
-    classValue = HM.allocateClass(gClassName, HMDebugBaseViewController.gClassName)
-    HM.addIvar(classValue.GetValue(), "_previousKeyWindow", "UIWindow *")
-    HM.addIvar(classValue.GetValue(), "_highlightView", "UIView *")
-    HM.addIvar(classValue.GetValue(), "_targetView", "UIView *")
-    HM.addIvar(classValue.GetValue(), "_exitBtn", "UIButton *")
+    classValue = HM.allocate_class(gClassName, HMDebugBaseViewController.gClassName)
+    HM.add_ivar(classValue.GetValue(), "_previousKeyWindow", "UIWindow *")
+    HM.add_ivar(classValue.GetValue(), "_highlightView", "UIView *")
+    HM.add_ivar(classValue.GetValue(), "_targetView", "UIView *")
+    HM.add_ivar(classValue.GetValue(), "_exitBtn", "UIButton *")
 
-    HM.addIvar(classValue.GetValue(), "_infoView", "UIView *")
-    HM.addIvar(classValue.GetValue(), "_actionView", "UIButton *")
-    HM.registerClass(classValue.GetValue())
+    HM.add_ivar(classValue.GetValue(), "_infoView", "UIView *")
+    HM.add_ivar(classValue.GetValue(), "_actionView", "UIButton *")
+    HM.register_class(classValue.GetValue())
 
     HM.DPrint(f"Add methods to {gClassName}...")
     startIMPValue = makeStartIMP()
-    if not HM.judgeSBValueHasValue(startIMPValue):
+    if not HM.is_SBValue_has_value(startIMPValue):
         HMProgressHUD.hide()
         return
-    HM.addClassMethod(gClassName, "start", startIMPValue.GetValue(), "@@:")
+    HM.add_class_method(gClassName, "start", startIMPValue.GetValue(), "@@:")
 
     viewDidLoadIMPValue = makeViewDidLoadIMP()
-    if not HM.judgeSBValueHasValue(viewDidLoadIMPValue):
+    if not HM.is_SBValue_has_value(viewDidLoadIMPValue):
         HMProgressHUD.hide()
         return
-    HM.addInstanceMethod(gClassName, "viewDidLoad", viewDidLoadIMPValue.GetValue(), "v@:")
+    HM.add_instance_method(gClassName, "viewDidLoad", viewDidLoadIMPValue.GetValue(), "v@:")
 
     viewDidLayoutSubviewsIMPValue = makeViewDidLayoutSubviewsIMP()
-    if not HM.judgeSBValueHasValue(viewDidLayoutSubviewsIMPValue):
+    if not HM.is_SBValue_has_value(viewDidLayoutSubviewsIMPValue):
         HMProgressHUD.hide()
         return
-    HM.addInstanceMethod(gClassName, "viewDidLayoutSubviews", viewDidLayoutSubviewsIMPValue.GetValue(), "v@:")
+    HM.add_instance_method(gClassName, "viewDidLayoutSubviews", viewDidLayoutSubviewsIMPValue.GetValue(), "v@:")
 
     # event
     HM.DPrint(f"Add methods to {gClassName}......")
     clickExitBtnIMPValue = makeClickExitBtnIMP()
-    if not HM.judgeSBValueHasValue(clickExitBtnIMPValue):
+    if not HM.is_SBValue_has_value(clickExitBtnIMPValue):
         HMProgressHUD.hide()
         return
-    HM.addInstanceMethod(gClassName, "clickExitBtn", clickExitBtnIMPValue.GetValue(), "v@:")
+    HM.add_instance_method(gClassName, "clickExitBtn", clickExitBtnIMPValue.GetValue(), "v@:")
 
     clickCloseBtnIMPValue = makeClickCloseBtnIMP()
-    if not HM.judgeSBValueHasValue(clickCloseBtnIMPValue):
+    if not HM.is_SBValue_has_value(clickCloseBtnIMPValue):
         HMProgressHUD.hide()
         return
-    HM.addInstanceMethod(gClassName, "clickCloseBtn", clickCloseBtnIMPValue.GetValue(), "v@:")
+    HM.add_instance_method(gClassName, "clickCloseBtn", clickCloseBtnIMPValue.GetValue(), "v@:")
 
     handleTapRecognizerIMPValue = makeHandleTapRecognizerIMP()
-    if not HM.judgeSBValueHasValue(handleTapRecognizerIMPValue):
+    if not HM.is_SBValue_has_value(handleTapRecognizerIMPValue):
         HMProgressHUD.hide()
         return
-    HM.addInstanceMethod(gClassName, "handleTapRecognizer:", handleTapRecognizerIMPValue.GetValue(), "v@:@")
+    HM.add_instance_method(gClassName, "handleTapRecognizer:", handleTapRecognizerIMPValue.GetValue(), "v@:@")
 
     findSubviewAtPointInViewIMPValue = makeFindSubviewAtPointInViewIMP()
-    if not HM.judgeSBValueHasValue(findSubviewAtPointInViewIMPValue):
+    if not HM.is_SBValue_has_value(findSubviewAtPointInViewIMPValue):
         HMProgressHUD.hide()
         return
-    HM.addInstanceMethod(gClassName, "findSubviewAtPoint:inView:", findSubviewAtPointInViewIMPValue.GetValue(), "@@:{CGPoint=dd}@")
+    HM.add_instance_method(gClassName, "findSubviewAtPoint:inView:", findSubviewAtPointInViewIMPValue.GetValue(), "@@:{CGPoint=dd}@")
 
     refreshTargetViewIMPValue = makeRefreshTargetViewIMP()
-    if not HM.judgeSBValueHasValue(refreshTargetViewIMPValue):
+    if not HM.is_SBValue_has_value(refreshTargetViewIMPValue):
         HMProgressHUD.hide()
         return
-    HM.addInstanceMethod(gClassName, "refreshTargetView:", refreshTargetViewIMPValue.GetValue(), "v@:@")
+    HM.add_instance_method(gClassName, "refreshTargetView:", refreshTargetViewIMPValue.GetValue(), "v@:@")
 
     getInfoArrayFromTargetViewIMPValue = makeGetInfoArrayFromTargetViewIMP()
-    if not HM.judgeSBValueHasValue(getInfoArrayFromTargetViewIMPValue):
+    if not HM.is_SBValue_has_value(getInfoArrayFromTargetViewIMPValue):
         HMProgressHUD.hide()
         return
-    HM.addInstanceMethod(gClassName, "getInfoArrayFromTargetView:", getInfoArrayFromTargetViewIMPValue.GetValue(), "@@:@")
+    HM.add_instance_method(gClassName, "getInfoArrayFromTargetView:", getInfoArrayFromTargetViewIMPValue.GetValue(), "@@:@")
 
     # function action
     HM.DPrint(f"Add methods to {gClassName}.........")
@@ -153,7 +153,7 @@ def makeStartIMP() -> lldb.SBValue:
 
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeViewDidLoadIMP() -> lldb.SBValue:
@@ -319,7 +319,7 @@ def makeViewDidLoadIMP() -> lldb.SBValue:
 
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeViewDidLayoutSubviewsIMP() -> lldb.SBValue:
@@ -346,7 +346,7 @@ def makeViewDidLayoutSubviewsIMP() -> lldb.SBValue:
 
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeClickExitBtnIMP() -> lldb.SBValue:
@@ -360,7 +360,7 @@ def makeClickExitBtnIMP() -> lldb.SBValue:
         };
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeClickCloseBtnIMP() -> lldb.SBValue:
@@ -375,7 +375,7 @@ def makeClickCloseBtnIMP() -> lldb.SBValue:
         };
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeHandleTapRecognizerIMP() -> lldb.SBValue:
@@ -409,7 +409,7 @@ def makeHandleTapRecognizerIMP() -> lldb.SBValue:
         };
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeFindSubviewAtPointInViewIMP() -> lldb.SBValue:
@@ -444,7 +444,7 @@ def makeFindSubviewAtPointInViewIMP() -> lldb.SBValue:
         };  
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeRefreshTargetViewIMP() -> lldb.SBValue:
@@ -555,7 +555,7 @@ def makeRefreshTargetViewIMP() -> lldb.SBValue:
         
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 # The "infoView" is based on https://github.com/QMUI/LookinServer
@@ -704,49 +704,49 @@ def makeGetInfoArrayFromTargetViewIMP() -> lldb.SBValue:
     
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def addFunctionMethods() -> bool:
     clickMoveBtnIMPValue = makeClickMoveBtnIMP()
-    if not HM.judgeSBValueHasValue(clickMoveBtnIMPValue):
+    if not HM.is_SBValue_has_value(clickMoveBtnIMPValue):
         return False
-    HM.addInstanceMethod(gClassName, "clickMoveBtn:", clickMoveBtnIMPValue.GetValue(), "v@:@")
+    HM.add_instance_method(gClassName, "clickMoveBtn:", clickMoveBtnIMPValue.GetValue(), "v@:@")
 
     ivarsActionIMPValue = makeIvarsActionIMP()
-    if not HM.judgeSBValueHasValue(ivarsActionIMPValue):
+    if not HM.is_SBValue_has_value(ivarsActionIMPValue):
         return False
-    HM.addInstanceMethod(gClassName, "ivarsAction", ivarsActionIMPValue.GetValue(), "v@:")
+    HM.add_instance_method(gClassName, "ivarsAction", ivarsActionIMPValue.GetValue(), "v@:")
 
     propertiesActionIMPValue = makePropertiesActionIMP()
-    if not HM.judgeSBValueHasValue(propertiesActionIMPValue):
+    if not HM.is_SBValue_has_value(propertiesActionIMPValue):
         return False
-    HM.addInstanceMethod(gClassName, "propertiesAction", propertiesActionIMPValue.GetValue(), "v@:")
+    HM.add_instance_method(gClassName, "propertiesAction", propertiesActionIMPValue.GetValue(), "v@:")
 
     methodsActionIMPValue = makeMethodsActionIMP()
-    if not HM.judgeSBValueHasValue(methodsActionIMPValue):
+    if not HM.is_SBValue_has_value(methodsActionIMPValue):
         return False
-    HM.addInstanceMethod(gClassName, "methodsAction", methodsActionIMPValue.GetValue(), "v@:")
+    HM.add_instance_method(gClassName, "methodsAction", methodsActionIMPValue.GetValue(), "v@:")
 
     siblingNextActionIMPValue = makeSiblingNextActionIMP()
-    if not HM.judgeSBValueHasValue(siblingNextActionIMPValue):
+    if not HM.is_SBValue_has_value(siblingNextActionIMPValue):
         return False
-    HM.addInstanceMethod(gClassName, "siblingNextAction", siblingNextActionIMPValue.GetValue(), "v@:")
+    HM.add_instance_method(gClassName, "siblingNextAction", siblingNextActionIMPValue.GetValue(), "v@:")
 
     siblingPreviousActionIMPValue = makeSiblingPreviousActionIMP()
-    if not HM.judgeSBValueHasValue(siblingPreviousActionIMPValue):
+    if not HM.is_SBValue_has_value(siblingPreviousActionIMPValue):
         return False
-    HM.addInstanceMethod(gClassName, "siblingPreviousAction", siblingPreviousActionIMPValue.GetValue(), "v@:")
+    HM.add_instance_method(gClassName, "siblingPreviousAction", siblingPreviousActionIMPValue.GetValue(), "v@:")
 
     superviewActionIMPValue = makeSuperviewActionIMP()
-    if not HM.judgeSBValueHasValue(superviewActionIMPValue):
+    if not HM.is_SBValue_has_value(superviewActionIMPValue):
         return False
-    HM.addInstanceMethod(gClassName, "superviewAction", superviewActionIMPValue.GetValue(), "v@:")
+    HM.add_instance_method(gClassName, "superviewAction", superviewActionIMPValue.GetValue(), "v@:")
 
     subviewActionIMPValue = makeSubviewActionIMP()
-    if not HM.judgeSBValueHasValue(subviewActionIMPValue):
+    if not HM.is_SBValue_has_value(subviewActionIMPValue):
         return False
-    HM.addInstanceMethod(gClassName, "subviewAction", subviewActionIMPValue.GetValue(), "v@:")
+    HM.add_instance_method(gClassName, "subviewAction", subviewActionIMPValue.GetValue(), "v@:")
 
     return True
 
@@ -771,7 +771,7 @@ def makeClickMoveBtnIMP() -> lldb.SBValue:
         };
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeIvarsActionIMP() -> lldb.SBValue:
@@ -786,7 +786,7 @@ def makeIvarsActionIMP() -> lldb.SBValue:
         }};
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makePropertiesActionIMP() -> lldb.SBValue:
@@ -801,7 +801,7 @@ def makePropertiesActionIMP() -> lldb.SBValue:
         }};
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeMethodsActionIMP() -> lldb.SBValue:
@@ -816,7 +816,7 @@ def makeMethodsActionIMP() -> lldb.SBValue:
         }};
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeSiblingNextActionIMP() -> lldb.SBValue:
@@ -837,7 +837,7 @@ def makeSiblingNextActionIMP() -> lldb.SBValue:
         };
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeSiblingPreviousActionIMP() -> lldb.SBValue:
@@ -858,7 +858,7 @@ def makeSiblingPreviousActionIMP() -> lldb.SBValue:
         };        
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeSuperviewActionIMP() -> lldb.SBValue:
@@ -873,7 +873,7 @@ def makeSuperviewActionIMP() -> lldb.SBValue:
         };       
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeSubviewActionIMP() -> lldb.SBValue:
@@ -888,5 +888,5 @@ def makeSubviewActionIMP() -> lldb.SBValue:
         };     
         imp_implementationWithBlock(IMPBlock);
      '''
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 

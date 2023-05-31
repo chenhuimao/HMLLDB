@@ -38,7 +38,7 @@ gClassName = "HMDebugMainViewController"
 
 def register() -> None:
 
-    if HM.existClass(gClassName):
+    if HM.is_existing_class(gClassName):
         return
 
     HMDebugBaseViewController.register()
@@ -47,28 +47,28 @@ def register() -> None:
     HMProgressHUD.show(f"Register {gClassName}...")
     HM.DPrint(f"Register {gClassName}...")
 
-    classValue = HM.allocateClass(gClassName, HMDebugBaseViewController.gClassName)
-    HM.registerClass(classValue.GetValue())
+    classValue = HM.allocate_class(gClassName, HMDebugBaseViewController.gClassName)
+    HM.register_class(classValue.GetValue())
 
     # Add methods
     HM.DPrint(f"Add methods to {gClassName}...")
     presentIMPValue = makePresentIMP()
-    if not HM.judgeSBValueHasValue(presentIMPValue):
+    if not HM.is_SBValue_has_value(presentIMPValue):
         HMProgressHUD.hide()
         return
-    HM.addClassMethod(gClassName, "present", presentIMPValue.GetValue(), "@@:")
+    HM.add_class_method(gClassName, "present", presentIMPValue.GetValue(), "@@:")
 
     viewDidLoadIMPValue = makeViewDidLoadIMP()
-    if not HM.judgeSBValueHasValue(viewDidLoadIMPValue):
+    if not HM.is_SBValue_has_value(viewDidLoadIMPValue):
         HMProgressHUD.hide()
         return
-    HM.addInstanceMethod(gClassName, "viewDidLoad", viewDidLoadIMPValue.GetValue(), "v@:")
+    HM.add_instance_method(gClassName, "viewDidLoad", viewDidLoadIMPValue.GetValue(), "v@:")
 
     dismissSelfIMPValue = makeDismissSelfIMP()
-    if not HM.judgeSBValueHasValue(dismissSelfIMPValue):
+    if not HM.is_SBValue_has_value(dismissSelfIMPValue):
         HMProgressHUD.hide()
         return
-    HM.addInstanceMethod(gClassName, "dismissSelf", dismissSelfIMPValue.GetValue(), "v@:")
+    HM.add_instance_method(gClassName, "dismissSelf", dismissSelfIMPValue.GetValue(), "v@:")
 
     # Methods related to tableView.
     HM.DPrint(f"Add methods to {gClassName}......")
@@ -110,7 +110,7 @@ def makePresentIMP() -> lldb.SBValue:
         imp_implementationWithBlock(presentBlock);
      '''
 
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeViewDidLoadIMP() -> lldb.SBValue:
@@ -146,7 +146,7 @@ def makeViewDidLoadIMP() -> lldb.SBValue:
         imp_implementationWithBlock(IMPBlock);
 
      '''
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeDismissSelfIMP() -> lldb.SBValue:
@@ -158,26 +158,26 @@ def makeDismissSelfIMP() -> lldb.SBValue:
         imp_implementationWithBlock(dismissSelfBlock);
 
      '''
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def addTableViewMethods() -> bool:
     global gClassName
 
     numberOfRowsInSectionIMPValue = makeNumberOfRowsInSectionIMP()
-    if not HM.judgeSBValueHasValue(numberOfRowsInSectionIMPValue):
+    if not HM.is_SBValue_has_value(numberOfRowsInSectionIMPValue):
         return False
-    HM.addInstanceMethod(gClassName, "tableView:numberOfRowsInSection:", numberOfRowsInSectionIMPValue.GetValue(), "q@:@q")
+    HM.add_instance_method(gClassName, "tableView:numberOfRowsInSection:", numberOfRowsInSectionIMPValue.GetValue(), "q@:@q")
 
     cellForRowAtIndexPathIMPValue = makeCellForRowAtIndexPathIMP()
-    if not HM.judgeSBValueHasValue(cellForRowAtIndexPathIMPValue):
+    if not HM.is_SBValue_has_value(cellForRowAtIndexPathIMPValue):
         return False
-    HM.addInstanceMethod(gClassName, "tableView:cellForRowAtIndexPath:", cellForRowAtIndexPathIMPValue.GetValue(), "@@:@@")
+    HM.add_instance_method(gClassName, "tableView:cellForRowAtIndexPath:", cellForRowAtIndexPathIMPValue.GetValue(), "@@:@@")
 
     didSelectRowAtIndexPathIMPValue = makeDidSelectRowAtIndexPathIMP()
-    if not HM.judgeSBValueHasValue(didSelectRowAtIndexPathIMPValue):
+    if not HM.is_SBValue_has_value(didSelectRowAtIndexPathIMPValue):
         return False
-    HM.addInstanceMethod(gClassName, "tableView:didSelectRowAtIndexPath:", didSelectRowAtIndexPathIMPValue.GetValue(), "v@:@@")
+    HM.add_instance_method(gClassName, "tableView:didSelectRowAtIndexPath:", didSelectRowAtIndexPathIMPValue.GetValue(), "v@:@@")
 
     return True
 
@@ -190,7 +190,7 @@ def makeNumberOfRowsInSectionIMP() -> lldb.SBValue:
         imp_implementationWithBlock(IMPBlock);    
     '''
 
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeCellForRowAtIndexPathIMP() -> lldb.SBValue:
@@ -222,7 +222,7 @@ def makeCellForRowAtIndexPathIMP() -> lldb.SBValue:
         imp_implementationWithBlock(IMPBlock);    
     '''
 
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeDidSelectRowAtIndexPathIMP() -> lldb.SBValue:
@@ -241,31 +241,31 @@ def makeDidSelectRowAtIndexPathIMP() -> lldb.SBValue:
         imp_implementationWithBlock(IMPBlock);    
     '''
 
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def addFeatureMethods() -> bool:
     global gClassName
 
     selectedAPPInfoIMPValue = makeSelectedAPPInfoIMP()
-    if not HM.judgeSBValueHasValue(selectedAPPInfoIMPValue):
+    if not HM.is_SBValue_has_value(selectedAPPInfoIMPValue):
         return False
-    HM.addInstanceMethod(gClassName, "selectedAPPInfo", selectedAPPInfoIMPValue.GetValue(), "v@:")
+    HM.add_instance_method(gClassName, "selectedAPPInfo", selectedAPPInfoIMPValue.GetValue(), "v@:")
 
     selectedSandboxIMPValue = makeSelectedSandboxIMP()
-    if not HM.judgeSBValueHasValue(selectedSandboxIMPValue):
+    if not HM.is_SBValue_has_value(selectedSandboxIMPValue):
         return False
-    HM.addInstanceMethod(gClassName, "selectedSandbox", selectedSandboxIMPValue.GetValue(), "v@:")
+    HM.add_instance_method(gClassName, "selectedSandbox", selectedSandboxIMPValue.GetValue(), "v@:")
 
     selectedInspectViewIMPValue = makeSelectedInspectViewIMP()
-    if not HM.judgeSBValueHasValue(selectedInspectViewIMPValue):
+    if not HM.is_SBValue_has_value(selectedInspectViewIMPValue):
         return False
-    HM.addInstanceMethod(gClassName, "selectedInspectView", selectedInspectViewIMPValue.GetValue(), "v@:")
+    HM.add_instance_method(gClassName, "selectedInspectView", selectedInspectViewIMPValue.GetValue(), "v@:")
 
     HM.DPrint("Add breakpoints to hook method...")
-    HM.addOneShotBreakPointInIMP(selectedAPPInfoIMPValue, "HMDebugMainViewController.selectedAPPInfoBreakPointHandler", "HMDebugMainViewController_selectedAPPInfo_Breakpoint")
-    HM.addOneShotBreakPointInIMP(selectedSandboxIMPValue, "HMDebugMainViewController.selectedSandboxBreakPointHandler", "HMDebugMainViewController_selectedSandbox_Breakpoint")
-    HM.addOneShotBreakPointInIMP(selectedInspectViewIMPValue, "HMDebugMainViewController.selectedInspectViewBreakPointHandler", "HMDebugMainViewController_selectedInspectView_Breakpoint")
+    HM.add_one_shot_breakpoint_in_imp(selectedAPPInfoIMPValue, "HMDebugMainViewController.selectedAPPInfoBreakPointHandler", "HMDebugMainViewController_selectedAPPInfo_Breakpoint")
+    HM.add_one_shot_breakpoint_in_imp(selectedSandboxIMPValue, "HMDebugMainViewController.selectedSandboxBreakPointHandler", "HMDebugMainViewController_selectedSandbox_Breakpoint")
+    HM.add_one_shot_breakpoint_in_imp(selectedInspectViewIMPValue, "HMDebugMainViewController.selectedInspectViewBreakPointHandler", "HMDebugMainViewController_selectedInspectView_Breakpoint")
 
     return True
 
@@ -281,7 +281,7 @@ def makeSelectedAPPInfoIMP() -> lldb.SBValue:
         imp_implementationWithBlock(IMPBlock);    
     '''
 
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeSelectedSandboxIMP() -> lldb.SBValue:
@@ -295,7 +295,7 @@ def makeSelectedSandboxIMP() -> lldb.SBValue:
         imp_implementationWithBlock(IMPBlock);    
     '''
 
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeSelectedInspectViewIMP() -> lldb.SBValue:
@@ -312,22 +312,22 @@ def makeSelectedInspectViewIMP() -> lldb.SBValue:
         imp_implementationWithBlock(IMPBlock);    
     '''
 
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def selectedAPPInfoBreakPointHandler(frame, bp_loc, internal_dict) -> bool:
     HMDebugInfoViewController.register()
-    HM.processContinue()
+    HM.process_continue()
     return True
 
 
 def selectedSandboxBreakPointHandler(frame, bp_loc, internal_dict) -> bool:
     HMSandboxViewController.register()
-    HM.processContinue()
+    HM.process_continue()
     return True
 
 
 def selectedInspectViewBreakPointHandler(frame, bp_loc, internal_dict) -> bool:
     HMInspectViewController.register()
-    HM.processContinue()
+    HM.process_continue()
     return True

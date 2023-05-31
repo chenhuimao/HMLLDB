@@ -59,42 +59,42 @@ def showDebugHUD(debugger, command, exe_ctx, result, internal_dict):
     global gClassName
     if isDisplayingHUD():
         HM.DPrint(f"{gClassName} is already on display")
-        HM.processContinue()
+        HM.process_continue()
         return
-    elif HM.existClass(gClassName):
+    elif HM.is_existing_class(gClassName):
         showHUDFunc()
-        HM.processContinue()
+        HM.process_continue()
         return
 
     # Register class
     HMProgressHUD.show(f"Register {gClassName}...")
     HM.DPrint(f"Register {gClassName}...")
 
-    classValue = HM.allocateClass(gClassName, "UIView")
-    HM.addIvar(classValue.GetValue(), "_link", "CADisplayLink *")
-    HM.addIvar(classValue.GetValue(), "_count", "int")  # count in 1 second
-    HM.addIvar(classValue.GetValue(), "_lastTime", "double")
+    classValue = HM.allocate_class(gClassName, "UIView")
+    HM.add_ivar(classValue.GetValue(), "_link", "CADisplayLink *")
+    HM.add_ivar(classValue.GetValue(), "_count", "int")  # count in 1 second
+    HM.add_ivar(classValue.GetValue(), "_lastTime", "double")
 
-    HM.addIvar(classValue.GetValue(), "_memoryLab", "UILabel *")
-    HM.addIvar(classValue.GetValue(), "_cpuUtilizationLab", "UILabel *")
-    HM.addIvar(classValue.GetValue(), "_fpsLab", "UILabel *")
+    HM.add_ivar(classValue.GetValue(), "_memoryLab", "UILabel *")
+    HM.add_ivar(classValue.GetValue(), "_cpuUtilizationLab", "UILabel *")
+    HM.add_ivar(classValue.GetValue(), "_fpsLab", "UILabel *")
 
-    HM.registerClass(classValue.GetValue())
+    HM.register_class(classValue.GetValue())
 
     # Add methods
     HM.DPrint(f"Add methods to {gClassName}...")
 
     addToKeyWindowIMPValue = makeAddToKeyWindowIMP()
-    if not HM.judgeSBValueHasValue(addToKeyWindowIMPValue):
+    if not HM.is_SBValue_has_value(addToKeyWindowIMPValue):
         HMProgressHUD.hide()
         return
-    HM.addClassMethod(gClassName, "addToKeyWindow", addToKeyWindowIMPValue.GetValue(), "@@:")
+    HM.add_class_method(gClassName, "addToKeyWindow", addToKeyWindowIMPValue.GetValue(), "@@:")
 
     tapSelfIMPValue = makeTapSelfIMP()
-    if not HM.judgeSBValueHasValue(tapSelfIMPValue):
+    if not HM.is_SBValue_has_value(tapSelfIMPValue):
         HMProgressHUD.hide()
         return
-    HM.addInstanceMethod(gClassName, "tapSelf", tapSelfIMPValue.GetValue(), "v@:")
+    HM.add_instance_method(gClassName, "tapSelf", tapSelfIMPValue.GetValue(), "v@:")
 
     # Add methods(update)
     if not addUpdateMethods():
@@ -109,7 +109,7 @@ def showDebugHUD(debugger, command, exe_ctx, result, internal_dict):
 
     # Add breakpoint in tapSelf
     HM.DPrint("Add breakpoint to hook method...")
-    HM.addOneShotBreakPointInIMP(tapSelfIMPValue, "HMDebugHUD.tapSelfBreakPointHandler", "HMDebugHUD_TapSelf_Breakpoint")
+    HM.add_one_shot_breakpoint_in_imp(tapSelfIMPValue, "HMDebugHUD.tapSelfBreakPointHandler", "HMDebugHUD_TapSelf_Breakpoint")
 
     HM.DPrint(f"Register {gClassName} done!")
 
@@ -118,7 +118,7 @@ def showDebugHUD(debugger, command, exe_ctx, result, internal_dict):
 
     HMProgressHUD.hide()
 
-    HM.processContinue()
+    HM.process_continue()
 
 
 def removeDebugHUD(debugger, command, exe_ctx, result, internal_dict) -> None:
@@ -133,7 +133,7 @@ def removeDebugHUD(debugger, command, exe_ctx, result, internal_dict) -> None:
     """
 
     global gClassName
-    if not HM.existClass(gClassName):
+    if not HM.is_existing_class(gClassName):
         HM.DPrint(f"{gClassName} does not exist.")
         return
 
@@ -151,15 +151,15 @@ def removeDebugHUD(debugger, command, exe_ctx, result, internal_dict) -> None:
         objView;
     '''
 
-    val = HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
-    if HM.judgeSBValueHasValue(val):
+    val = HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    if HM.is_SBValue_has_value(val):
         HM.DPrint("remove done!")
     else:
         HM.DPrint(f"{gClassName} does not exist.")
 
 
 def isDisplayingHUD() -> bool:
-    if not HM.existClass(gClassName):
+    if not HM.is_existing_class(gClassName):
         return False
 
     command_script = f'''
@@ -177,11 +177,11 @@ def isDisplayingHUD() -> bool:
         if (HUD) {{
             [keyWindow bringSubviewToFront:HUD];
         }}
-        isDisplaying;
+        (BOOL)isDisplaying;
     '''
 
-    val = HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
-    return HM.boolOfSBValue(val)
+    val = HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.bool_of_SBValue(val)
 
 
 def showHUDFunc() -> None:
@@ -189,11 +189,11 @@ def showHUDFunc() -> None:
         Class HUD = NSClassFromString(@"{gClassName}");
         (UIView *)[HUD performSelector:@selector(addToKeyWindow)];
     '''
-    HM.evaluateExpressionValue(expression=addToKeyWindowCommand, prefix=HMExpressionPrefix.gPrefix)
+    HM.evaluate_expression_value(expression=addToKeyWindowCommand, prefix=HMExpressionPrefix.gPrefix)
 
 
 def currentTask() -> lldb.SBValue:
-    taskValue = HM.evaluateExpressionValue("(unsigned int)(long)mach_task_self_")
+    taskValue = HM.evaluate_expression_value("(unsigned int)(long)mach_task_self_")
     return taskValue
 
 
@@ -201,24 +201,24 @@ def addUpdateMethods() -> bool:
     global gClassName
 
     debugHUDtickIMPValue = makeDebugHUDtickIMP()
-    if not HM.judgeSBValueHasValue(debugHUDtickIMPValue):
+    if not HM.is_SBValue_has_value(debugHUDtickIMPValue):
         return False
-    HM.addInstanceMethod(gClassName, "debugHUDtick:", debugHUDtickIMPValue.GetValue(), "v@:@")
+    HM.add_instance_method(gClassName, "debugHUDtick:", debugHUDtickIMPValue.GetValue(), "v@:@")
 
     updateMemoryFootprintIMPValue = makeUpdateMemoryFootprintIMP()
-    if not HM.judgeSBValueHasValue(updateMemoryFootprintIMPValue):
+    if not HM.is_SBValue_has_value(updateMemoryFootprintIMPValue):
         return False
-    HM.addInstanceMethod(gClassName, "updateMemoryFootprint", updateMemoryFootprintIMPValue.GetValue(), "v@:")
+    HM.add_instance_method(gClassName, "updateMemoryFootprint", updateMemoryFootprintIMPValue.GetValue(), "v@:")
 
     updateCPUUtilizationIMPValue = makeUpdateCPUUtilizationIMP()
-    if not HM.judgeSBValueHasValue(updateCPUUtilizationIMPValue):
+    if not HM.is_SBValue_has_value(updateCPUUtilizationIMPValue):
         return False
-    HM.addInstanceMethod(gClassName, "updateCPUUtilization", updateCPUUtilizationIMPValue.GetValue(), "v@:")
+    HM.add_instance_method(gClassName, "updateCPUUtilization", updateCPUUtilizationIMPValue.GetValue(), "v@:")
 
     updateFPSIMPValue = makeUpdateFPSIMP()
-    if not HM.judgeSBValueHasValue(updateFPSIMPValue):
+    if not HM.is_SBValue_has_value(updateFPSIMPValue):
         return False
-    HM.addInstanceMethod(gClassName, "updateFPS:", updateFPSIMPValue.GetValue(), "v@:i")
+    HM.add_instance_method(gClassName, "updateFPS:", updateFPSIMPValue.GetValue(), "v@:i")
 
     return True
 
@@ -264,7 +264,7 @@ def makeAddToKeyWindowIMP() -> lldb.SBValue:
 
     '''
 
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeTapSelfIMP() -> lldb.SBValue:
@@ -277,7 +277,7 @@ def makeTapSelfIMP() -> lldb.SBValue:
         imp_implementationWithBlock(tapSelfBlock);
 
     '''
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeDebugHUDtickIMP() -> lldb.SBValue:
@@ -307,7 +307,7 @@ def makeDebugHUDtickIMP() -> lldb.SBValue:
         imp_implementationWithBlock(debugHUDtickBlock);
 
     '''
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeUpdateMemoryFootprintIMP() -> lldb.SBValue:
@@ -346,7 +346,7 @@ def makeUpdateMemoryFootprintIMP() -> lldb.SBValue:
         
     '''
 
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeUpdateCPUUtilizationIMP() -> lldb.SBValue:
@@ -409,7 +409,7 @@ def makeUpdateCPUUtilizationIMP() -> lldb.SBValue:
 
     '''
 
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeUpdateFPSIMP() -> lldb.SBValue:
@@ -437,31 +437,31 @@ def makeUpdateFPSIMP() -> lldb.SBValue:
         imp_implementationWithBlock(updateFPSBlock);
 
     '''
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def addMoveMethods() -> bool:
     global gClassName
 
     touchesMovedWithEventIMPValue = makeTouchesMovedWithEventIMP()
-    if not HM.judgeSBValueHasValue(touchesMovedWithEventIMPValue):
+    if not HM.is_SBValue_has_value(touchesMovedWithEventIMPValue):
         return False
-    HM.addInstanceMethod(gClassName, "touchesMoved:withEvent:", touchesMovedWithEventIMPValue.GetValue(), "v@:@@")
+    HM.add_instance_method(gClassName, "touchesMoved:withEvent:", touchesMovedWithEventIMPValue.GetValue(), "v@:@@")
 
     touchesEndedWithEventIMPValue = makeTouchesEndedWithEventIMP()
-    if not HM.judgeSBValueHasValue(touchesEndedWithEventIMPValue):
+    if not HM.is_SBValue_has_value(touchesEndedWithEventIMPValue):
         return False
-    HM.addInstanceMethod(gClassName, "touchesEnded:withEvent:", touchesEndedWithEventIMPValue.GetValue(), "v@:@@")
+    HM.add_instance_method(gClassName, "touchesEnded:withEvent:", touchesEndedWithEventIMPValue.GetValue(), "v@:@@")
 
     touchesCancelledWithEventIMPValue = makeTouchesCancelledWithEventIMP()
-    if not HM.judgeSBValueHasValue(touchesCancelledWithEventIMPValue):
+    if not HM.is_SBValue_has_value(touchesCancelledWithEventIMPValue):
         return False
-    HM.addInstanceMethod(gClassName, "touchesCancelled:withEvent:", touchesCancelledWithEventIMPValue.GetValue(), "v@:@@")
+    HM.add_instance_method(gClassName, "touchesCancelled:withEvent:", touchesCancelledWithEventIMPValue.GetValue(), "v@:@@")
 
     attachToEdgeIMPValue = makeAttachToEdgeIMP()
-    if not HM.judgeSBValueHasValue(attachToEdgeIMPValue):
+    if not HM.is_SBValue_has_value(attachToEdgeIMPValue):
         return False
-    HM.addInstanceMethod(gClassName, "attachToEdge", attachToEdgeIMPValue.GetValue(), "v@:")
+    HM.add_instance_method(gClassName, "attachToEdge", attachToEdgeIMPValue.GetValue(), "v@:")
 
     return True
 
@@ -502,7 +502,7 @@ def makeTouchesMovedWithEventIMP() -> lldb.SBValue:
         imp_implementationWithBlock(touchesMovedWithEventBlock);
 
     '''
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeTouchesEndedWithEventIMP() -> lldb.SBValue:
@@ -523,7 +523,7 @@ def makeTouchesEndedWithEventIMP() -> lldb.SBValue:
         imp_implementationWithBlock(touchesEndedWithEventBlock);
 
     '''
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeTouchesCancelledWithEventIMP() -> lldb.SBValue:
@@ -544,7 +544,7 @@ def makeTouchesCancelledWithEventIMP() -> lldb.SBValue:
         imp_implementationWithBlock(touchesCancelledWithEventBlock);
 
     '''
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeAttachToEdgeIMP() -> lldb.SBValue:
@@ -595,10 +595,10 @@ def makeAttachToEdgeIMP() -> lldb.SBValue:
         imp_implementationWithBlock(attachToEdgeBlock);
 
     '''
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def tapSelfBreakPointHandler(frame, bp_loc, internal_dict) -> bool:
     HMDebugMainViewController.register()
-    HM.processContinue()
+    HM.process_continue()
     return True

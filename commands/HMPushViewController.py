@@ -91,24 +91,24 @@ def push(debugger, command, exe_ctx, result, internal_dict):
         for string in args:
             instanceExpr += string + " "
         instanceExpr = instanceExpr.rstrip()
-        VCObject = HM.evaluateExpressionValue(instanceExpr).GetValue()
+        VCObject = HM.evaluate_expression_value(instanceExpr).GetValue()
     else:
         makeVCExpression = f"(UIViewController *)[[NSClassFromString(@\"{args[0]}\") alloc] init]"
-        VCObject = HM.evaluateExpressionValue(makeVCExpression).GetValue()     # address
+        VCObject = HM.evaluate_expression_value(makeVCExpression).GetValue()     # address
 
     if verifyObjIsKindOfClass(VCObject, "UIViewController"):
         pushExpression = f"(void)[{navigationVC} pushViewController:(id){VCObject} animated:YES]"
         debugger.HandleCommand('expression -l objc -O -- ' + pushExpression)
         state = True
     elif not options.instance:
-        classPrefixes = HM.getClassPrefixes()[0]
+        classPrefixes = HM.get_class_prefixes()[0]
         for prefix in classPrefixes:  # for Swift file
             className = f"{prefix}.{args[0]}"
-            if not HM.existClass(className):
+            if not HM.is_existing_class(className):
                 continue
 
             makeVCExpression = f"(UIViewController *)[[NSClassFromString(@\"{className}\") alloc] init]"
-            VCObject = HM.evaluateExpressionValue(makeVCExpression).GetValue()  # address
+            VCObject = HM.evaluate_expression_value(makeVCExpression).GetValue()  # address
             if verifyObjIsKindOfClass(VCObject, "UIViewController"):
                 pushExpression = f"(void)[{navigationVC} pushViewController:(id){VCObject} animated:YES]"
                 debugger.HandleCommand('expression -l objc -O -- ' + pushExpression)
@@ -117,23 +117,23 @@ def push(debugger, command, exe_ctx, result, internal_dict):
 
     HM.DPrint("push succeed" if state else "push failed")
     if state:
-        HM.processContinue()
+        HM.process_continue()
 
 
 def verifyObjIsKindOfClass(objAddress: str, className: str) -> bool:
     if objAddress is None or len(objAddress) == 0:
         return False
     
-    resultValue = HM.evaluateExpressionValue(f"(BOOL)[(id){objAddress} isKindOfClass:[{className} class]]")
-    return HM.boolOfSBValue(resultValue)
+    resultValue = HM.evaluate_expression_value(f"(BOOL)[(id){objAddress} isKindOfClass:[{className} class]]")
+    return HM.bool_of_SBValue(resultValue)
 
 
 def getNavigationVC() -> Optional[str]:
-    rootViewController = HM.evaluateExpressionValue("[[[UIApplication sharedApplication] keyWindow] rootViewController]").GetValue()
+    rootViewController = HM.evaluate_expression_value("[[[UIApplication sharedApplication] keyWindow] rootViewController]").GetValue()
     if verifyObjIsKindOfClass(rootViewController, "UINavigationController"):
         return rootViewController
     elif verifyObjIsKindOfClass(rootViewController, "UITabBarController"):
-        selectedViewController = HM.evaluateExpressionValue(f"[(UITabBarController *){rootViewController} selectedViewController]").GetValue()
+        selectedViewController = HM.evaluate_expression_value(f"[(UITabBarController *){rootViewController} selectedViewController]").GetValue()
         if verifyObjIsKindOfClass(selectedViewController, "UINavigationController"):
             return selectedViewController
         else:

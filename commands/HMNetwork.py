@@ -52,38 +52,38 @@ def request(debugger, command, exe_ctx, result, internal_dict):
     """
 
     global gProtocolName
-    if HM.existClass(gProtocolName):
+    if HM.is_existing_class(gProtocolName):
         return
 
     registerProtocol()
     swizzlingProtocolClasses()
-    HM.processContinue()
+    HM.process_continue()
 
 
 def registerProtocol():
     global gProtocolName
-    if HM.existClass(gProtocolName):
+    if HM.is_existing_class(gProtocolName):
         return
 
     # Register class
     HM.DPrint(f"Register {gProtocolName}...")
 
-    classValue = HM.allocateClass(gProtocolName, "NSURLProtocol")
-    HM.registerClass(classValue.GetValue())
+    classValue = HM.allocate_class(gProtocolName, "NSURLProtocol")
+    HM.register_class(classValue.GetValue())
 
     # Add methods
     HM.DPrint(f"Add methods to {gProtocolName}...")
 
     canInitWithRequestIMPValue = makeCanInitWithRequestIMP()
-    if not HM.judgeSBValueHasValue(canInitWithRequestIMPValue):
+    if not HM.is_SBValue_has_value(canInitWithRequestIMPValue):
         return
-    HM.addClassMethod(gProtocolName, "canInitWithRequest:", canInitWithRequestIMPValue.GetValue(), "B@:@")
+    HM.add_class_method(gProtocolName, "canInitWithRequest:", canInitWithRequestIMPValue.GetValue(), "B@:@")
 
     HM.DPrint(f"Register {gProtocolName} done!")
 
     # register NSURLProtocol
     registerClassExp = f"[NSURLProtocol registerClass:(Class){classValue.GetValue()}]"
-    HM.evaluateExpressionValue(registerClassExp)
+    HM.evaluate_expression_value(registerClassExp)
 
 
 def makeCanInitWithRequestIMP() -> lldb.SBValue:
@@ -94,7 +94,7 @@ def makeCanInitWithRequestIMP() -> lldb.SBValue:
         };
         imp_implementationWithBlock(IMPBlock);
     '''
-    return HM.evaluateExpressionValue(expression=command_script)
+    return HM.evaluate_expression_value(expression=command_script)
 
 
 def swizzlingProtocolClasses():
@@ -102,13 +102,13 @@ def swizzlingProtocolClasses():
 
     # add customized method
     clsName = "__NSCFURLSessionConfiguration"
-    if not HM.existClass(clsName):
+    if not HM.is_existing_class(clsName):
         clsName = "NSURLSessionConfiguration"
 
     HMLLDBProtocolClassesIMPValue = makeHMLLDBProtocolClassesIMP()
-    if not HM.judgeSBValueHasValue(HMLLDBProtocolClassesIMPValue):
+    if not HM.is_SBValue_has_value(HMLLDBProtocolClassesIMPValue):
         return
-    HM.addInstanceMethod(clsName, gCustomizedSELString, HMLLDBProtocolClassesIMPValue.GetValue(), "@@:")
+    HM.add_instance_method(clsName, gCustomizedSELString, HMLLDBProtocolClassesIMPValue.GetValue(), "@@:")
 
     # exchange implementation
     command_script = f'''
@@ -117,7 +117,7 @@ def swizzlingProtocolClasses():
         Method m2 = class_getInstanceMethod(cls, NSSelectorFromString(@"{gCustomizedSELString}"));
         method_exchangeImplementations(m1, m2);
     '''
-    HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeHMLLDBProtocolClassesIMP() -> lldb.SBValue:
@@ -139,4 +139,4 @@ def makeHMLLDBProtocolClassesIMP() -> lldb.SBValue:
         }};
         imp_implementationWithBlock(IMPBlock);
     '''
-    return HM.evaluateExpressionValue(expression=command_script)
+    return HM.evaluate_expression_value(expression=command_script)

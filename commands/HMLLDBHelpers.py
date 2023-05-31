@@ -28,17 +28,17 @@ import inspect
 import HMLLDBClassInfo
 
 
-gIsFirstCall = True
+g_is_first_call = True
 
-gClassPrefixes: List[str] = []   # Class Prefixes that may be user-written
-gClassPrefixesValue: lldb.SBValue = lldb.SBValue()
+g_class_prefixes: List[str] = []   # Class Prefixes that may be user-written
+g_class_prefixes_value: lldb.SBValue = lldb.SBValue()
 
 
-def processContinue() -> None:
-    asyncState = lldb.debugger.GetAsync()
+def process_continue() -> None:
+    async_state = lldb.debugger.GetAsync()
     lldb.debugger.SetAsync(True)
     lldb.debugger.HandleCommand('process continue')
-    lldb.debugger.SetAsync(asyncState)
+    lldb.debugger.SetAsync(async_state)
 
 
 def DPrint(obj: Any) -> None:
@@ -57,12 +57,12 @@ def int_value_from_string(integer_str: str) -> Tuple[bool, int]:
         return False, 0
 
 
-def evaluateExpressionValue(expression: str, prefix='', printErrors=True) -> lldb.SBValue:
+def evaluate_expression_value(expression: str, prefix='', print_errors=True) -> lldb.SBValue:
     frame = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame()
 
-    global gIsFirstCall
-    if gIsFirstCall:
-        gIsFirstCall = False
+    global g_is_first_call
+    if g_is_first_call:
+        g_is_first_call = False
         op = lldb.SBExpressionOptions()
         op.SetLanguage(lldb.eLanguageTypeObjC_plus_plus)
         frame.EvaluateExpression('''
@@ -100,7 +100,7 @@ def evaluateExpressionValue(expression: str, prefix='', printErrors=True) -> lld
     value = frame.EvaluateExpression(expression, options)
     error = value.GetError()
 
-    if printErrors and not successOfSBError(error):
+    if print_errors and not is_successful_of_SBError(error):
         DPrint(error)
         DPrint(inspect.getframeinfo(inspect.currentframe().f_back))
 
@@ -108,89 +108,89 @@ def evaluateExpressionValue(expression: str, prefix='', printErrors=True) -> lld
 
 
 # Based on https://github.com/facebook/chisel/blob/master/fblldbbase.py
-def successOfSBError(err: lldb.SBError) -> bool:
-    kNoResult = 0x1001  # 4097
-    isSuccess = err.success or err.value == kNoResult
-    return isSuccess
+def is_successful_of_SBError(err: lldb.SBError) -> bool:
+    no_result = 0x1001  # 4097
+    is_successful = err.success or err.value == no_result
+    return is_successful
 
 
-def judgeSBValueHasValue(val: lldb.SBValue) -> bool:
+def is_SBValue_has_value(val: lldb.SBValue) -> bool:
     if val.GetValue() is None or val.GetValueAsSigned() == 0:
         return False
     return True
 
 
-def boolOfSBValue(val: lldb.SBValue) -> bool:
+def bool_of_SBValue(val: lldb.SBValue) -> bool:
     result = val.GetValue()
     if result == "True" or result == "true" or result == "YES":
         return True
     return False
 
 
-def addOneShotBreakPointInIMP(imp: lldb.SBValue, callbackFunc: str, name: str) -> None:
+def add_one_shot_breakpoint_in_imp(imp: lldb.SBValue, callback_func: str, name: str) -> None:
     target = lldb.debugger.GetSelectedTarget()
     bp = target.BreakpointCreateByAddress(imp.GetValueAsUnsigned())
     bp.AddName(name)
     bp.SetOneShot(True)
-    bp.SetScriptCallbackFunction(callbackFunc)
+    bp.SetScriptCallbackFunction(callback_func)
 
 
-def getFunctionAddress(name: str, moduleName='') -> int:
+def get_function_address(name: str, module_name='') -> int:
     target = lldb.debugger.GetSelectedTarget()
-    modulesCount = target.GetNumModules()
-    for i in range(modulesCount):
+    modules_count = target.GetNumModules()
+    for i in range(modules_count):
         module = target.GetModuleAtIndex(i)
-        if len(moduleName) > 0:
-            fileName = module.GetFileSpec().GetFilename()
-            if not moduleName in fileName:
+        if len(module_name) > 0:
+            file_name = module.GetFileSpec().GetFilename()
+            if not module_name in file_name:
                 continue
 
-        sclist: lldb.SBSymbolContextList = module.FindFunctions(name, lldb.eFunctionNameTypeAny)
-        sclistCount = sclist.GetSize()
-        for j in range(sclistCount):
-            symbolContext = sclist.GetContextAtIndex(j)
-            address = symbolContextGetBaseRangeAddress(symbolContext)
+        sc_list: lldb.SBSymbolContextList = module.FindFunctions(name, lldb.eFunctionNameTypeAny)
+        sc_list_count = sc_list.GetSize()
+        for j in range(sc_list_count):
+            symbol_context = sc_list.GetContextAtIndex(j)
+            address = symbol_context_get_base_range_address(symbol_context)
             if address.IsValid():
-                addressIntValue = address.GetLoadAddress(lldb.debugger.GetSelectedTarget())
-                return addressIntValue
+                address_int_value = address.GetLoadAddress(target)
+                return address_int_value
 
     return 0
 
 
-def symbolContextGetBaseRangeAddress(sc: lldb.SBSymbolContext) -> lldb.SBAddress:
+def symbol_context_get_base_range_address(sc: lldb.SBSymbolContext) -> lldb.SBAddress:
     # SymbolContext::GetAddressRange(...)
-    baseRangeAddress = lldb.SBAddress()
-    lineEntry = sc.GetLineEntry()
+    base_range_address = lldb.SBAddress()
+    line_entry = sc.GetLineEntry()
     block = sc.GetBlock()
     function = sc.GetFunction()
     symbol = sc.GetSymbol()
 
     # HMLLDBClassInfo.pSBSymbolContext(sc)
-    # HMLLDBClassInfo.pSBLineEntry(lineEntry)
+    # HMLLDBClassInfo.pSBLineEntry(line_entry)
     # HMLLDBClassInfo.pSBBlock(block)
     # HMLLDBClassInfo.pSBFunction(function)
     # HMLLDBClassInfo.pSBSymbol(symbol)
 
-    if lineEntry.IsValid():
-        baseRangeAddress = lineEntry.GetStartAddress()
+    if line_entry.IsValid():
+        base_range_address = line_entry.GetStartAddress()
     elif block.IsValid():
-        inlineBlock = block.GetContainingInlinedBlock()
-        if inlineBlock.IsValid():
-            baseRangeAddress = inlineBlock.GetRangeStartAddress(0)
+        inline_block = block.GetContainingInlinedBlock()
+        if inline_block.IsValid():
+            base_range_address = inline_block.GetRangeStartAddress(0)
     elif function.IsValid():
-        baseRangeAddress = function.GetStartAddress()
+        base_range_address = function.GetStartAddress()
     elif symbol.IsValid():
-        baseRangeAddress = symbol.GetStartAddress()
+        base_range_address = symbol.GetStartAddress()
 
-    return baseRangeAddress
+    return base_range_address
 
 
-def getClassPrefixes() -> Tuple[List[str], lldb.SBValue]:
-    global gClassPrefixes
-    global gClassPrefixesValue
+def get_class_prefixes() -> Tuple[List[str], lldb.SBValue]:
+    global g_class_prefixes
+    global g_class_prefixes_value
 
-    if judgeSBValueHasValue(gClassPrefixesValue):
-        return gClassPrefixes, gClassPrefixesValue
+    if is_SBValue_has_value(g_class_prefixes_value):
+        return g_class_prefixes, g_class_prefixes_value
 
     DPrint("Getting class prefixes when using this function for the first time")
 
@@ -212,17 +212,17 @@ def getClassPrefixes() -> Tuple[List[str], lldb.SBValue]:
         (NSMutableArray *)clsPrefixes;
     '''
 
-    gClassPrefixesValue = evaluateExpressionValue(command_script)
-    for i in range(gClassPrefixesValue.GetNumChildren()):
-        prefixValue = gClassPrefixesValue.GetChildAtIndex(i)
-        gClassPrefixes.append(prefixValue.GetObjectDescription())
+    g_class_prefixes_value = evaluate_expression_value(command_script)
+    for i in range(g_class_prefixes_value.GetNumChildren()):
+        prefix_value = g_class_prefixes_value.GetChildAtIndex(i)
+        g_class_prefixes.append(prefix_value.GetObjectDescription())
 
-    return gClassPrefixes, gClassPrefixesValue
+    return g_class_prefixes, g_class_prefixes_value
 
 
-def existClass(className: str) -> bool:
+def is_existing_class(class_name: str) -> bool:
     command_script = f'''
-        Class cls = (Class)objc_lookUpClass("{className}");
+        Class cls = (Class)objc_lookUpClass("{class_name}");
         BOOL exist = NO;
         if (cls) {{
             exist = YES;
@@ -230,60 +230,60 @@ def existClass(className: str) -> bool:
         (BOOL)exist;
     '''
 
-    value = evaluateExpressionValue(command_script)
-    return boolOfSBValue(value)
+    value = evaluate_expression_value(command_script)
+    return bool_of_SBValue(value)
 
 
-def allocateClass(className: str, superClassName: str) -> lldb.SBValue:
+def allocate_class(class_name: str, super_class_name: str) -> lldb.SBValue:
     command_script = f'''
-        Class newCls = (Class)objc_lookUpClass("{className}");
+        Class newCls = (Class)objc_lookUpClass("{class_name}");
         if (!newCls) {{
-            Class superCls = (Class)objc_lookUpClass("{superClassName}");
-            newCls = (Class)objc_allocateClassPair(superCls, "{className}", 0);
+            Class superCls = (Class)objc_lookUpClass("{super_class_name}");
+            newCls = (Class)objc_allocateClassPair(superCls, "{class_name}", 0);
         }}
         (Class)newCls;
     '''
 
-    return evaluateExpressionValue(command_script)
+    return evaluate_expression_value(command_script)
 
 
-def registerClass(classAddress: str) -> None:
-    command_script = f"(void)objc_registerClassPair(Class({classAddress}))"
-    evaluateExpressionValue(command_script)
+def register_class(class_address: str) -> None:
+    command_script = f"(void)objc_registerClassPair(Class({class_address}))"
+    evaluate_expression_value(command_script)
 
 
-def addIvar(classAddress: str, ivarName: str, types: str) -> bool:
+def add_ivar(class_address: str, ivar_name: str, types: str) -> bool:
     command_script = f'''
         const char * types = @encode({types});
         NSUInteger size;
         NSUInteger alingment;
         NSGetSizeAndAlignment(types, &size, &alingment);
-        (BOOL)class_addIvar((Class){classAddress}, "{ivarName}", size, alingment, types);
+        (BOOL)class_addIvar((Class){class_address}, "{ivar_name}", size, alingment, types);
     '''
 
-    value = evaluateExpressionValue(command_script)
-    return boolOfSBValue(value)
+    value = evaluate_expression_value(command_script)
+    return bool_of_SBValue(value)
 
 
-def addClassMethod(className: str, selector: str, impAddress: str, types: str) -> None:
+def add_class_method(class_name: str, selector: str, imp_address: str, types: str) -> None:
     command_script = f'''
-        Class metaCls = (Class)objc_getMetaClass("{className}");
+        Class metaCls = (Class)objc_getMetaClass("{class_name}");
         if (metaCls) {{
             SEL selector = NSSelectorFromString([[NSString alloc] initWithUTF8String:"{selector}"]);
-            (BOOL)class_addMethod(metaCls, selector, (void (*)()){impAddress}, "{types}");
+            (BOOL)class_addMethod(metaCls, selector, (void (*)()){imp_address}, "{types}");
         }}
     '''
 
-    evaluateExpressionValue(command_script)
+    evaluate_expression_value(command_script)
 
 
-def addInstanceMethod(className: str, selector: str, impAddress: str, types: str) -> None:
+def add_instance_method(class_name: str, selector: str, imp_address: str, types: str) -> None:
     command_script = f'''
-        Class cls = (Class)objc_lookUpClass("{className}");
+        Class cls = (Class)objc_lookUpClass("{class_name}");
         if (cls) {{
             SEL selector = NSSelectorFromString([[NSString alloc] initWithUTF8String:"{selector}"]);
-            (BOOL)class_addMethod(cls, selector, (void (*)()){impAddress}, "{types}");
+            (BOOL)class_addMethod(cls, selector, (void (*)()){imp_address}, "{types}");
         }}
     '''
 
-    evaluateExpressionValue(command_script)
+    evaluate_expression_value(command_script)

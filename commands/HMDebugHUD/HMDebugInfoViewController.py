@@ -37,25 +37,25 @@ gClassName = "HMDebugInfoViewController"
 
 def register() -> None:
 
-    if HM.existClass(gClassName):
+    if HM.is_existing_class(gClassName):
         return
 
     # Register class
     HMProgressHUD.show(f"Register {gClassName}...")
     HM.DPrint(f"Register {gClassName}...")
 
-    classValue = HM.allocateClass(gClassName, HMDebugBaseViewController.gClassName)
-    HM.addIvar(classValue.GetValue(), "_leftTextArray", "NSMutableArray *")
-    HM.addIvar(classValue.GetValue(), "_rightTextArray", "NSMutableArray *")
-    HM.registerClass(classValue.GetValue())
+    classValue = HM.allocate_class(gClassName, HMDebugBaseViewController.gClassName)
+    HM.add_ivar(classValue.GetValue(), "_leftTextArray", "NSMutableArray *")
+    HM.add_ivar(classValue.GetValue(), "_rightTextArray", "NSMutableArray *")
+    HM.register_class(classValue.GetValue())
 
     # Add methods
     HM.DPrint(f"Add methods to {gClassName}...")
     viewDidLoadIMPValue = makeViewDidLoadIMP()
-    if not HM.judgeSBValueHasValue(viewDidLoadIMPValue):
+    if not HM.is_SBValue_has_value(viewDidLoadIMPValue):
         HMProgressHUD.hide()
         return
-    HM.addInstanceMethod(gClassName, "viewDidLoad", viewDidLoadIMPValue.GetValue(), "v@:")
+    HM.add_instance_method(gClassName, "viewDidLoad", viewDidLoadIMPValue.GetValue(), "v@:")
 
     # Methods related to tableView.
     HM.DPrint(f"Add methods to {gClassName}......")
@@ -175,21 +175,21 @@ def makeViewDidLoadIMP() -> lldb.SBValue:
         imp_implementationWithBlock(IMPBlock);    
     '''
 
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def addTableViewMethods() -> bool:
     global gClassName
 
     numberOfRowsInSectionIMPValue = makeNumberOfRowsInSectionIMP()
-    if not HM.judgeSBValueHasValue(numberOfRowsInSectionIMPValue):
+    if not HM.is_SBValue_has_value(numberOfRowsInSectionIMPValue):
         return False
-    HM.addInstanceMethod(gClassName, "tableView:numberOfRowsInSection:", numberOfRowsInSectionIMPValue.GetValue(), "q@:@q")
+    HM.add_instance_method(gClassName, "tableView:numberOfRowsInSection:", numberOfRowsInSectionIMPValue.GetValue(), "q@:@q")
 
     cellForRowAtIndexPathIMPValue = makeCellForRowAtIndexPathIMP()
-    if not HM.judgeSBValueHasValue(cellForRowAtIndexPathIMPValue):
+    if not HM.is_SBValue_has_value(cellForRowAtIndexPathIMPValue):
         return False
-    HM.addInstanceMethod(gClassName, "tableView:cellForRowAtIndexPath:", cellForRowAtIndexPathIMPValue.GetValue(), "@@:@@")
+    HM.add_instance_method(gClassName, "tableView:cellForRowAtIndexPath:", cellForRowAtIndexPathIMPValue.GetValue(), "@@:@@")
 
     return True
 
@@ -204,7 +204,7 @@ def makeNumberOfRowsInSectionIMP() -> lldb.SBValue:
         imp_implementationWithBlock(IMPBlock);    
     '''
 
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeCellForRowAtIndexPathIMP() -> lldb.SBValue:
@@ -264,4 +264,4 @@ def makeCellForRowAtIndexPathIMP() -> lldb.SBValue:
         imp_implementationWithBlock(IMPBlock);    
     '''
 
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)

@@ -49,36 +49,36 @@ def showFPS(debugger, command, exe_ctx, result, internal_dict):
     HM.DPrint("showfps is deprecated. Use showhud instead.")
 
     FPSClassName = "HMFPSLabel"
-    if HM.existClass(FPSClassName):
+    if HM.is_existing_class(FPSClassName):
         HM.DPrint("HMFPSLabel is already on display")
         return
 
     # Register class
-    FPSLabelClassValue = HM.allocateClass(FPSClassName, "UILabel")
-    HM.addIvar(FPSLabelClassValue.GetValue(), "_link", "CADisplayLink *")
-    HM.addIvar(FPSLabelClassValue.GetValue(), "_count", "int")
-    HM.addIvar(FPSLabelClassValue.GetValue(), "_lastTime", "double")
-    HM.registerClass(FPSLabelClassValue.GetValue())
+    FPSLabelClassValue = HM.allocate_class(FPSClassName, "UILabel")
+    HM.add_ivar(FPSLabelClassValue.GetValue(), "_link", "CADisplayLink *")
+    HM.add_ivar(FPSLabelClassValue.GetValue(), "_count", "int")
+    HM.add_ivar(FPSLabelClassValue.GetValue(), "_lastTime", "double")
+    HM.register_class(FPSLabelClassValue.GetValue())
 
     addToKeyWindowIMPValue = makeAddToKeyWindowIMP()
-    if not HM.judgeSBValueHasValue(addToKeyWindowIMPValue):
+    if not HM.is_SBValue_has_value(addToKeyWindowIMPValue):
         return
-    HM.addClassMethod(FPSClassName, "addToKeyWindow", addToKeyWindowIMPValue.GetValue(), "@@:")
+    HM.add_class_method(FPSClassName, "addToKeyWindow", addToKeyWindowIMPValue.GetValue(), "@@:")
 
     tickIMPValue = makeTickIMP()
-    if not HM.judgeSBValueHasValue(tickIMPValue):
+    if not HM.is_SBValue_has_value(tickIMPValue):
         return
-    HM.addInstanceMethod(FPSClassName, "tick:", tickIMPValue.GetValue(), "v@:@")
+    HM.add_instance_method(FPSClassName, "tick:", tickIMPValue.GetValue(), "v@:@")
 
     # Show fps command
     addToKeyWindowCommand = '''
         Class fps = NSClassFromString(@"HMFPSLabel");
         (UILabel *)[fps performSelector:@selector(addToKeyWindow)];
     '''
-    HM.evaluateExpressionValue(addToKeyWindowCommand)
+    HM.evaluate_expression_value(addToKeyWindowCommand)
 
     HM.DPrint("showfps Done!")
-    HM.processContinue()
+    HM.process_continue()
 
 
 def makeAddToKeyWindowIMP() -> lldb.SBValue:
@@ -107,7 +107,7 @@ def makeAddToKeyWindowIMP() -> lldb.SBValue:
         
     '''
 
-    return HM.evaluateExpressionValue(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
+    return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
 def makeTickIMP() -> lldb.SBValue:
@@ -147,4 +147,4 @@ def makeTickIMP() -> lldb.SBValue:
 
     '''
 
-    return HM.evaluateExpressionValue(command_script)
+    return HM.evaluate_expression_value(command_script)

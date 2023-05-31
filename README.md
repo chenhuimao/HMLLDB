@@ -382,7 +382,7 @@ General Purpose Registers:
 0x16dc24e70: 0x0000000281a30000
 
 (lldb)rr x0 sp -s 0x10
-[HMLLDB] register read x0 sp!
+[HMLLDB] register read x0 sp
     x0 = 0x0000000000000000
     sp = 0x000000016fb2cdf0
 0x16fb2cdf0: 0x000000010110b8b0

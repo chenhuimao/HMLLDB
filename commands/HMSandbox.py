@@ -62,7 +62,7 @@ def sandbox(debugger, command, exe_ctx, result, internal_dict):
             [rootVC presentViewController:nv animated:YES completion:nil];
         }}
     '''
-    HM.evaluateExpressionValue(command_script)
+    HM.evaluate_expression_value(command_script)
 
-    HM.processContinue()
+    HM.process_continue()
 
