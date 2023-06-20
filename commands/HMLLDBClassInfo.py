@@ -1418,7 +1418,36 @@ def pSBLaunchInfo(obj: Optional[lldb.SBLaunchInfo]) -> None:
     print_format("GetNumEnvironmentEntries", info.GetNumEnvironmentEntries())
     print_format("GetEnvironment", info.GetEnvironment())  # SBEnvironment
     print_format("GetWorkingDirectory", info.GetWorkingDirectory())
-    print_format("GetLaunchFlags", info.GetLaunchFlags())
+
+    launch_flags = info.GetLaunchFlags()
+    print_format("GetLaunchFlags", launch_flags)
+    if launch_flags & lldb.eLaunchFlagExec:
+        print(f"\teLaunchFlagExec ({lldb.eLaunchFlagExec})")
+    if launch_flags & lldb.eLaunchFlagDebug:
+        print(f"\teLaunchFlagDebug ({lldb.eLaunchFlagDebug})")
+    if launch_flags & lldb.eLaunchFlagStopAtEntry:
+        print(f"\teLaunchFlagStopAtEntry ({lldb.eLaunchFlagStopAtEntry})")
+    if launch_flags & lldb.eLaunchFlagDisableASLR:
+        print(f"\teLaunchFlagDisableASLR ({lldb.eLaunchFlagDisableASLR})")
+    if launch_flags & lldb.eLaunchFlagDisableSTDIO:
+        print(f"\teLaunchFlagDisableSTDIO ({lldb.eLaunchFlagDisableSTDIO})")
+    if launch_flags & lldb.eLaunchFlagLaunchInTTY:
+        print(f"\teLaunchFlagLaunchInTTY ({lldb.eLaunchFlagLaunchInTTY})")
+    if launch_flags & lldb.eLaunchFlagLaunchInShell:
+        print(f"\teLaunchFlagLaunchInShell ({lldb.eLaunchFlagLaunchInShell})")
+    if launch_flags & lldb.eLaunchFlagLaunchInSeparateProcessGroup:
+        print(f"\teLaunchFlagLaunchInSeparateProcessGroup ({lldb.eLaunchFlagLaunchInSeparateProcessGroup})")
+    if launch_flags & lldb.eLaunchFlagDontSetExitStatus:
+        print(f"\teLaunchFlagDontSetExitStatus ({lldb.eLaunchFlagDontSetExitStatus})")
+    if launch_flags & lldb.eLaunchFlagDetachOnError:
+        print(f"\teLaunchFlagDetachOnError ({lldb.eLaunchFlagDetachOnError})")
+    if launch_flags & lldb.eLaunchFlagShellExpandArguments:
+        print(f"\teLaunchFlagShellExpandArguments ({lldb.eLaunchFlagShellExpandArguments})")
+    if launch_flags & lldb.eLaunchFlagCloseTTYOnExit:
+        print(f"\teLaunchFlagCloseTTYOnExit ({lldb.eLaunchFlagCloseTTYOnExit})")
+    if launch_flags & lldb.eLaunchFlagInheritTCCFromParent:
+        print(f"\teLaunchFlagInheritTCCFromParent ({lldb.eLaunchFlagInheritTCCFromParent})")
+
     print_format("GetProcessPluginName", info.GetProcessPluginName())
     print_format("GetShell", info.GetShell())
     print_format("GetShellExpandArguments", info.GetShellExpandArguments())
