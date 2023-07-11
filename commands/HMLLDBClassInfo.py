@@ -527,6 +527,7 @@ def pSBThread(obj: Optional[lldb.SBThread]) -> None:
     print_format("GetStopReason(raw)", stop_reason)
     print_format("GetStopReason(resolved)", get_string_from_stop_reason(stop_reason))
     print_format("GetStopReasonDataCount", thread.GetStopReasonDataCount())
+    print_format("GetStopDescription", thread.GetStopDescription(1024))
     print_format("GetStopReturnValue", thread.GetStopReturnValue())  # SBValue
     print_format("GetStopErrorValue", thread.GetStopErrorValue())  # SBValue
     print_format("GetThreadID", thread.GetThreadID())
