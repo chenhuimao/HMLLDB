@@ -161,6 +161,8 @@ def breakpoint_frame_handler(frame, bp_loc, extra_args, internal_dict) -> bool:
     for i in range(thread.GetNumFrames()):
         frame_in_stack = thread.GetFrameAtIndex(i)
         frame_display_name = frame_in_stack.GetDisplayFunctionName()
+        if not frame_display_name:
+            frame_display_name = hex(frame_in_stack.GetPC())
         if keywords[keywords_index] in frame_display_name:
             keywords_index += 1
             if keywords_index == keywords_size:
