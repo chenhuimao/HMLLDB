@@ -35,11 +35,15 @@ def adrp(debugger, command, exe_ctx, result, internal_dict):
     """
     Syntax:
         adrp <immediate> <pc address>
+        adrp <pc address> <adrp> <register> <immediate>
         adrp <pc address> <+offset> <adrp> <register> <immediate>
 
     Examples:
         (lldb) adrp 348413 0x189aef040
         [HMLLDB] result: 0x1debec000, 8032010240
+
+        (lldb) adrp 0x195d0ccb0: adrp   x16, 369530
+        [HMLLDB] x16: 0x1f0086000, 8322048000
 
         (lldb) adrp 0x189aef040 <+32>:  adrp   x8, 348413
         [HMLLDB] x8: 0x1debec000, 8032010240
@@ -52,6 +56,13 @@ def adrp(debugger, command, exe_ctx, result, internal_dict):
     if len(command_args) == 2:
         immediate_is_valid, immediate_value = HM.int_value_from_string(command_args[0])
         pc_address_is_valid, pc_address_value = HM.int_value_from_string(command_args[1])
+        if (not immediate_is_valid) or (not pc_address_is_valid):
+            HM.DPrint("Error input, Some input arguments do not support conversion to integers. Please enter \"help adrp\" for help.")
+            return
+    elif len(command_args) == 4:
+        immediate_is_valid, immediate_value = HM.int_value_from_string(command_args[3])
+        pc_address_str = command_args[0].rstrip(':')
+        pc_address_is_valid, pc_address_value = HM.int_value_from_string(pc_address_str)
         if (not immediate_is_valid) or (not pc_address_is_valid):
             HM.DPrint("Error input, Some input arguments do not support conversion to integers. Please enter \"help adrp\" for help.")
             return
@@ -68,7 +79,10 @@ def adrp(debugger, command, exe_ctx, result, internal_dict):
     result_tuple: Tuple[int, str] = calculate_adrp_result_with_immediate_and_pc_address(immediate_value, pc_address_value)
     if len(command_args) == 2:
         HM.DPrint(f"result: {result_tuple[1]}, {result_tuple[0]}")
-    else:
+    elif len(command_args) == 4:
+        target_register = command_args[2].rstrip(',')
+        HM.DPrint(f"{target_register}: {result_tuple[1]}, {result_tuple[0]}")
+    elif len(command_args) == 5:
         target_register = command_args[3].rstrip(',')
         HM.DPrint(f"{target_register}: {result_tuple[1]}, {result_tuple[0]}")
 
