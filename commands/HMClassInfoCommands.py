@@ -582,31 +582,42 @@ def print_ivars_info(debugger, command, exe_ctx, result, internal_dict):
         HM.DPrint("Requires a argument, Please enter \"help ivarsinfo\" for help.")
         return
 
-    if not HM.is_existing_class(command):
-        HM.DPrint(f"{command} does not exist.")
-        return
+    cls_prefixes_value = HM.get_class_prefixes()[1]
 
     command_script = f'''        
         Class inputClass = objc_lookUpClass("{command}");
+        if (inputClass == nil) {{
+            for (NSString *prefix in (NSMutableArray *){cls_prefixes_value.GetValue()}) {{
+                NSString *clsName = [prefix stringByAppendingString:@".{command}"];
+                inputClass = objc_lookUpClass((char *)[clsName UTF8String]);
+                if (inputClass) {{
+                    break;
+                }}
+            }}
+        }}
         
         NSMutableString *result = [[NSMutableString alloc] init];
-        [result appendString:[[NSString alloc] initWithFormat:@"%s (%p)", class_getName(inputClass), inputClass]];
+        if (inputClass == nil) {{
+            [result appendString:@"Can't find {command} class\\n"];
+        }} else {{
+            [result appendString:[[NSString alloc] initWithFormat:@"%s (%p)", class_getName(inputClass), inputClass]];
+            unsigned int ivarsCount = 0;
+            Ivar *ivarList = class_copyIvarList(inputClass, &ivarsCount);
+            for (int i = 0; i < ivarsCount; ++i) {{
+                Ivar ivar = ivarList[i];
+                const char *ivarName = ivar_getName(ivar);
+                const char *ivarTypeEncoding = ivar_getTypeEncoding(ivar);
+                long ivarOffset = ivar_getOffset(ivar);
+                
+                NSString *ivarInfo = [[NSString alloc] initWithFormat:@"\\n%s\\n\\ttypeEncoding:%s\\n\\toffset:%ld hex:0x%lx", ivarName, ivarTypeEncoding, ivarOffset, ivarOffset];
+                [result appendString:ivarInfo];
+            }}
+            if (ivarsCount == 0) {{
+                [result appendString:@"\\n[HMLLDB] No ivar found."];
+            }}
+            free(ivarList);
+        }}
         
-        unsigned int ivarsCount = 0;
-        Ivar *ivarList = class_copyIvarList(inputClass, &ivarsCount);
-        for (int i = 0; i < ivarsCount; ++i) {{
-            Ivar ivar = ivarList[i];
-            const char *ivarName = ivar_getName(ivar);
-            const char *ivarTypeEncoding = ivar_getTypeEncoding(ivar);
-            long ivarOffset = ivar_getOffset(ivar);
-            
-            NSString *ivarInfo = [[NSString alloc] initWithFormat:@"\\n%s\\n\\ttypeEncoding:%s\\n\\toffset:%ld hex:0x%lx", ivarName, ivarTypeEncoding, ivarOffset, ivarOffset];
-            [result appendString:ivarInfo];
-        }}
-        if (ivarsCount == 0) {{
-            [result appendString:@"\\n[HMLLDB] No ivar found."];
-        }}
-        free(ivarList);
         (NSMutableString *)result;
     '''
 
