@@ -8,7 +8,7 @@
 - Some commands provide interactive UI within the APP
 
 ## Requirements
-- Xcode 14.3
+- Xcode 14.3.1
 - 64-bit simulator or real device, iOS 11.0+
 - Debug configuration (or ***Optimization Level*** set [-O0]/[-Onone])
 
@@ -259,19 +259,23 @@ _animationInfo
 Set a  breakpoint that stops only when the specified stack keyword is matched.    
 ```
 Syntax:
-bpframe [--one-shot] <symbol or function> <stack keyword 1> <stack keyword 2> ... <stack keyword n>
-bpframe [--one-shot] --address <address> <stack keyword 1> <stack keyword 2> ... <stack keyword n>
+bpframe [--one-shot] <symbol or address> <stack keyword 1> <stack keyword 2> ... <stack keyword n>
 
-# Stop when "viewDidAppear:" is hit and the call stack contains "customMethod"
-(lldb) bpframe viewDidAppear: customMethod
+# Stop when "setupChildViewControllers:" is hit and the call stack contains "otherFunction"
+(lldb) bpframe setupChildViewControllers: otherFunction
 
-# --address/-a; Set breakpoint at the address(hexadecimal).
-# Stop when "0x1025df6c0" is hit and the call stack contains "customMethod"
-(lldb) bpframe -a 0x1025df6c0 customMethod
+# Stop when "setupChildViewControllers:" is hit and the call stack contains "function_1" & "function_2"
+(lldb) bpframe setupChildViewControllers: function_1 function_2
+
+# Stop when "0x1025df6c0" is hit and the call stack contains "0x19261c1c0" & "0x19261bec0" addresses
+(lldb) bpframe 0x1025df6c0 0x19261c1c0 0x19261bec0
+
+# Stop when "0x1025df6c0" is hit and the call stack contains "otherFunction" & "0x19261bec0" address
+(lldb) bpframe 0x1025df6c0 otherFunction 0x19261bec0
 
 # --one-shot/-o; The breakpoint is deleted the first time it stop.
-(lldb) bpframe -o viewDidAppear: customMethod
-(lldb) bpframe -o -a 0x1025df6c0 customMethod
+(lldb) bpframe -o setupChildViewControllers: otherFunction
+(lldb) bpframe -o 0x1025df6c0 otherFunction
 ```
 
 
@@ -398,14 +402,18 @@ When I see the above line of assembly code, I want to **quickly** get the value 
 ```
 Syntax:
     adrp <immediate> <pc address>
+    adrp <pc address> <adrp> <register> <immediate>
     adrp <pc address> <+offset> <adrp> <register> <immediate>
 
+Examples:
+    (lldb) adrp 348413 0x189aef040
+    [HMLLDB] result: 0x1debec000, 8032010240
 
-(lldb) adrp 348413 0x189aef040
-[HMLLDB] result: 0x1debec000, 8032010240
+    (lldb) adrp 0x189aef040: adrp   x8, 348413
+    [HMLLDB] x8: 0x1debec000, 8032010240
 
-(lldb) adrp 0x189aef040 <+32>:  adrp   x8, 348413
-[HMLLDB] x8: 0x1debec000, 8032010240
+    (lldb) adrp 0x189aef040 <+32>:  adrp   x8, 348413
+    [HMLLDB] x8: 0x1debec000, 8032010240
 ```
 
 

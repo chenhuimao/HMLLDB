@@ -42,8 +42,8 @@ def adrp(debugger, command, exe_ctx, result, internal_dict):
         (lldb) adrp 348413 0x189aef040
         [HMLLDB] result: 0x1debec000, 8032010240
 
-        (lldb) adrp 0x195d0ccb0: adrp   x16, 369530
-        [HMLLDB] x16: 0x1f0086000, 8322048000
+        (lldb) adrp 0x189aef040: adrp   x8, 348413
+        [HMLLDB] x8: 0x1debec000, 8032010240
 
         (lldb) adrp 0x189aef040 <+32>:  adrp   x8, 348413
         [HMLLDB] x8: 0x1debec000, 8032010240

@@ -41,22 +41,27 @@ def __lldb_init_module(debugger, internal_dict):
 def breakpoint_frame(debugger, command, exe_ctx, result, internal_dict):
     """
     Syntax:
-        bpframe [--one-shot] <symbol or function> <stack keyword 1> <stack keyword 2> ... <stack keyword n>
-        bpframe [--one-shot] --address <address> <stack keyword 1> <stack keyword 2> ... <stack keyword n>
-
+        bpframe [--one-shot] <symbol or address> <stack keyword 1> <stack keyword 2> ... <stack keyword n>
 
     Options:
         --one-shot/-o; The breakpoint is deleted the first time it stop.
-        --address/-a; Set breakpoint at the address(hexadecimal).
 
     Examples:
-        // Stop when "viewDidAppear:" is hit and the call stack contains "customMethod"
-        (lldb) bpframe viewDidAppear: customMethod
-        (lldb) bpframe -o viewDidAppear: customMethod
+        // Stop when "setupChildViewControllers:" is hit and the call stack contains "otherFunction"
+        (lldb) bpframe setupChildViewControllers: otherFunction
 
-        // Stop when "0x1025df6c0" is hit and the call stack contains "customMethod"
-        (lldb) bpframe -a 0x1025df6c0 customMethod
-        (lldb) bpframe -o -a 0x1025df6c0 customMethod
+        // Stop when "setupChildViewControllers:" is hit and the call stack contains "function_1" & "function_2"
+        (lldb) bpframe setupChildViewControllers: function_1 function_2
+
+        // Stop when "0x1025df6c0" is hit and the call stack contains "0x19261c1c0" & "0x19261bec0" addresses
+        (lldb) bpframe 0x1025df6c0 0x19261c1c0 0x19261bec0
+
+        // Stop when "0x1025df6c0" is hit and the call stack contains "otherFunction" & "0x19261bec0" address
+        (lldb) bpframe 0x1025df6c0 otherFunction 0x19261bec0
+
+        // --one-shot/-o; The breakpoint is deleted the first time it stop.
+        (lldb) bpframe -o setupChildViewControllers: otherFunction
+        (lldb) bpframe -o 0x1025df6c0 otherFunction
 
     Notice:
         1. Separate keywords with spaces.
@@ -82,8 +87,8 @@ def breakpoint_frame(debugger, command, exe_ctx, result, internal_dict):
         return
 
     target = lldb.debugger.GetSelectedTarget()
-    if options.address:
-        address = int(args_list[0], 16)
+    is_address, address = HM.int_value_from_string(args_list[0])
+    if is_address:
         # HM.DPrint(address)
         bp = target.BreakpointCreateByAddress(address)
     else:
@@ -116,8 +121,7 @@ def breakpoint_frame(debugger, command, exe_ctx, result, internal_dict):
 
 def generate_bpframe_option_parser() -> optparse.OptionParser:
     usage = '''usage: 
-    bpframe [--one-shot] <symbol or function> <stack keyword 1> <stack keyword 2> ... <stack keyword n>
-    bpframe [--one-shot] --address <address> <stack keyword 1> <stack keyword 2> ... <stack keyword n>
+    bpframe [--one-shot] <symbol or address> <stack keyword 1> <stack keyword 2> ... <stack keyword n>
     '''
     parser = optparse.OptionParser(usage=usage, prog="bpframe")
     parser.add_option("-o", "--one-shot",
@@ -125,11 +129,6 @@ def generate_bpframe_option_parser() -> optparse.OptionParser:
                       default=False,
                       dest="is_one_shot",
                       help="The breakpoint is deleted the first time it stop.")
-    parser.add_option("-a", "--address",
-                      action="store_true",
-                      default=False,
-                      dest="address",
-                      help="Set breakpoint at the address(hexadecimal).")
 
     return parser
 
@@ -146,7 +145,7 @@ def breakpoint_frame_handler(frame, bp_loc, extra_args, internal_dict) -> bool:
         arg: lldb.SBStructuredData = extra_args.GetItemAtIndex(i)
         if arg.GetType() != lldb.eStructuredDataTypeString:
             continue
-        keyword = arg.GetStringValue(100)
+        keyword = arg.GetStringValue(300)
         keywords.append(keyword)
 
     keywords_size = len(keywords)
@@ -160,14 +159,27 @@ def breakpoint_frame_handler(frame, bp_loc, extra_args, internal_dict) -> bool:
     thread = frame.GetThread()
     for i in range(thread.GetNumFrames()):
         frame_in_stack = thread.GetFrameAtIndex(i)
-        frame_display_name = frame_in_stack.GetDisplayFunctionName()
-        if not frame_display_name:
-            frame_display_name = hex(frame_in_stack.GetPC())
-        if keywords[keywords_index] in frame_display_name:
-            keywords_index += 1
-            if keywords_index == keywords_size:
-                result = True
-                break
+        frame_pc_address = frame_in_stack.GetPC()
+        current_keyword = keywords[keywords_index]
+        is_address, address = HM.int_value_from_string(current_keyword)
+        if is_address:
+            # Increase compatibility (address + 4)
+            if address == frame_pc_address or address + 4 == frame_pc_address:
+                keywords_index += 1
+        else:
+            frame_display_name = frame_in_stack.GetDisplayFunctionName()
+            if not frame_display_name:
+                frame_display_name = hex(frame_pc_address)
+            if current_keyword in frame_display_name:
+                keywords_index += 1
+
+        if keywords_index == keywords_size:
+            result = True
+            break
+
+    if result:
+        HM.DPrint(f"Hit breakpoint with bpframe command.")
+
     return result
 
 
