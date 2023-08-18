@@ -10,7 +10,7 @@
 ## Requirements
 - Xcode 14.3.1
 - 64-bit simulator or real device, iOS 11.0+
-- Debug configuration (or ***Optimization Level*** set [-O0]/[-Onone])
+- Some commands require debug configuration (or ***Optimization Level*** set [-O0]/[-Onone])
 
 ## Installation
 1. Download all the files. I recommend you to clone the repository.
@@ -142,15 +142,22 @@ These commands are optimized for Swift, and the namespace can be omitted when en
 ```
 (lldb) fclass NormalLoadingViewController
 [HMLLDB] Waiting...
-[HMLLDB] Count: 1 
-Kingfisher_Demo.NormalLoadingViewController (0x102148fa8)
+[HMLLDB] Count: 1
+Kingfisher_Demo.NormalLoadingViewController (0x102148fa8, Kingfisher-Demo)
 
 # Case insensitive
-(lldb) fclass Kingfisher_Demo.im
+(lldb) fclass image
 [HMLLDB] Waiting...
-[HMLLDB] Count: 2 
-Kingfisher_Demo.ImageDataProviderCollectionViewController (0x102149a18)
-Kingfisher_Demo.ImageCollectionViewCell (0x1021498e8)
+[HMLLDB] Count: 672
+Kingfisher.ImageLoadingProgressSideEffect (0x10124ae18, Kingfisher)
+Kingfisher.GIFAnimatedImage (0x10124a3e0, Kingfisher)
+...
+Kingfisher_Demo.DetailImageViewController (0x1009068e8, Kingfisher-Demo)
+Kingfisher_Demo.AVAssetImageGeneratorViewController (0x100904568, Kingfisher-Demo)
+...
+UIImagePickerController (0x1ea918240, UIKitCore)
+_UIStackedImageContainerView (0x1ea90fac8, UIKitCore)
+...
 ```
 
 `fsubclass`: Find all subclasses of a class.

@@ -23,18 +23,20 @@
 # https://github.com/chenhuimao/HMLLDB
 
 import lldb
-import shlex
+from typing import Set, List
 import optparse
+import re
+import shlex
 import HMExpressionPrefix
-import HMLLDBHelpers as HM
 import HMLLDBClassInfo
+import HMLLDBHelpers as HM
 
 
 def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand('command script add -f HMClassInfoCommands.methods methods -h "Execute [inputClass _methodDescription] or [inputClass _shortMethodDescription]."')
     debugger.HandleCommand('command script add -f HMClassInfoCommands.properties properties -h "Execute [inputClass _propertyDescription]."')
 
-    debugger.HandleCommand('command script add -f HMClassInfoCommands.findClass fclass -h "Find the class containing the input name(Case insensitive)."')
+    debugger.HandleCommand('command script add -f HMClassInfoCommands.find_class fclass -h "Find the class containing the input name(Case insensitive)."')
     debugger.HandleCommand('command script add -f HMClassInfoCommands.findSubclass fsubclass -h "Find the subclass of the input."')
     debugger.HandleCommand('command script add -f HMClassInfoCommands.findSuperClass fsuperclass -h "Find the superclass of the input."')
     debugger.HandleCommand('command script add -f HMClassInfoCommands.findMethod fmethod -h "Find the specified method in the method list, you can also find the method list of the specified class."')
@@ -192,7 +194,7 @@ def properties(debugger, command, exe_ctx, result, internal_dict):
     HM.DPrint(result)
 
 
-def findClass(debugger, command, exe_ctx, result, internal_dict):
+def find_class(debugger, command, exe_ctx, result, internal_dict):
     """
     Syntax:
         fclass <className>
@@ -211,10 +213,10 @@ def findClass(debugger, command, exe_ctx, result, internal_dict):
     HM.DPrint("Waiting...")
 
     if len(command) == 0:
-        addObjectScript = '[classNames appendFormat:@"%@ (%p)\\n", name, classList[i]]; findCount += 1;'
+        add_object_script = '[classNames appendFormat:@"%@ (%p)\\n", name, classList[i]]; findCount += 1;'
     else:
         command = command.lower()
-        addObjectScript = f'''
+        add_object_script = f'''
             if ([[name lowercaseString] containsString:@"{command}"]) {{
                 [classNames appendFormat:@"%@ (%p)\\n", name, classList[i]];
                 findCount += 1;
@@ -228,20 +230,43 @@ def findClass(debugger, command, exe_ctx, result, internal_dict):
         NSMutableString *classNames = [[NSMutableString alloc] init];
         for (int i = 0; i < classCount; i++) {{
             NSString *name = [[NSString alloc] initWithUTF8String:class_getName(classList[i])];
-            {addObjectScript}
+            {add_object_script}
         }}
         free(classList);
 
         if (findCount == 0) {{
             [classNames insertString:@"No class found.\\n" atIndex:0];
         }} else {{
-            [classNames insertString:[[NSString alloc] initWithFormat:@"Count: %u \\n", findCount] atIndex:0];
+            [classNames insertString:[[NSString alloc] initWithFormat:@"Count: %u\\n", findCount] atIndex:0];
         }}
         (NSMutableString *)classNames;
     '''
 
-    classNames = HM.evaluate_expression_value(command_script).GetObjectDescription()
-    HM.DPrint(classNames)
+    result = HM.evaluate_expression_value(command_script).GetObjectDescription()
+    # HM.DPrint(result)
+
+    # Get the module where the address is located
+    result_with_module = ""
+    result_length = len(result)
+    chunk_length: int = 1000
+    current_index: int = 0
+    while current_index < result_length:
+        next_index = result.find('\n', current_index + chunk_length)
+        if next_index == -1:
+            next_index = result_length
+        chunk_str: str = result[current_index:next_index]
+
+        pattern = r'\((0x.*?)\)'
+        address_list: List[str] = re.findall(pattern, chunk_str)
+        address_set: Set[str] = set(address_list)
+        for address_str in address_set:
+            module_name = HM.get_module_name_from_address(address_str)
+            chunk_str = chunk_str.replace(address_str, f"{address_str}, {module_name}")
+
+        result_with_module += chunk_str
+        current_index = next_index
+
+    HM.DPrint(result_with_module)
 
 
 def findSubclass(debugger, command, exe_ctx, result, internal_dict):

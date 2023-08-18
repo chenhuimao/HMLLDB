@@ -185,6 +185,14 @@ def symbol_context_get_base_range_address(sc: lldb.SBSymbolContext) -> lldb.SBAd
     return base_range_address
 
 
+def get_module_name_from_address(address_str: str) -> str:
+    is_valid, address_int = int_value_from_string(address_str)
+    if not is_valid:
+        return "Invalid address"
+    address: lldb.SBAddress = lldb.SBAddress(address_int, lldb.debugger.GetSelectedTarget())
+    return address.GetModule().GetFileSpec().GetFilename()
+
+
 def get_class_prefixes() -> Tuple[List[str], lldb.SBValue]:
     global g_class_prefixes
     global g_class_prefixes_value
