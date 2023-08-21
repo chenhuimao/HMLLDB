@@ -165,8 +165,8 @@ _UIStackedImageContainerView (0x1ea90fac8, UIKitCore)
 (lldb) fsubclass UICollectionViewController
 [HMLLDB] Waiting...
 [HMLLDB] Subclass count: 10 
-Kingfisher_Demo.InfinityCollectionViewController (0x102cf2c18)
-Kingfisher_Demo.HighResolutionCollectionViewController (0x102cf1ed0)
+Kingfisher_Demo.InfinityCollectionViewController (0x102cf2c18, Kingfisher_Demo)
+Kingfisher_Demo.HighResolutionCollectionViewController (0x102cf1ed0, Kingfisher_Demo)
 ...
 ```
 

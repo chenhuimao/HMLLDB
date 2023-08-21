@@ -37,8 +37,8 @@ def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand('command script add -f HMClassInfoCommands.properties properties -h "Execute [inputClass _propertyDescription]."')
 
     debugger.HandleCommand('command script add -f HMClassInfoCommands.find_class fclass -h "Find the class containing the input name(Case insensitive)."')
-    debugger.HandleCommand('command script add -f HMClassInfoCommands.findSubclass fsubclass -h "Find the subclass of the input."')
-    debugger.HandleCommand('command script add -f HMClassInfoCommands.findSuperClass fsuperclass -h "Find the superclass of the input."')
+    debugger.HandleCommand('command script add -f HMClassInfoCommands.find_subclass fsubclass -h "Find the subclass of the input."')
+    debugger.HandleCommand('command script add -f HMClassInfoCommands.find_super_class fsuperclass -h "Find the superclass of the input."')
     debugger.HandleCommand('command script add -f HMClassInfoCommands.findMethod fmethod -h "Find the specified method in the method list, you can also find the method list of the specified class."')
 
     debugger.HandleCommand('command script add -f HMClassInfoCommands.print_ivars_info ivarsinfo -h "Show ivars information of class."')
@@ -74,32 +74,32 @@ def methods(debugger, command, exe_ctx, result, internal_dict):
         result.SetError(parser.usage)
         return
 
-    inputStr: str = ""
+    input_str: str = ""
     for string in args:
-        inputStr += string + " "
-    inputStr = inputStr.rstrip()
+        input_str += string + " "
+    input_str = input_str.rstrip()
 
-    if len(inputStr) == 0:
+    if len(input_str) == 0:
         HM.DPrint("Requires a argument, Please enter \"help methods\" for help.")
         return
 
     if options.short:
-        selName = "_shortMethodDescription"
+        sel_name = "_shortMethodDescription"
     else:
-        selName = "_methodDescription"
+        sel_name = "_methodDescription"
 
-    value = HM.evaluate_expression_value(expression=f'(NSString *)[{inputStr} performSelector:NSSelectorFromString(@"{selName}")]', print_errors=False)
+    value = HM.evaluate_expression_value(expression=f'(NSString *)[{input_str} performSelector:NSSelectorFromString(@"{sel_name}")]', print_errors=False)
     if HM.is_successful_of_SBError(value.GetError()):
         HM.DPrint(value.GetObjectDescription())
         return
 
-    clsPrefixesValue = HM.get_class_prefixes()[1]
+    class_prefixes_value = HM.get_class_prefixes()[1]
     command_script = f'''
-        Class inputClass = objc_lookUpClass("{inputStr}");
+        Class inputClass = objc_lookUpClass("{input_str}");
 
         if (inputClass == nil) {{   //  Find prefixed class
-            for (NSString *prefix in (NSMutableArray *){clsPrefixesValue.GetValue()}) {{
-                NSString *clsName = [prefix stringByAppendingString:@".{inputStr}"];
+            for (NSString *prefix in (NSMutableArray *){class_prefixes_value.GetValue()}) {{
+                NSString *clsName = [prefix stringByAppendingString:@".{input_str}"];
                 inputClass = objc_lookUpClass((char *)[clsName UTF8String]);
                 if (inputClass) {{
                     break;
@@ -109,12 +109,12 @@ def methods(debugger, command, exe_ctx, result, internal_dict):
 
         NSMutableString *result = [[NSMutableString alloc] init];
         if (inputClass == nil) {{
-            [result appendString:@"Unable to resolve {inputStr} or find {inputStr} class, maybe {inputStr} is not a subclass of NSObject\\n"];
+            [result appendString:@"Unable to resolve {input_str} or find {input_str} class, maybe {input_str} is not a subclass of NSObject\\n"];
         }} else {{
-            if ((BOOL)[(Class)inputClass respondsToSelector:(SEL)NSSelectorFromString(@"{selName}")]) {{
-                [result appendString:(NSString *)[inputClass performSelector:NSSelectorFromString(@"{selName}")]];
+            if ((BOOL)[(Class)inputClass respondsToSelector:(SEL)NSSelectorFromString(@"{sel_name}")]) {{
+                [result appendString:(NSString *)[inputClass performSelector:NSSelectorFromString(@"{sel_name}")]];
             }} else {{
-                [result appendString:@"{inputStr} is not a subclass of NSObject"];
+                [result appendString:@"{input_str} is not a subclass of NSObject"];
             }}
         }}
 
@@ -162,12 +162,12 @@ def properties(debugger, command, exe_ctx, result, internal_dict):
         HM.DPrint(value.GetObjectDescription())
         return
 
-    clsPrefixesValue = HM.get_class_prefixes()[1]
+    class_prefixes_value = HM.get_class_prefixes()[1]
     command_script = f'''
         Class inputClass = objc_lookUpClass("{command}");
 
         if (inputClass == nil) {{   //  Find prefixed class
-            for (NSString *prefix in (NSMutableArray *){clsPrefixesValue.GetValue()}) {{
+            for (NSString *prefix in (NSMutableArray *){class_prefixes_value.GetValue()}) {{
                 NSString *clsName = [prefix stringByAppendingString:@".{command}"];
                 inputClass = objc_lookUpClass((char *)[clsName UTF8String]);
                 if (inputClass) {{
@@ -192,6 +192,29 @@ def properties(debugger, command, exe_ctx, result, internal_dict):
 
     result = HM.evaluate_expression_value(command_script).GetObjectDescription()
     HM.DPrint(result)
+
+
+def append_module_after_address(origin_text: str, address_pattern: str) -> str:
+    result = ""
+    origin_text_length = len(origin_text)
+    chunk_length: int = 1000
+    current_index: int = 0
+    while current_index < origin_text_length:
+        next_index = origin_text.find('\n', current_index + chunk_length)
+        if next_index == -1:
+            next_index = origin_text_length
+        chunk_str: str = origin_text[current_index:next_index]
+
+        address_list: List[str] = re.findall(address_pattern, chunk_str)
+        address_set: Set[str] = set(address_list)
+        for address_str in address_set:
+            module_name = HM.get_module_name_from_address(address_str)
+            chunk_str = chunk_str.replace(address_str, f"{address_str}, {module_name}")
+
+        result += chunk_str
+        current_index = next_index
+
+    return result
 
 
 def find_class(debugger, command, exe_ctx, result, internal_dict):
@@ -246,30 +269,11 @@ def find_class(debugger, command, exe_ctx, result, internal_dict):
     # HM.DPrint(result)
 
     # Get the module where the address is located
-    result_with_module = ""
-    result_length = len(result)
-    chunk_length: int = 1000
-    current_index: int = 0
-    while current_index < result_length:
-        next_index = result.find('\n', current_index + chunk_length)
-        if next_index == -1:
-            next_index = result_length
-        chunk_str: str = result[current_index:next_index]
-
-        pattern = r'\((0x.*?)\)'
-        address_list: List[str] = re.findall(pattern, chunk_str)
-        address_set: Set[str] = set(address_list)
-        for address_str in address_set:
-            module_name = HM.get_module_name_from_address(address_str)
-            chunk_str = chunk_str.replace(address_str, f"{address_str}, {module_name}")
-
-        result_with_module += chunk_str
-        current_index = next_index
-
+    result_with_module = append_module_after_address(result, r'\((0x.*?)\)')
     HM.DPrint(result_with_module)
 
 
-def findSubclass(debugger, command, exe_ctx, result, internal_dict):
+def find_subclass(debugger, command, exe_ctx, result, internal_dict):
     """
     Syntax:
         fsubclass [--nonrecursively] <className>
@@ -286,7 +290,7 @@ def findSubclass(debugger, command, exe_ctx, result, internal_dict):
     """
 
     command_args = shlex.split(command)
-    parser = generate_findSubclass_option_parser()
+    parser = generate_find_subclass_option_parser()
     try:
         # options: optparse.Values
         # args: list
@@ -302,7 +306,7 @@ def findSubclass(debugger, command, exe_ctx, result, internal_dict):
     HM.DPrint("Waiting...")
 
     if options.nonrecursively:
-        compareScript = '''
+        compare_script = '''
             if (class_getSuperclass(cls) == inputClass){
                 NSString *name = [[NSString alloc] initWithUTF8String:class_getName(cls)];
                 [result appendFormat:@"%@ (%p)\\n", name, cls];
@@ -311,7 +315,7 @@ def findSubclass(debugger, command, exe_ctx, result, internal_dict):
         '''
 
     else:
-        compareScript = '''
+        compare_script = '''
             for (Class superClass = class_getSuperclass(cls); superClass != nil; superClass = class_getSuperclass(superClass)) {
                 if (superClass == inputClass) {
                     NSString *name = [[NSString alloc] initWithUTF8String:class_getName(cls)];
@@ -323,12 +327,12 @@ def findSubclass(debugger, command, exe_ctx, result, internal_dict):
             }
         '''
 
-    clsPrefixesValue = HM.get_class_prefixes()[1]
+    class_prefixes_value = HM.get_class_prefixes()[1]
     command_script = f'''
         Class inputClass = objc_lookUpClass("{args[0]}");
 
         if (inputClass == nil) {{   //  Find prefixed class
-            for (NSString *prefix in (NSMutableArray *){clsPrefixesValue.GetValue()}) {{
+            for (NSString *prefix in (NSMutableArray *){class_prefixes_value.GetValue()}) {{
                 NSString *clsName = [prefix stringByAppendingString:@".{args[0]}"];
                 inputClass = objc_lookUpClass((char *)[clsName UTF8String]);
                 if (inputClass) {{
@@ -347,7 +351,7 @@ def findSubclass(debugger, command, exe_ctx, result, internal_dict):
 
             for (int i = 0; i < classCount; i++) {{
                 Class cls = classList[i];
-                {compareScript}
+                {compare_script}
             }}
 
             if (findCount == 0) {{
@@ -362,11 +366,15 @@ def findSubclass(debugger, command, exe_ctx, result, internal_dict):
         (NSMutableString *)result;
     '''
 
-    classNames = HM.evaluate_expression_value(command_script).GetObjectDescription()
-    HM.DPrint(classNames)
+    result = HM.evaluate_expression_value(command_script).GetObjectDescription()
+    # HM.DPrint(result)
+
+    # Get the module where the address is located
+    result_with_module = append_module_after_address(result, r'\((0x.*?)\)')
+    HM.DPrint(result_with_module)
 
 
-def generate_findSubclass_option_parser() -> optparse.OptionParser:
+def generate_find_subclass_option_parser() -> optparse.OptionParser:
     usage = "usage: fsubclass [-n] <className>"
     parser = optparse.OptionParser(usage=usage, prog="fsubclass")
     parser.add_option("-n", "--nonrecursively",
@@ -378,7 +386,7 @@ def generate_findSubclass_option_parser() -> optparse.OptionParser:
     return parser
 
 
-def findSuperClass(debugger, command, exe_ctx, result, internal_dict):
+def find_super_class(debugger, command, exe_ctx, result, internal_dict):
     """
     Syntax:
         fsuperclass <className>
@@ -393,12 +401,12 @@ def findSuperClass(debugger, command, exe_ctx, result, internal_dict):
         HM.DPrint("Requires a argument, Please enter \"help fsuperclass\" for help.")
         return
 
-    clsPrefixesValue = HM.get_class_prefixes()[1]
+    class_prefixes_value = HM.get_class_prefixes()[1]
     command_script = f'''
         Class inputClass = objc_lookUpClass("{command}");
 
         if (inputClass == nil) {{   //  Find prefixed class
-            for (NSString *prefix in (NSMutableArray *){clsPrefixesValue.GetValue()}) {{
+            for (NSString *prefix in (NSMutableArray *){class_prefixes_value.GetValue()}) {{
                 NSString *clsName = [prefix stringByAppendingString:@".{command}"];
                 inputClass = objc_lookUpClass((char *)[clsName UTF8String]);
                 if (inputClass) {{
@@ -421,8 +429,8 @@ def findSuperClass(debugger, command, exe_ctx, result, internal_dict):
         (NSMutableString *)result;
     '''
 
-    classNames = HM.evaluate_expression_value(command_script).GetObjectDescription()
-    HM.DPrint(classNames)
+    result = HM.evaluate_expression_value(command_script).GetObjectDescription()
+    HM.DPrint(result)
 
 
 def findMethod(debugger, command, exe_ctx, result, internal_dict):
