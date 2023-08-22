@@ -23,7 +23,7 @@
 # https://github.com/chenhuimao/HMLLDB
 
 import lldb
-from typing import Any, List, Tuple
+from typing import Any, List, Tuple, Optional
 import inspect
 import HMLLDBClassInfo
 
@@ -185,7 +185,7 @@ def symbol_context_get_base_range_address(sc: lldb.SBSymbolContext) -> lldb.SBAd
     return base_range_address
 
 
-def get_module_name_from_address(address_str: str) -> str:
+def get_module_name_from_address(address_str: str) -> Optional[str]:
     is_valid, address_int = int_value_from_string(address_str)
     if not is_valid:
         return "Invalid address"

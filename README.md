@@ -187,27 +187,27 @@ Kingfisher_Demo.HighResolutionCollectionViewController (0x102cf1ed0, Kingfisher_
 (lldb) fmethod clear
 [HMLLDB] Waiting...
 [HMLLDB] Methods count: 3725 
-(-) clearMemoryCache (0x10526f1c0)
+(-) clearMemoryCache (0x10340c174, Kingfisher)
 	Type encoding:v16@0:8
 	Class:Kingfisher.ImageCache
-(-) accessibilityClearInternalData (0x1084ffd08)
+(-) _clearAllSpecifiers (0x1c7f1959c, Preferences)
 	Type encoding:v16@0:8
-	Class:NSObject
-(+) _accessibilityClearProcessedClasses: (0x7fff2dc2cd25)
-	Type encoding:v24@0:8@16
-	Class:NSObject
+	Class:PSSpecifierDataSource
+(-) _clearCells (0x2160258c0, ScreenReaderOutput)
+	Type encoding:v16@0:8
+	Class:SCRO2DBrailleCanvas
 ...
 
 # Option -c: Find the method list of the specified class. Case sensitive.
 (lldb) fmethod -c ImageCache
 [HMLLDB] Waiting...
-[HMLLDB] Class: Kingfisher.ImageCache (0x1052f26f8)
+[HMLLDB] Class: Kingfisher.ImageCache (0x10348de18, Kingfisher)
 Instance methods count: 3. Class method count: 0.
-(-) cleanExpiredDiskCache (0x10526fa00)
+(-) backgroundCleanExpiredDiskCache (0x10340dd6c, Kingfisher)
 	Type encoding:v16@0:8
-(-) backgroundCleanExpiredDiskCache (0x105271330)
+(-) cleanExpiredDiskCache (0x10340c84c, Kingfisher)
 	Type encoding:v16@0:8
-(-) clearMemoryCache (0x10526f1c0)
+(-) clearMemoryCache (0x10340c174, Kingfisher)
 	Type encoding:v16@0:8
 ```
 
@@ -248,7 +248,7 @@ Show ivars information of class.
 ivarsinfo <className>
 
 (lldb) ivarsinfo UIView
-[HMLLDB] UIView (0x22658d3b8)
+[HMLLDB] UIView (0x22658d3b8, UIKitCore)
 _constraintsExceptingSubviewAutoresizingConstraints
 	typeEncoding:@"NSMutableArray"
 	offset:16 hex:0x10

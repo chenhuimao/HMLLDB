@@ -39,7 +39,7 @@ def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand('command script add -f HMClassInfoCommands.find_class fclass -h "Find the class containing the input name(Case insensitive)."')
     debugger.HandleCommand('command script add -f HMClassInfoCommands.find_subclass fsubclass -h "Find the subclass of the input."')
     debugger.HandleCommand('command script add -f HMClassInfoCommands.find_super_class fsuperclass -h "Find the superclass of the input."')
-    debugger.HandleCommand('command script add -f HMClassInfoCommands.findMethod fmethod -h "Find the specified method in the method list, you can also find the method list of the specified class."')
+    debugger.HandleCommand('command script add -f HMClassInfoCommands.find_method fmethod -h "Find the specified method in the method list, you can also find the method list of the specified class."')
 
     debugger.HandleCommand('command script add -f HMClassInfoCommands.print_ivars_info ivarsinfo -h "Show ivars information of class."')
 
@@ -209,7 +209,8 @@ def append_module_after_address(origin_text: str, address_pattern: str) -> str:
         address_set: Set[str] = set(address_list)
         for address_str in address_set:
             module_name = HM.get_module_name_from_address(address_str)
-            chunk_str = chunk_str.replace(address_str, f"{address_str}, {module_name}")
+            if module_name is not None:
+                chunk_str = chunk_str.replace(address_str, f"{address_str}, {module_name}")
 
         result += chunk_str
         current_index = next_index
@@ -433,7 +434,7 @@ def find_super_class(debugger, command, exe_ctx, result, internal_dict):
     HM.DPrint(result)
 
 
-def findMethod(debugger, command, exe_ctx, result, internal_dict):
+def find_method(debugger, command, exe_ctx, result, internal_dict):
     """
     Syntax:
         fmethod <methodName>  (Case insensitive.)
@@ -451,7 +452,7 @@ def findMethod(debugger, command, exe_ctx, result, internal_dict):
     """
 
     command_args = shlex.split(command)
-    parser = generate_findMethod_option_parser()
+    parser = generate_find_method_option_parser()
     try:
         # options: optparse.Values
         # args: list
@@ -468,16 +469,15 @@ def findMethod(debugger, command, exe_ctx, result, internal_dict):
             HM.DPrint("Argument length must be greater than 4.")
             return
 
-
     HM.DPrint("Waiting...")
 
     if options.cls:
-        clsPrefixesValue = HM.get_class_prefixes()[1]
+        class_prefixes_value = HM.get_class_prefixes()[1]
         command_script = f'''
             NSMutableString *result = [[NSMutableString alloc] init];
             Class inputClass = objc_lookUpClass("{options.cls}");
             if (inputClass == nil) {{   //  Find prefixed class
-                for (NSString *prefix in (NSMutableArray *){clsPrefixesValue.GetValue()}) {{
+                for (NSString *prefix in (NSMutableArray *){class_prefixes_value.GetValue()}) {{
                     NSString *clsName = [prefix stringByAppendingString:@".{options.cls}"];
                     inputClass = objc_lookUpClass((char *)[clsName UTF8String]);
                     if (inputClass) {{
@@ -525,9 +525,9 @@ def findMethod(debugger, command, exe_ctx, result, internal_dict):
         '''
 
     else:
-        inputMethodName = args[0].lower()
+        input_method_name = args[0].lower()
         command_script = f'''
-            NSString *inputMethodName = [[NSString alloc] initWithUTF8String:"{inputMethodName}"];
+            NSString *inputMethodName = [[NSString alloc] initWithUTF8String:"{input_method_name}"];
             
             NSMutableString *result = [[NSMutableString alloc] init];
         
@@ -584,10 +584,14 @@ def findMethod(debugger, command, exe_ctx, result, internal_dict):
         '''
 
     result = HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix).GetObjectDescription()
-    HM.DPrint(result)
+    # HM.DPrint(result)
+
+    # Get the module where the address is located
+    result_with_module = append_module_after_address(result, r'\((0x.*?)\)')
+    HM.DPrint(result_with_module)
 
 
-def generate_findMethod_option_parser() -> optparse.OptionParser:
+def generate_find_method_option_parser() -> optparse.OptionParser:
     usage = "usage: fmethod [-c] <className>"
     parser = optparse.OptionParser(usage=usage, prog="fmethod")
     parser.add_option("-c", "--class",
@@ -655,5 +659,9 @@ def print_ivars_info(debugger, command, exe_ctx, result, internal_dict):
     '''
 
     result = HM.evaluate_expression_value(command_script).GetObjectDescription()
-    HM.DPrint(result)
+    # HM.DPrint(result)
+
+    # Get the module where the address is located
+    result_with_module = append_module_after_address(result, r'\((0x.*?)\)')
+    HM.DPrint(result_with_module)
 

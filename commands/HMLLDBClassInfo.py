@@ -328,7 +328,7 @@ def get_string_from_stop_reason(stop_reason: int) -> str:
 
 
 def pSBHostOS(obj: Optional[lldb.SBHostOS]) -> None:
-    if obj:
+    if obj is not None:
         hostOS = obj
     else:
         hostOS = lldb.SBHostOS
@@ -351,7 +351,7 @@ def pSBHostOS(obj: Optional[lldb.SBHostOS]) -> None:
 
 
 def pSBDebugger(obj: Optional[lldb.SBDebugger]) -> None:
-    if obj:
+    if obj is not None:
         debugger = obj
     else:
         debugger = lldb.debugger
@@ -396,7 +396,7 @@ def pSBDebugger(obj: Optional[lldb.SBDebugger]) -> None:
 
 
 def pSBTarget(obj: Optional[lldb.SBTarget]) -> None:
-    if obj:
+    if obj is not None:
         target = obj
     else:
         target = lldb.debugger.GetSelectedTarget()
@@ -448,7 +448,7 @@ def pSBTarget(obj: Optional[lldb.SBTarget]) -> None:
 
 
 def pSBProcess(obj: Optional[lldb.SBProcess]) -> None:
-    if obj:
+    if obj is not None:
         process = obj
     else:
         process = lldb.debugger.GetSelectedTarget().GetProcess()
@@ -490,7 +490,7 @@ def pSBProcess(obj: Optional[lldb.SBProcess]) -> None:
 
 
 def pSBProcessInfo(obj: Optional[lldb.SBProcessInfo]) -> None:
-    if obj:
+    if obj is not None:
         info = obj
     else:
         info = lldb.debugger.GetSelectedTarget().GetProcess().GetProcessInfo()
@@ -514,7 +514,7 @@ def pSBProcessInfo(obj: Optional[lldb.SBProcessInfo]) -> None:
 
 
 def pSBThread(obj: Optional[lldb.SBThread]) -> None:
-    if obj:
+    if obj is not None:
         thread = obj
     else:
         thread = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread()
@@ -555,7 +555,7 @@ def pSBThread(obj: Optional[lldb.SBThread]) -> None:
 
 
 def pSBThreadPlan(obj: Optional[lldb.SBThreadPlan]) -> None:
-    if obj:
+    if obj is not None:
         plan = obj
     else:
         plan = lldb.SBThreadPlan()
@@ -579,7 +579,7 @@ def pSBThreadPlan(obj: Optional[lldb.SBThreadPlan]) -> None:
 
 
 def pSBFrame(obj: Optional[lldb.SBFrame]) -> None:
-    if obj:
+    if obj is not None:
         frame = obj
     else:
         frame = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame()
@@ -622,7 +622,7 @@ def pSBFrame(obj: Optional[lldb.SBFrame]) -> None:
 
 
 def pSBValue(obj: Optional[lldb.SBValue]) -> None:
-    if obj:
+    if obj is not None:
         value = obj
     else:
         value = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().FindVariable("self")
@@ -683,7 +683,7 @@ def pSBValue(obj: Optional[lldb.SBValue]) -> None:
 
 
 def pSBSymbolContext(obj: Optional[lldb.SBSymbolContext]) -> None:
-    if obj:
+    if obj is not None:
         ctx = obj
     else:
         ctx = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetSymbolContext(lldb.eSymbolContextEverything)
@@ -707,7 +707,7 @@ def pSBModule(obj: Optional[lldb.SBModule]) -> None:
     functionName = 'viewWillLayoutSubviews'
     # functionName = 'CGRectMake'
 
-    if obj:
+    if obj is not None:
         module = obj
     else:
         # module = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetModule()
@@ -746,7 +746,7 @@ def pSBModule(obj: Optional[lldb.SBModule]) -> None:
 
 
 def pSBSymbol(obj: Optional[lldb.SBSymbol]) -> None:
-    if obj:
+    if obj is not None:
         symbol = obj
     else:
         symbol = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetSymbol()
@@ -771,7 +771,7 @@ def pSBSymbol(obj: Optional[lldb.SBSymbol]) -> None:
 def pSBInstruction(obj: Optional[lldb.SBInstruction]) -> None:
     target = lldb.debugger.GetSelectedTarget()
 
-    if obj:
+    if obj is not None:
         instruction = obj
     else:
         instruction_list = target.GetProcess().GetSelectedThread().GetSelectedFrame().GetSymbol().GetInstructions(lldb.debugger.GetSelectedTarget())
@@ -793,7 +793,7 @@ def pSBInstruction(obj: Optional[lldb.SBInstruction]) -> None:
 
 
 def pSBFunction(obj: Optional[lldb.SBFunction]) -> None:
-    if obj:
+    if obj is not None:
         func = obj
     else:
         func = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetFunction()
@@ -818,7 +818,7 @@ def pSBFunction(obj: Optional[lldb.SBFunction]) -> None:
 
 
 def pSBBlock(obj: Optional[lldb.SBBlock]) -> None:
-    if obj:
+    if obj is not None:
         block = obj
     else:
         block = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetBlock()
@@ -844,7 +844,7 @@ def pSBBlock(obj: Optional[lldb.SBBlock]) -> None:
 
 
 def pSBCompileUnit(obj: Optional[lldb.SBCompileUnit]) -> None:
-    if obj:
+    if obj is not None:
         unit = obj
     else:
         unit = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetCompileUnit()
@@ -865,7 +865,7 @@ def pSBCompileUnit(obj: Optional[lldb.SBCompileUnit]) -> None:
 
 
 def pSBLineEntry(obj: Optional[lldb.SBLineEntry]) -> None:
-    if obj:
+    if obj is not None:
         le = obj
     else:
         le = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetLineEntry()
@@ -883,7 +883,7 @@ def pSBLineEntry(obj: Optional[lldb.SBLineEntry]) -> None:
 
 
 def pSBFile(obj: Optional[lldb.SBFile]) -> None:
-    if obj:
+    if obj is not None:
         file = obj
     else:
         file = lldb.debugger.GetInputFile()
@@ -897,7 +897,7 @@ def pSBFile(obj: Optional[lldb.SBFile]) -> None:
 
 
 def pSBFileSpec(obj: Optional[lldb.SBFileSpec]) -> None:
-    if obj:
+    if obj is not None:
         file_spec = obj
     else:
         file_spec = lldb.debugger.GetSelectedTarget().GetExecutable()
@@ -916,7 +916,7 @@ def pSBFileSpec(obj: Optional[lldb.SBFileSpec]) -> None:
 
 
 def pSBAddress(obj: Optional[lldb.SBAddress]) -> None:
-    if obj:
+    if obj is not None:
         address = obj
     else:
         address = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetPCAddress()
@@ -946,7 +946,7 @@ def pSBAddress(obj: Optional[lldb.SBAddress]) -> None:
 
 
 def pSBBreakpoint(obj: Optional[lldb.SBBreakpoint]) -> None:
-    if obj:
+    if obj is not None:
         bp = obj
     else:
         bp = lldb.debugger.GetSelectedTarget().GetBreakpointAtIndex(0)
@@ -982,7 +982,7 @@ def pSBBreakpoint(obj: Optional[lldb.SBBreakpoint]) -> None:
 
 
 def pSBBreakpointLocation(obj: Optional[lldb.SBBreakpointLocation]) -> None:
-    if obj:
+    if obj is not None:
         breakpoint_location = obj
     else:
         breakpoint_location = lldb.debugger.GetSelectedTarget().GetBreakpointAtIndex(0).GetLocationAtIndex(0)
@@ -1010,7 +1010,7 @@ def pSBBreakpointLocation(obj: Optional[lldb.SBBreakpointLocation]) -> None:
 
 
 def pSBError(obj: Optional[lldb.SBError]) -> None:
-    if obj:
+    if obj is not None:
         error = obj
     else:
         error = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().FindVariable("self").GetError()
@@ -1026,7 +1026,7 @@ def pSBError(obj: Optional[lldb.SBError]) -> None:
 
 
 def pSBType(obj: Optional[lldb.SBType]) -> None:
-    if obj:
+    if obj is not None:
         t = obj
     else:
         t = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetFunction().GetType()
@@ -1081,7 +1081,7 @@ def pSBType(obj: Optional[lldb.SBType]) -> None:
 
 
 def pSBTypeMemberFunction(obj: Optional[lldb.SBTypeMemberFunction]) -> None:
-    if obj:
+    if obj is not None:
         func = obj
     else:
         func = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().FindVariable("self").GetType().GetMemberFunctionAtIndex(0)
@@ -1102,7 +1102,7 @@ def pSBTypeMemberFunction(obj: Optional[lldb.SBTypeMemberFunction]) -> None:
 
 
 def pSBTypeCategory(obj: Optional[lldb.SBTypeCategory]) -> None:
-    if obj:
+    if obj is not None:
         category = obj
     else:
         category = lldb.debugger.GetDefaultCategory()
@@ -1126,7 +1126,7 @@ def pSBTypeCategory(obj: Optional[lldb.SBTypeCategory]) -> None:
 
 
 def pSBBroadcaster(obj: Optional[lldb.SBBroadcaster]) -> None:
-    if obj:
+    if obj is not None:
         broadcaster = obj
     else:
         broadcaster = lldb.debugger.GetCommandInterpreter().GetBroadcaster()
@@ -1140,7 +1140,7 @@ def pSBBroadcaster(obj: Optional[lldb.SBBroadcaster]) -> None:
 
 
 def pSBListener(obj: Optional[lldb.SBListener]) -> None:
-    if obj:
+    if obj is not None:
         listener = obj
     else:
         listener = lldb.debugger.GetListener()
@@ -1152,7 +1152,7 @@ def pSBListener(obj: Optional[lldb.SBListener]) -> None:
 
 
 def pSBEvent(obj: Optional[lldb.SBEvent]) -> None:
-    if obj:
+    if obj is not None:
         event = obj
     else:
         event = lldb.SBEvent()
@@ -1326,7 +1326,7 @@ def pSBEvent(obj: Optional[lldb.SBEvent]) -> None:
 
 
 def pSBStructuredData(obj: Optional[lldb.SBStructuredData]) -> None:
-    if obj:
+    if obj is not None:
         sd = obj
     else:
         sd = lldb.debugger.GetBuildConfiguration()
@@ -1350,7 +1350,7 @@ def pSBStructuredData(obj: Optional[lldb.SBStructuredData]) -> None:
 
 
 def pSBPlatform(obj: Optional[lldb.SBPlatform]) -> None:
-    if obj:
+    if obj is not None:
         platform = obj
     else:
         platform = lldb.debugger.GetSelectedPlatform()
@@ -1375,7 +1375,7 @@ def pSBPlatform(obj: Optional[lldb.SBPlatform]) -> None:
 
 
 def pSBSourceManager(obj: Optional[lldb.SBSourceManager]) -> None:
-    if obj:
+    if obj is not None:
         manager = obj
     else:
         manager = lldb.debugger.GetSourceManager()
@@ -1386,7 +1386,7 @@ def pSBSourceManager(obj: Optional[lldb.SBSourceManager]) -> None:
 
 
 def pSBUnixSignals(obj: Optional[lldb.SBUnixSignals]) -> None:
-    if obj:
+    if obj is not None:
         signals = obj
     else:
         signals = lldb.debugger.GetSelectedPlatform().GetUnixSignals()
@@ -1401,7 +1401,7 @@ def pSBUnixSignals(obj: Optional[lldb.SBUnixSignals]) -> None:
 
 
 def pSBLaunchInfo(obj: Optional[lldb.SBLaunchInfo]) -> None:
-    if obj:
+    if obj is not None:
         info = obj
     else:
         info = lldb.debugger.GetSelectedTarget().GetLaunchInfo()
@@ -1463,7 +1463,7 @@ def pSBLaunchInfo(obj: Optional[lldb.SBLaunchInfo]) -> None:
 
 
 def pSBEnvironment(obj: Optional[lldb.SBEnvironment]) -> None:
-    if obj:
+    if obj is not None:
         env = obj
     else:
         env = lldb.debugger.GetSelectedTarget().GetEnvironment()
@@ -1481,7 +1481,7 @@ def pSBEnvironment(obj: Optional[lldb.SBEnvironment]) -> None:
 
 
 def pSBCommandInterpreter(obj: Optional[lldb.SBCommandInterpreter]) -> None:
-    if obj:
+    if obj is not None:
         ci = obj
     else:
         ci = lldb.debugger.GetCommandInterpreter()
@@ -1507,7 +1507,7 @@ def pSBCommandInterpreter(obj: Optional[lldb.SBCommandInterpreter]) -> None:
 
 
 def pSBQueue(obj: Optional[lldb.SBQueue]) -> None:
-    if obj:
+    if obj is not None:
         queue = obj
     else:
         queue = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetQueue()
@@ -1530,7 +1530,7 @@ def pSBQueue(obj: Optional[lldb.SBQueue]) -> None:
 
 
 def pSBSection(obj: Optional[lldb.SBSection]) -> None:
-    if obj:
+    if obj is not None:
         section = obj
     else:
         section = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetModule().FindSection("__TEXT")
@@ -1556,7 +1556,7 @@ def pSBSection(obj: Optional[lldb.SBSection]) -> None:
 
 
 def pSBMemoryRegionInfoList(obj: Optional[lldb.SBMemoryRegionInfoList]) -> None:
-    if obj:
+    if obj is not None:
         memory_region_info_list = obj
     else:
         memory_region_info_list = lldb.debugger.GetSelectedTarget().GetProcess().GetMemoryRegions()
@@ -1578,7 +1578,7 @@ def pSBMemoryRegionInfoList(obj: Optional[lldb.SBMemoryRegionInfoList]) -> None:
 
 
 def pSBMemoryRegionInfo(obj: Optional[lldb.SBMemoryRegionInfo]) -> None:
-    if obj:
+    if obj is not None:
         memoryRegionInfo = obj
     else:
         memoryRegionInfo = lldb.SBMemoryRegionInfo()
@@ -1602,7 +1602,7 @@ def pSBMemoryRegionInfo(obj: Optional[lldb.SBMemoryRegionInfo]) -> None:
 
 
 def pSBExpressionOptions(obj: Optional[lldb.SBExpressionOptions]) -> None:
-    if obj:
+    if obj is not None:
         options = obj
     else:
         options = lldb.SBExpressionOptions()
