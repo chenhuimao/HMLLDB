@@ -90,7 +90,9 @@ def methods(debugger, command, exe_ctx, result, internal_dict):
 
     value = HM.evaluate_expression_value(expression=f'(NSString *)[{input_str} performSelector:NSSelectorFromString(@"{sel_name}")]', print_errors=False)
     if HM.is_successful_of_SBError(value.GetError()):
-        HM.DPrint(value.GetObjectDescription())
+        # Get the module where the address is located
+        result_with_module = append_module_after_address(value.GetObjectDescription(), r'\((0x.*?)\)')
+        HM.DPrint(result_with_module)
         return
 
     class_prefixes_value = HM.get_class_prefixes()[1]
@@ -122,7 +124,11 @@ def methods(debugger, command, exe_ctx, result, internal_dict):
     '''
 
     result = HM.evaluate_expression_value(command_script).GetObjectDescription()
-    HM.DPrint(result)
+    # HM.DPrint(result)
+
+    # Get the module where the address is located
+    result_with_module = append_module_after_address(result, r'\((0x.*?)\)')
+    HM.DPrint(result_with_module)
 
 
 def generate_methods_option_parser() -> optparse.OptionParser:

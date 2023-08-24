@@ -95,7 +95,7 @@ The `target symbols add [<symfile>]` command needs to specify the address of the
 
 
 ### deletefile
-It is recommended to re-run the project after executing the command, because some data is still in the memory.
+It is recommended to re-run the application after executing the command, because some data is still in the memory.
 ```
 # Delete all file in the sandbox
 (lldb) deletefile -a
@@ -228,11 +228,11 @@ ivars <Instance>
 [HMLLDB] <Kingfisher_Demo.NormalLoadingViewController: 0x10d55ffa8>:
 in Kingfisher_Demo.NormalLoadingViewController:
 	Instance Methods:
-		- (id) collectionView:(id)arg1 cellForItemAtIndexPath:(id)arg2; (0x10d523f30)
-		- (long) collectionView:(id)arg1 numberOfItemsInSection:(long)arg2; (0x10d522a20)
-		- (void) collectionView:(id)arg1 willDisplayCell:(id)arg2 forItemAtIndexPath:(id)arg3; (0x10d523af0)
-		- (void) collectionView:(id)arg1 didEndDisplayingCell:(id)arg2 forItemAtIndexPath:(id)arg3; (0x10d522cb0)
-		- (id) initWithCoder:(id)arg1; (0x10d522960)
+		- (id) collectionView:(id)arg1 cellForItemAtIndexPath:(id)arg2; (0x10d523f30, Kingfisher-Demo)
+		- (long) collectionView:(id)arg1 numberOfItemsInSection:(long)arg2; (0x10d522a20, Kingfisher-Demo)
+		- (void) collectionView:(id)arg1 willDisplayCell:(id)arg2 forItemAtIndexPath:(id)arg3; (0x10d523af0, Kingfisher-Demo)
+		- (void) collectionView:(id)arg1 didEndDisplayingCell:(id)arg2 forItemAtIndexPath:(id)arg3; (0x10d522cb0, Kingfisher-Demo)
+		- (id) initWithCoder:(id)arg1; (0x10d522960, Kingfisher-Demo)
 ...
 
 # These commands can only be used for subclasses of NSObject
