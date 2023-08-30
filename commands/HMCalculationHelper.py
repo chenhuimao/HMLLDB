@@ -28,7 +28,8 @@ import HMLLDBHelpers as HM
 
 
 def __lldb_init_module(debugger, internal_dict):
-    debugger.HandleCommand('command script add -f HMInstructionsHelper.adrp adrp -h "Get the execution result of the adrp instruction."')
+    debugger.HandleCommand('command script add -f HMCalculationHelper.adrp adrp -h "Get the execution result of the adrp instruction."')
+    debugger.HandleCommand('command script add -f HMCalculationHelper.python_eval py -h "Evaluate expression using python."')
 
 
 def adrp(debugger, command, exe_ctx, result, internal_dict):
@@ -48,7 +49,7 @@ def adrp(debugger, command, exe_ctx, result, internal_dict):
         (lldb) adrp 0x189aef040 <+32>:  adrp   x8, 348413
         [HMLLDB] x8: 0x1debec000, 8032010240
 
-    This command is implemented in HMInstructionsHelper.py
+    This command is implemented in HMCalculationHelper.py
     """
 
     command_args: List[str] = command.split()
@@ -94,3 +95,25 @@ def calculate_adrp_result_with_immediate_and_pc_address(immediate: int, pc_addre
     result_value: int = immediate_value_temp + pc_address_value_temp
     return result_value, hex(result_value)
 
+
+def python_eval(debugger, command, exe_ctx, result, internal_dict):
+    """
+    Syntax:
+        py <python_expression>
+
+    Examples:
+        (lldb) py 2 + 3
+        [HMLLDB] 5
+
+        (lldb) py hex(0x102b60000 + 175428412)
+        [HMLLDB] 0x10d2ad33c
+
+    This command is implemented in HMCalculationHelper.py
+    """
+
+    if len(command) == 0:
+        HM.DPrint("Error input, requires an expression parameter. Please enter \"help py\" for help.")
+        return
+
+    result = eval(command)
+    HM.DPrint(result)
