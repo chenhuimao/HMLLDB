@@ -25,6 +25,7 @@
 import lldb
 from typing import Any, List, Tuple, Optional
 import inspect
+import HMExpressionPrefix
 import HMLLDBClassInfo
 
 
@@ -209,7 +210,7 @@ def get_class_prefixes() -> Tuple[List[str], lldb.SBValue]:
         for (int i = 0; i < classCount; i++) {
             NSString *name = [[NSString alloc] initWithUTF8String:class_getName(classList[i])];
             if ([name containsString:@"."]) {
-                NSRange range = [name rangeOfString:@"."];
+                NSRange range = (NSRange)[name rangeOfString:@"."];
                 NSString *prefix = [name substringToIndex:range.location];
                 if (![clsPrefixes containsObject:prefix] && ![prefix containsString:@"NSKVONotifying_"] && ![prefix containsString:@"_NSZombie_"]) {
                     [clsPrefixes addObject:prefix];
@@ -220,7 +221,7 @@ def get_class_prefixes() -> Tuple[List[str], lldb.SBValue]:
         (NSMutableArray *)clsPrefixes;
     '''
 
-    g_class_prefixes_value = evaluate_expression_value(command_script)
+    g_class_prefixes_value = evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
     for i in range(g_class_prefixes_value.GetNumChildren()):
         prefix_value = g_class_prefixes_value.GetChildAtIndex(i)
         g_class_prefixes.append(prefix_value.GetObjectDescription())
