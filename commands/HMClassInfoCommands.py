@@ -36,7 +36,7 @@ def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand('command script add -f HMClassInfoCommands.methods methods -h "Execute [inputClass _methodDescription] or [inputClass _shortMethodDescription]."')
     debugger.HandleCommand('command script add -f HMClassInfoCommands.properties properties -h "Execute [inputClass _propertyDescription]."')
 
-    debugger.HandleCommand('command script add -f HMClassInfoCommands.find_class fclass -h "Find the class containing the input name(Case insensitive)."')
+    debugger.HandleCommand('command script add -f HMClassInfoCommands.find_class fclass -h "Find all classes whose names contain the specified string(Case insensitive)."')
     debugger.HandleCommand('command script add -f HMClassInfoCommands.find_subclass fsubclass -h "Find the subclass of the input."')
     debugger.HandleCommand('command script add -f HMClassInfoCommands.find_super_class fsuperclass -h "Find the superclass of the input."')
     debugger.HandleCommand('command script add -f HMClassInfoCommands.find_method fmethod -h "Find the specified method in the method list, you can also find the method list of the specified class."')
@@ -227,31 +227,70 @@ def append_module_after_address(origin_text: str, address_pattern: str) -> str:
 def find_class(debugger, command, exe_ctx, result, internal_dict):
     """
     Syntax:
-        fclass <className>
+        fclass <class_name> [-p <protocol>]
+
+    Options:
+        --protocol/-p; Display classes that conform to the protocol
 
     Examples:
         (lldb) fclass
         (lldb) fclass UITabBarController
         (lldb) fclass controller
+        (lldb) fclass controller -p UITableViewDelegate
+        (lldb) fclass -p UITableViewDelegate
 
     Notice:
-        Case insensitive.
+        class_name: case insensitive.
 
     This command is implemented in HMClassInfoCommands.py
     """
 
+    command_args = shlex.split(command)
+    parser = generate_find_class_option_parser()
+    try:
+        # options: optparse.Values
+        # args: list
+        (options, args) = parser.parse_args(command_args)
+    except:
+        result.SetError(parser.usage)
+        return
+
     HM.DPrint("Waiting...")
 
-    if len(command) == 0:
+    if len(args) == 0:
         add_object_script = '[classNames appendFormat:@"%@ (%p)\\n", name, classList[i]]; findCount += 1;'
     else:
-        command = command.lower()
+        target_class = args[0].lower()
         add_object_script = f'''
-            if ([[name lowercaseString] containsString:@"{command}"]) {{
+            if ([[name lowercaseString] containsString:@"{target_class}"]) {{
                 [classNames appendFormat:@"%@ (%p)\\n", name, classList[i]];
                 findCount += 1;
             }}
         '''
+
+    if options.protocol:
+        if not HM.is_existing_protocol(options.protocol):
+            HM.DPrint(f"Can't find {options.protocol} protocol")
+            return
+
+        continue_if_not_conforms_to_protocol = f'''
+            Protocol *targetProtocol = (Protocol *)objc_getProtocol("{options.protocol}");
+            BOOL is_conform = (BOOL)class_conformsToProtocol(classList[i], targetProtocol);
+            if (!is_conform) {{
+                for (Class superClass = class_getSuperclass(classList[i]); superClass != nil; superClass = class_getSuperclass(superClass)) {{
+                    is_conform = (BOOL)class_conformsToProtocol(superClass, targetProtocol);
+                    if (is_conform) {{
+                        break;
+                    }}
+                }}
+            }}
+
+            if (!is_conform) {{
+                continue;
+            }}
+        '''
+    else:
+        continue_if_not_conforms_to_protocol = ';'
 
     command_script = f'''
         unsigned int findCount = 0;
@@ -259,6 +298,7 @@ def find_class(debugger, command, exe_ctx, result, internal_dict):
         Class *classList = objc_copyClassList(&classCount);
         NSMutableString *classNames = [[NSMutableString alloc] init];
         for (int i = 0; i < classCount; i++) {{
+            {continue_if_not_conforms_to_protocol}
             NSString *name = [[NSString alloc] initWithUTF8String:class_getName(classList[i])];
             {add_object_script}
         }}
@@ -278,6 +318,19 @@ def find_class(debugger, command, exe_ctx, result, internal_dict):
     # Get the module where the address is located
     result_with_module = append_module_after_address(result, r'\((0x.*?)\)')
     HM.DPrint(result_with_module)
+
+
+def generate_find_class_option_parser() -> optparse.OptionParser:
+    usage = "usage: fclass <class_name> [-p <protocol>]"
+    parser = optparse.OptionParser(usage=usage, prog="fclass")
+
+    parser.add_option("-p", "--protocol",
+                      action="store",
+                      default=None,
+                      dest="protocol",
+                      help="Display classes that conform to the protocol")
+
+    return parser
 
 
 def find_subclass(debugger, command, exe_ctx, result, internal_dict):

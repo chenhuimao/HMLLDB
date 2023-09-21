@@ -9,7 +9,7 @@
 
 ## Requirements
 - Xcode 14.3.1
-- 64-bit simulator or real device, iOS 11.0+
+- 64-bit simulator or real device, iOS 12.0+
 - Some commands require debug configuration (or ***Optimization Level*** set [-O0]/[-Onone])
 
 ## Installation
@@ -31,7 +31,7 @@ For example, this is the command in my computer:
 | deletefile     | Delete the specified file in the sandbox |
 | pbundlepath    | Print the path of the main bundle |
 | phomedirectory | Print the path of the home directory("~") |
-| fclass         | Find the class containing the input name(Case insensitive) |
+| fclass         | Find all classes whose names contain the specified string(Case insensitive) |
 | fsubclass      | Find the subclass of the input |
 | fsuperclass    | Find the superclass of the input |
 | fmethod        | Find the specified method in the method list, you can also find the method list of the specified class |
@@ -137,9 +137,12 @@ It is recommended to re-run the application after executing the command, because
 ### fclass & fsubclass & fsuperclass & fmethod
 These commands are optimized for Swift, and the namespace can be omitted when entering the Swift class.   
 
-`fclass`: Find all class names that contain the specified string.
+`fclass`: Find all classes whose names contain the specified string(Case insensitive).
 
 ```
+Syntax:
+	fclass <class_name> [-p <protocol>]
+        
 (lldb) fclass NormalLoadingViewController
 [HMLLDB] Waiting...
 [HMLLDB] Count: 1
@@ -157,6 +160,33 @@ Kingfisher_Demo.AVAssetImageGeneratorViewController (0x100904568, Kingfisher-Dem
 ...
 UIImagePickerController (0x1ea918240, UIKitCore)
 _UIStackedImageContainerView (0x1ea90fac8, UIKitCore)
+...
+
+# Option -p: Display classes that conform to the protocol.
+(lldb) fclass controller -p UICollectionViewDelegate
+[HMLLDB] Waiting...
+[HMLLDB] Count: 16
+UIActivityContentViewController (0x224739570, ShareSheet)
+UIPrintPreviewViewController (0x225b5f408, PrintKitUI)
+UIDebuggingSpecViewController (0x2252cfeb8, UIKitCore)
+UIDebuggingInformationHierarchyViewController (0x2252cfc60, UIKitCore)
+UICollectionViewController (0x2245d4e50, UIKitCore)
+SUIKSearchResultsCollectionViewController (0x2256e82b8, Preferences)
+Kingfisher_Demo.InfinityCollectionViewController (0x10079ac18, Kingfisher-Demo)
+Kingfisher_Demo.HighResolutionCollectionViewController (0x100799ed0, Kingfisher-Demo)
+Kingfisher_Demo.OrientationImagesViewController (0x100799cc8, Kingfisher-Demo)
+Kingfisher_Demo.ImageDataProviderCollectionViewController (0x100799bb0, Kingfisher-Demo)
+Kingfisher_Demo.IndicatorCollectionViewController (0x100799328, Kingfisher-Demo)
+Kingfisher_Demo.ProcessorCollectionViewController (0x100799178, Kingfisher-Demo)
+Kingfisher_Demo.NormalLoadingViewController (0x1007989b8, Kingfisher-Demo)
+_UISearchSuggestionsListViewController (0x2252dcb40, UIKitCore)
+_UIAlertControllerTextFieldViewController (0x2245d13b8, UIKitCore)
+UIActivityGroupViewController (0x224739520, ShareSheet)
+
+# Find all classes that conform to the UICollectionViewDelegate protocol
+(lldb) fclass -p UICollectionViewDelegate
+[HMLLDB] Waiting...
+[HMLLDB] Count: 30
 ...
 ```
 

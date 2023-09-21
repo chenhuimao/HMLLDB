@@ -242,6 +242,19 @@ def is_existing_class(class_name: str) -> bool:
     return bool_of_SBValue(value)
 
 
+def is_existing_protocol(protocol_name: str) -> bool:
+    command_script = f'''
+        BOOL exist = NO;
+        Protocol *targetProtocol = (Protocol *)objc_getProtocol("{protocol_name}");
+        if (targetProtocol) {{
+            exist = YES;
+        }}
+        (BOOL)exist;
+    '''
+    value = evaluate_expression_value(command_script)
+    return bool_of_SBValue(value)
+
+
 def allocate_class(class_name: str, super_class_name: str) -> lldb.SBValue:
     command_script = f'''
         Class newCls = (Class)objc_lookUpClass("{class_name}");
