@@ -327,6 +327,50 @@ def get_string_from_stop_reason(stop_reason: int) -> str:
     return "unknown"
 
 
+def get_string_from_instruction_control_flow_kind(kind: int) -> str:
+    if kind == lldb.eInstructionControlFlowKindUnknown:
+        return 'eInstructionControlFlowKindUnknown'
+    elif kind == lldb.eInstructionControlFlowKindOther:
+        return 'eInstructionControlFlowKindOther'
+    elif kind == lldb.eInstructionControlFlowKindCall:
+        return 'eInstructionControlFlowKindCall'
+    elif kind == lldb.eInstructionControlFlowKindReturn:
+        return 'eInstructionControlFlowKindReturn'
+    elif kind == lldb.eInstructionControlFlowKindJump:
+        return 'eInstructionControlFlowKindJump'
+    elif kind == lldb.eInstructionControlFlowKindCondJump:
+        return 'eInstructionControlFlowKindCondJump'
+    elif kind == lldb.eInstructionControlFlowKindFarCall:
+        return 'eInstructionControlFlowKindFarCall'
+    elif kind == lldb.eInstructionControlFlowKindFarReturn:
+        return 'eInstructionControlFlowKindFarReturn'
+    elif kind == lldb.eInstructionControlFlowKindFarJump:
+        return 'eInstructionControlFlowKindFarJump'
+    return "unknown"
+
+
+def get_string_from_structured_data_type(structured_data_type: int) -> str:
+    if structured_data_type == lldb.eStructuredDataTypeInvalid:
+        return 'eStructuredDataTypeInvalid'
+    elif structured_data_type == lldb.eStructuredDataTypeNull:
+        return 'eStructuredDataTypeNull'
+    elif structured_data_type == lldb.eStructuredDataTypeGeneric:
+        return 'eStructuredDataTypeGeneric'
+    elif structured_data_type == lldb.eStructuredDataTypeArray:
+        return 'eStructuredDataTypeArray'
+    elif structured_data_type == lldb.eStructuredDataTypeInteger:
+        return 'eStructuredDataTypeInteger'
+    elif structured_data_type == lldb.eStructuredDataTypeFloat:
+        return 'eStructuredDataTypeFloat'
+    elif structured_data_type == lldb.eStructuredDataTypeBoolean:
+        return 'eStructuredDataTypeBoolean'
+    elif structured_data_type == lldb.eStructuredDataTypeString:
+        return 'eStructuredDataTypeString'
+    elif structured_data_type == lldb.eStructuredDataTypeDictionary:
+        return 'eStructuredDataTypeDictionary'
+    return "unknown"
+
+
 def pSBHostOS(obj: Optional[lldb.SBHostOS]) -> None:
     if obj is not None:
         hostOS = obj
@@ -364,10 +408,12 @@ def pSBDebugger(obj: Optional[lldb.SBDebugger]) -> None:
     # print_format("GetInputFileHandle", debugger.GetInputFileHandle())  # FileSP
     # print_format("GetOutputFileHandle", debugger.GetOutputFileHandle())  # FileSP
     # print_format("GetErrorFileHandle", debugger.GetErrorFileHandle())  # FileSP
+    print_format("GetSetting", debugger.GetSetting())  # SBStructuredData
     print_format("GetInputFile", debugger.GetInputFile())  # SBFile
     print_format("GetOutputFile", debugger.GetOutputFile())  # SBFile
     print_format("GetErrorFile", debugger.GetErrorFile())  # SBFile
     print_format("GetCommandInterpreter", debugger.GetCommandInterpreter())  # SBCommandInterpreter
+    print_format("InterruptRequested", debugger.InterruptRequested())
     print_format("GetListener", debugger.GetListener())  # SBListener
     print_format("GetDummyTarget", debugger.GetDummyTarget())  # SBTarget
     print_format("GetNumTargets", debugger.GetNumTargets())
@@ -476,6 +522,8 @@ def pSBProcess(obj: Optional[lldb.SBProcess]) -> None:
     print_format("GetAddressByteSize", process.GetAddressByteSize())
     print_format("GetUnixSignals", process.GetUnixSignals())  # SBUnixSignals
     print_format("GetBroadcaster", process.GetBroadcaster())  # SBBroadcaster
+    print_format("GetBroadcasterClass", lldb.SBProcess.GetBroadcasterClass())
+    print_format("GetScriptedImplementation", process.GetScriptedImplementation())
     print_format("GetExtendedCrashInformation", process.GetExtendedCrashInformation())  # SBStructuredData
     print_format("GetNumExtendedBacktraceTypes", process.GetNumExtendedBacktraceTypes())
     print_format("GetMemoryRegions", process.GetMemoryRegions())  # SBMemoryRegionInfoList
@@ -760,6 +808,8 @@ def pSBSymbol(obj: Optional[lldb.SBSymbol]) -> None:
     print_format("GetMangledName", symbol.GetMangledName())
     print_format("GetStartAddress", symbol.GetStartAddress())  # SBAddress
     print_format("GetEndAddress", symbol.GetEndAddress())  # SBAddress
+    print_format("GetValue", symbol.GetValue())
+    print_format("GetSize", symbol.GetSize())
     print_format("GetPrologueByteSize", symbol.GetPrologueByteSize())
     print_format("GetType(raw)", symbol.GetType())  # SymbolType int
     print_format("GetType(resolved)", get_string_from_symbol_type(symbol.GetType()))
@@ -774,9 +824,15 @@ def pSBInstruction(obj: Optional[lldb.SBInstruction]) -> None:
     if obj is not None:
         instruction = obj
     else:
-        instruction_list = target.GetProcess().GetSelectedThread().GetSelectedFrame().GetSymbol().GetInstructions(lldb.debugger.GetSelectedTarget())
+        frame = target.GetProcess().GetSelectedThread().GetSelectedFrame()
+        instruction_list = frame.GetSymbol().GetInstructions(lldb.debugger.GetSelectedTarget())
+        for inst in instruction_list:
+            if inst.GetAddress() == frame.GetPCAddress():
+                instruction = inst
+                break
+
         # instruction_list = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")[0].GetSymbol().GetInstructions(lldb.debugger.GetSelectedTarget())
-        instruction = instruction_list.GetInstructionAtIndex(0)
+        # instruction = instruction_list.GetInstructionAtIndex(0)
 
     print_class_name("SBInstruction")
     print_format("SBInstruction", instruction)
@@ -785,6 +841,8 @@ def pSBInstruction(obj: Optional[lldb.SBInstruction]) -> None:
     print_format("GetMnemonic", instruction.GetMnemonic(target))
     print_format("GetOperands", instruction.GetOperands(target))
     print_format("GetComment", instruction.GetComment(target))
+    print_format("GetControlFlowKind(raw)", instruction.GetControlFlowKind(target))  # InstructionControlFlowKind int
+    print_format("GetControlFlowKind(resolved)", get_string_from_instruction_control_flow_kind(instruction.GetControlFlowKind(target)))
     print_format("GetData", instruction.GetData(target))  # SBData
     print_format("GetByteSize", instruction.GetByteSize())
     print_format("DoesBranch", instruction.DoesBranch())
@@ -1145,6 +1203,7 @@ def pSBListener(obj: Optional[lldb.SBListener]) -> None:
     else:
         listener = lldb.debugger.GetListener()
         # listener = lldb.debugger.GetSelectedTarget().GetLaunchInfo().GetListener()
+        # listener = lldb.debugger.GetSelectedTarget().GetLaunchInfo().GetShadowListener()
 
     print_class_name("SBListener")
     print_format("SBListener", listener)
@@ -1331,11 +1390,13 @@ def pSBStructuredData(obj: Optional[lldb.SBStructuredData]) -> None:
     else:
         sd = lldb.debugger.GetBuildConfiguration()
         # sd = lldb.debugger.GetSelectedTarget().GetStatistics()
+        # sd = lldb.debugger.GetSetting()
 
     print_class_name("SBStructuredData")
     print_format("SBStructuredData", sd)
     print_format("IsValid", sd.IsValid())
-    print_format("GetType", sd.GetType())  # StructuredDataType int
+    print_format("GetType(raw)", sd.GetType())  # StructuredDataType int
+    print_format("GetType(resolved)", get_string_from_structured_data_type(sd.GetType()))
     print_format("GetSize", sd.GetSize())
     string_list = lldb.SBStringList()
     sd.GetKeys(string_list)
@@ -1344,6 +1405,7 @@ def pSBStructuredData(obj: Optional[lldb.SBStructuredData]) -> None:
     print_format("GetFloatValue", sd.GetFloatValue())
     print_format("GetBooleanValue", sd.GetBooleanValue())
     print_format("GetStringValue", sd.GetStringValue(1000))
+    print_format("GetGenericValue", sd.GetGenericValue())  # SBScriptObject
     stream = lldb.SBStream()
     sd.GetAsJSON(stream)
     print_format("GetAsJSON", stream.GetData())
@@ -1415,6 +1477,7 @@ def pSBLaunchInfo(obj: Optional[lldb.SBLaunchInfo]) -> None:
     print_format("GroupIDIsValid", info.GroupIDIsValid())
     print_format("GetExecutableFile", info.GetExecutableFile())  # SBFileSpec
     print_format("GetListener", info.GetListener())  # SBListener
+    print_format("GetShadowListener", info.GetShadowListener())  # SBListener
     print_format("GetNumArguments", info.GetNumArguments())
     print_format("GetNumEnvironmentEntries", info.GetNumEnvironmentEntries())
     print_format("GetEnvironment", info.GetEnvironment())  # SBEnvironment
@@ -1493,6 +1556,7 @@ def pSBCommandInterpreter(obj: Optional[lldb.SBCommandInterpreter]) -> None:
     print_format("HasCustomQuitExitCode", ci.HasCustomQuitExitCode())
     print_format("GetQuitStatus", ci.GetQuitStatus())
     print_format("CommandExists", ci.CommandExists("breakpoint"))
+    print_format("UserCommandExists", ci.UserCommandExists("plldbClassInfo"))
     print_format("AliasExists", ci.AliasExists('bt'))
     print_format("GetBroadcaster", ci.GetBroadcaster())  # SBBroadcaster
     print_format("GetBroadcasterClass", ci.GetBroadcasterClass())
@@ -1504,6 +1568,7 @@ def pSBCommandInterpreter(obj: Optional[lldb.SBCommandInterpreter]) -> None:
     print_format("GetDebugger", ci.GetDebugger())  # SBDebugger
     print_format("IsActive", ci.IsActive())
     print_format("WasInterrupted", ci.WasInterrupted())
+    print_format("InterruptCommand", ci.InterruptCommand())
 
 
 def pSBQueue(obj: Optional[lldb.SBQueue]) -> None:
@@ -1550,6 +1615,7 @@ def pSBSection(obj: Optional[lldb.SBSection]) -> None:
     print_format("GetSectionType", section.GetSectionType())  # SectionType int
     print_format("GetPermissions", section.GetPermissions())
     print_format("GetTargetByteSize", section.GetTargetByteSize())
+    print_format("GetAlignment", section.GetAlignment())
     print_format("get_addr", section.get_addr())  # SBAddress
 
     print_traversal(section, "GetNumSubSections", "GetSubSectionAtIndex")  # [SBSection]
