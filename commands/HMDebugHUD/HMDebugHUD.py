@@ -556,16 +556,12 @@ def makeAttachToEdgeIMP() -> lldb.SBValue:
                 return;
             }
         
-            UIEdgeInsets safeAreaInsets = UIEdgeInsetsZero;
-            if ([HUD.window respondsToSelector:@selector(safeAreaInsets)]) {
-                safeAreaInsets = [HUD.window safeAreaInsets];
-            }
-            
-            CGFloat minX = safeAreaInsets.left;
-            CGFloat maxX = HUD.window.bounds.size.width - safeAreaInsets.right;
-            CGFloat minY = safeAreaInsets.top;
-            CGFloat maxY = HUD.window.bounds.size.height - safeAreaInsets.bottom;
-        
+            UIEdgeInsets hm_safeAreaInsets = {0.0, 0.0, 0.0, 0.0};   
+            hm_safeAreaInsets = [HUD.window safeAreaInsets];   
+            CGFloat minX = hm_safeAreaInsets.left;
+            CGFloat maxX = HUD.window.bounds.size.width - hm_safeAreaInsets.right;
+            CGFloat minY = hm_safeAreaInsets.top;
+            CGFloat maxY = HUD.window.bounds.size.height - hm_safeAreaInsets.bottom;
             
             CGFloat x = HUD.frame.origin.x;
             if (x < minX) {
