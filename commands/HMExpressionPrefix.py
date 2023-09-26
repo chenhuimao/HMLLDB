@@ -39,13 +39,4 @@ typedef struct CGRect {
     CGPoint origin;
     CGSize size;
 } CGRect;
-
-typedef struct UIEdgeInsets {
-    double top, left, bottom, right;
-} UIEdgeInsets;
-
-typedef struct _NSRange {
-    unsigned long location;
-    unsigned long length;
-} NSRange;
 '''

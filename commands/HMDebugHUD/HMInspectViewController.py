@@ -332,14 +332,12 @@ def makeViewDidLayoutSubviewsIMP() -> lldb.SBValue:
             }};
             ((void (*)(struct objc_super *, SEL))objc_msgSendSuper)(&superInfo, @selector(viewDidLayoutSubviews));
             
-            UIEdgeInsets safeAreaInsets = UIEdgeInsetsZero;
-            if ([UIApplication.sharedApplication.keyWindow respondsToSelector:@selector(safeAreaInsets)]) {{
-                safeAreaInsets = [UIApplication.sharedApplication.keyWindow safeAreaInsets];
-            }}
+            UIEdgeInsets hm_safeAreaInsets = {{0.0, 0.0, 0.0, 0.0}};   
+            hm_safeAreaInsets = [UIApplication.sharedApplication.keyWindow safeAreaInsets];
 
             UIButton *_exitBtn = (UIButton *)[vc valueForKey:@"_exitBtn"];
             CGSize exitBtnSize = (CGSize){{_exitBtn.intrinsicContentSize.width + 20, _exitBtn.intrinsicContentSize.height}}; 
-            CGFloat exitBtnY = vc.view.frame.size.height - safeAreaInsets.bottom - 10 - exitBtnSize.height;
+            CGFloat exitBtnY = vc.view.frame.size.height - hm_safeAreaInsets.bottom - 10 - exitBtnSize.height;
             (void)[_exitBtn setFrame:(CGRect){{(vc.view.frame.size.width - exitBtnSize.width) / 2, exitBtnY, exitBtnSize.width, exitBtnSize.height}}];
             _exitBtn.layer.cornerRadius = exitBtnSize.height / 2;
         }};
@@ -681,10 +679,12 @@ def makeGetInfoArrayFromTargetViewIMP() -> lldb.SBValue:
                 UIScrollView *scrollView = (UIScrollView *)targetView;
                 [infoArray addObject:@[@"ContentSize", NSStringFromCGSize(scrollView.contentSize)]];
                 [infoArray addObject:@[@"ContentOffset", NSStringFromCGPoint(scrollView.contentOffset)]];
-                [infoArray addObject:@[@"ContentInset", NSStringFromUIEdgeInsets(scrollView.contentInset)]];
-                if ([scrollView respondsToSelector:@selector(adjustedContentInset)]) {
-                    [infoArray addObject:@[@"AdjustedContentInset", NSStringFromUIEdgeInsets(scrollView.adjustedContentInset)]];
-                }
+                UIEdgeInsets hm_contentInset = {0.0, 0.0, 0.0, 0.0};
+                hm_contentInset = scrollView.contentInset;
+                [infoArray addObject:@[@"ContentInset", NSStringFromUIEdgeInsets({hm_contentInset.top, hm_contentInset.left, hm_contentInset.bottom, hm_contentInset.right})]];
+                UIEdgeInsets hm_adjustedContentInset = {0.0, 0.0, 0.0, 0.0};
+                hm_adjustedContentInset = scrollView.adjustedContentInset;
+                [infoArray addObject:@[@"AdjustedContentInset", NSStringFromUIEdgeInsets({hm_adjustedContentInset.top, hm_adjustedContentInset.left, hm_adjustedContentInset.bottom, hm_adjustedContentInset.right})]];
                 
                 if ([scrollView isKindOfClass:[UITextView class]]) {
                     UITextView *textView = (UITextView *)scrollView;
