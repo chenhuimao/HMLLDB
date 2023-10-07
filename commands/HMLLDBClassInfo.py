@@ -152,6 +152,8 @@ def print_lldb_class_info(debugger, command, exe_ctx, result, internal_dict):
         pSBEnvironment(None)
     if compare_name("SBCommandInterpreter"):
         pSBCommandInterpreter(None)
+    if compare_name("SBCommandReturnObject"):
+        pSBCommandReturnObject(None)
     if compare_name("SBQueue"):
         pSBQueue(None)
     if compare_name("SBSection"):
@@ -369,6 +371,26 @@ def get_string_from_structured_data_type(structured_data_type: int) -> str:
     elif structured_data_type == lldb.eStructuredDataTypeDictionary:
         return 'eStructuredDataTypeDictionary'
     return "unknown"
+
+
+def get_string_from_return_status(return_status: int) -> str:
+    if return_status == lldb.eReturnStatusInvalid:
+        return 'eReturnStatusInvalid'
+    elif return_status == lldb.eReturnStatusSuccessFinishNoResult:
+        return 'eReturnStatusSuccessFinishNoResult'
+    elif return_status == lldb.eReturnStatusSuccessFinishResult:
+        return 'eReturnStatusSuccessFinishResult'
+    elif return_status == lldb.eReturnStatusSuccessContinuingNoResult:
+        return 'eReturnStatusSuccessContinuingNoResult'
+    elif return_status == lldb.eReturnStatusSuccessContinuingResult:
+        return 'eReturnStatusSuccessContinuingResult'
+    elif return_status == lldb.eReturnStatusStarted:
+        return 'eReturnStatusStarted'
+    elif return_status == lldb.eReturnStatusFailed:
+        return 'eReturnStatusFailed'
+    elif return_status == lldb.eReturnStatusQuit:
+        return 'eReturnStatusQuit'
+    return 'unknown'
 
 
 def pSBHostOS(obj: Optional[lldb.SBHostOS]) -> None:
@@ -841,8 +863,9 @@ def pSBInstruction(obj: Optional[lldb.SBInstruction]) -> None:
     print_format("GetMnemonic", instruction.GetMnemonic(target))
     print_format("GetOperands", instruction.GetOperands(target))
     print_format("GetComment", instruction.GetComment(target))
-    print_format("GetControlFlowKind(raw)", instruction.GetControlFlowKind(target))  # InstructionControlFlowKind int
-    print_format("GetControlFlowKind(resolved)", get_string_from_instruction_control_flow_kind(instruction.GetControlFlowKind(target)))
+    control_flow_kind = instruction.GetControlFlowKind(target)  # InstructionControlFlowKind int
+    print_format("GetControlFlowKind(raw)", control_flow_kind)
+    print_format("GetControlFlowKind(resolved)", get_string_from_instruction_control_flow_kind(control_flow_kind))
     print_format("GetData", instruction.GetData(target))  # SBData
     print_format("GetByteSize", instruction.GetByteSize())
     print_format("DoesBranch", instruction.DoesBranch())
@@ -1569,6 +1592,27 @@ def pSBCommandInterpreter(obj: Optional[lldb.SBCommandInterpreter]) -> None:
     print_format("IsActive", ci.IsActive())
     print_format("WasInterrupted", ci.WasInterrupted())
     print_format("InterruptCommand", ci.InterruptCommand())
+
+
+def pSBCommandReturnObject(obj: Optional[lldb.SBCommandReturnObject]) -> None:
+    if obj is not None:
+        return_object = obj
+    else:
+        return_object = lldb.SBCommandReturnObject()
+        lldb.debugger.GetCommandInterpreter().HandleCommand("breakpoint list", return_object)
+
+    print_class_name("SBCommandReturnObject")
+    print_format("SBCommandReturnObject", return_object)
+    print_format("IsValid", return_object.IsValid())
+    print_format("GetOutputSize", return_object.GetOutputSize())
+    print_format("GetErrorSize", return_object.GetErrorSize())
+    print_format("GetOutput", return_object.GetOutput())
+    print_format("GetError", return_object.GetError())
+    status = return_object.GetStatus()  # ReturnStatus int
+    print_format("GetStatus(raw)", status)
+    print_format("GetStatus(resolved)", get_string_from_return_status(status))
+    print_format("Succeeded", return_object.Succeeded())
+    print_format("HasResult", return_object.HasResult())
 
 
 def pSBQueue(obj: Optional[lldb.SBQueue]) -> None:
