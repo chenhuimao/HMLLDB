@@ -186,12 +186,31 @@ def symbol_context_get_base_range_address(sc: lldb.SBSymbolContext) -> lldb.SBAd
     return base_range_address
 
 
-def get_module_name_from_address(address_str: str) -> Optional[str]:
+def get_module_name_from_address(address_str: str) -> str:
     is_valid, address_int = int_value_from_string(address_str)
     if not is_valid:
-        return "Invalid address"
+        return "[HMLLDB] Invalid address"
     address: lldb.SBAddress = lldb.SBAddress(address_int, lldb.debugger.GetSelectedTarget())
-    return address.GetModule().GetFileSpec().GetFilename()
+    module_name = address.GetModule().GetFileSpec().GetFilename()
+    if module_name is None:
+        return ""
+    return module_name
+
+
+def get_image_lookup_summary_from_address(address_str: str) -> str:
+    is_valid, address_int = int_value_from_string(address_str)
+    if not is_valid:
+        return "[HMLLDB] Invalid address"
+    return_object = lldb.SBCommandReturnObject()
+    lldb.debugger.GetCommandInterpreter().HandleCommand(f"image lookup -a {address_str}", return_object)
+    if return_object.GetErrorSize() > 0:
+        return ""
+    return_object_lines = return_object.GetOutput().splitlines()
+    for line in return_object_lines:
+        if line.strip().startswith('Summary: '):
+            return line.strip().lstrip('Summary: ')
+
+    return ""
 
 
 def get_class_prefixes() -> Tuple[List[str], lldb.SBValue]:

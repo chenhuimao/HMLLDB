@@ -215,7 +215,7 @@ def append_module_after_address(origin_text: str, address_pattern: str) -> str:
         address_set: Set[str] = set(address_list)
         for address_str in address_set:
             module_name = HM.get_module_name_from_address(address_str)
-            if module_name is not None:
+            if len(module_name) > 0:
                 chunk_str = chunk_str.replace(address_str, f"{address_str}, {module_name}")
 
         result += chunk_str

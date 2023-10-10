@@ -142,6 +142,9 @@ def my_comment_for_instruction(instruction: lldb.SBInstruction, previous_instruc
         if len(my_comment) > 0:
             return my_comment
 
+    my_comment = comment_for_branch(instruction, exe_ctx)
+    if len(my_comment) > 0:
+        return my_comment
     return ""
 
 
@@ -202,6 +205,47 @@ def comment_for_adrp_next_instruction(adrp_instruction: lldb.SBInstruction, next
         if adrp_operands[0] == operands[1] and operands[2].startswith('#0x'):
             add_result = adrp_result_tuple[0] + int(operands[2].lstrip('#'), 16)
             comment = f"{operands[0]} = {hex(add_result)}, {add_result}"
+
+    return comment
+
+
+def comment_for_branch(instruction: lldb.SBInstruction, exe_ctx: lldb.SBExecutionContext) -> str:
+    target = exe_ctx.GetTarget()
+    if not instruction.GetMnemonic(target).startswith('b'):
+        return ""
+
+    # Find the 3 instructions of the branch address
+    operands = instruction.GetOperands(target)
+    is_valid_address, address_int = HM.int_value_from_string(operands)
+    if not is_valid_address:
+        return ""
+
+    address: lldb.SBAddress = lldb.SBAddress(address_int, target)
+    instruction_list: lldb.SBInstructionList = target.ReadInstructions(address, 3)
+    instruction_count = instruction_list.GetSize()
+    if instruction_count != 3:
+        return ""
+
+    first_instruction = instruction_list.GetInstructionAtIndex(0)
+    second_instruction = instruction_list.GetInstructionAtIndex(1)
+    third_instruction = instruction_list.GetInstructionAtIndex(2)
+
+    # Calculate the actual branch address and comments
+    comment = ""
+    third_mnemonic = third_instruction.GetMnemonic(target)
+    if first_instruction.GetMnemonic(target) == 'adrp' and third_mnemonic.startswith('b'):
+        if second_instruction.GetMnemonic(target) == 'add':
+            # adrp x16, -51447
+            # add x16, x16, #0x4e0          ; objc_claimAutoreleasedReturnValue
+            # br x16
+            adrp_operands = first_instruction.GetOperands(target).split(', ')
+            adrp_result_tuple: Tuple[int, str] = HMCalculationHelper.calculate_adrp_result_with_immediate_and_pc_address(int(adrp_operands[1]), first_instruction.GetAddress().GetLoadAddress(target))
+            add_operands = second_instruction.GetOperands(target).split(', ')
+            if adrp_operands[0] == add_operands[1] and add_operands[2].startswith('#0x'):
+                add_result = adrp_result_tuple[0] + int(add_operands[2].lstrip('#'), 16)
+                branch_operands = third_instruction.GetOperands(target)
+                if branch_operands == add_operands[0]:
+                    comment = f"{third_mnemonic} {hex(add_result)} {second_instruction.GetComment(target)}"
 
     return comment
 
