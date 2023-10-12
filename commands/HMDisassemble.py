@@ -71,9 +71,9 @@ def enhanced_disassemble(debugger, command, exe_ctx, result, internal_dict):
             continue
 
         # find address
-        address_str = keywords[0]
+        address_str = keywords[0].rstrip(':')
         if keywords[0] == '->':
-            address_str = keywords[1]
+            address_str = keywords[1].rstrip(':')
         is_valid, address_int = HM.int_value_from_string(address_str)
         if not is_valid:
             continue
@@ -93,7 +93,8 @@ def enhanced_disassemble(debugger, command, exe_ctx, result, internal_dict):
     # Find instructions without comment
     address_comment_dict: Dict[int, str] = {}
     instruction_count = instruction_list.GetSize()
-    for i in range(instruction_count - 1):
+    # HM.DPrint(f"instruction_count:{instruction_count}")
+    for i in range(instruction_count):
         instruction: lldb.SBInstruction = instruction_list.GetInstructionAtIndex(i)
         comment = instruction.GetComment(target)
         # HMLLDBClassInfo.pSBInstruction(instruction)
@@ -117,9 +118,9 @@ def enhanced_disassemble(debugger, command, exe_ctx, result, internal_dict):
             continue
 
         # find address
-        address_str = keywords[0]
+        address_str = keywords[0].rstrip(':')
         if keywords[0] == '->':
-            address_str = keywords[1]
+            address_str = keywords[1].rstrip(':')
         is_valid, address_int = HM.int_value_from_string(address_str)
         if not is_valid:
             print(line)
@@ -132,26 +133,47 @@ def enhanced_disassemble(debugger, command, exe_ctx, result, internal_dict):
 
 
 def my_comment_for_instruction(instruction: lldb.SBInstruction, previous_instruction: Optional[lldb.SBInstruction], exe_ctx: lldb.SBExecutionContext) -> str:
-    target = exe_ctx.GetTarget()
+    # adr
+    my_comment = comment_for_adr(instruction, exe_ctx)
+    if len(my_comment) > 0:
+        return my_comment
+
+    # adrp
     my_comment = comment_for_adrp(instruction, exe_ctx)
     if len(my_comment) > 0:
         return my_comment
 
+    # adrp next instruction
     if previous_instruction is not None:
         my_comment = comment_for_adrp_next_instruction(previous_instruction, instruction, exe_ctx)
         if len(my_comment) > 0:
             return my_comment
 
+    # branch
     my_comment = comment_for_branch(instruction, exe_ctx)
     if len(my_comment) > 0:
         return my_comment
     return ""
 
 
+def comment_for_adr(instruction: lldb.SBInstruction, exe_ctx: lldb.SBExecutionContext) -> str:
+    target = exe_ctx.GetTarget()
+    if instruction.GetMnemonic(target) != 'adr':
+        return ""
+    # adr x17, #-0x8000
+    operands = instruction.GetOperands(target).split(', ')
+    if not (operands[1].startswith('#0x') or operands[1].startswith('#-0x')):
+        return ""
+    adr_result = instruction.GetAddress().GetLoadAddress(target) + int(operands[1].lstrip('#'), 16)
+    comment = f"{operands[0]} = {hex(adr_result)}, {adr_result}"
+    return comment
+
+
 def comment_for_adrp(instruction: lldb.SBInstruction, exe_ctx: lldb.SBExecutionContext) -> str:
     target = exe_ctx.GetTarget()
     if instruction.GetMnemonic(target) != 'adrp':
         return ""
+    # # adrp x8, -24587
     operands = instruction.GetOperands(target).split(', ')
     adrp_result_tuple: Tuple[int, str] = HMCalculationHelper.calculate_adrp_result_with_immediate_and_pc_address(int(operands[1]), instruction.GetAddress().GetLoadAddress(target))
     comment = f"{operands[0]} = {adrp_result_tuple[1]}, {adrp_result_tuple[0]}"
