@@ -53,7 +53,7 @@ def enhanced_disassemble(debugger, command, exe_ctx, result, internal_dict):
         return
 
     original_output = return_object.GetOutput()
-    if "arm64" not in debugger.GetSelectedTarget().GetTriple():
+    if not HM.is_arm64(exe_ctx.GetTarget()):
         if return_object.GetOutputSize() > 0:
             print(original_output)
         else:

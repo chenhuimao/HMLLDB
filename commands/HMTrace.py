@@ -1,6 +1,6 @@
 # The MIT License (MIT)
 #
-# Copyright (c) 2022 Huimao Chen
+# Copyright (c) 2023 Huimao Chen
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -35,6 +35,7 @@ def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand('command script add -f HMTrace.trace_function tracefunction -h "Trace functions step by step until the next breakpoint is hit."')
     debugger.HandleCommand('command script add -f HMTrace.trace_instruction traceinstruction -h "Trace instructions step by step until the next breakpoint is hit."')
     debugger.HandleCommand('command script add -f HMTrace.trace_step_over_instruction trace-step-over-instruction -h "Trace step over instruction."')
+    debugger.HandleCommand('command script add -f HMTrace.complete_backtrace cbt -h "Completely displays the current thread\'s call stack based on the fp/lr register."')
 
 
 g_function_limit: int = -1
@@ -353,4 +354,52 @@ def should_step_over(target: lldb.SBTarget, frame: lldb.SBFrame) -> bool:
                 return False
 
     return True
+
+
+def complete_backtrace(debugger, command, exe_ctx, result, internal_dict):
+    """
+    Syntax:
+        cbt
+
+    Examples:
+        (lldb) cbt
+
+    This command is implemented in HMTrace.py
+    """
+
+    if not HM.is_arm64(exe_ctx.GetTarget()):
+        HM.DPrint("x86_64 architecture does not require the \"cbt\" command, please use the \"bt\" command.")
+        return
+
+    # print current thread
+    print(exe_ctx.GetThread())
+
+    # always get the first frame
+    current_registers: lldb.SBValueList = exe_ctx.GetThread().GetFrameAtIndex(0).GetRegisters()
+    general_purpose_registers: lldb.SBValue = current_registers.GetFirstValueByName("General Purpose Registers")
+
+    # print pc register information
+    pc_value_int = general_purpose_registers.GetChildMemberWithName('pc').GetValueAsUnsigned()
+    first_lr_desc = HM.get_image_lookup_summary_from_address(str(pc_value_int))
+    frame_count = 0
+    print(f"\tframe #{frame_count}:\t{hex(pc_value_int)}\t{first_lr_desc}")
+    frame_count += 1
+
+    # print current lr register information
+    lr_value_int = general_purpose_registers.GetChildMemberWithName('lr').GetValueAsUnsigned()
+    first_lr_desc = HM.get_image_lookup_summary_from_address(str(lr_value_int))
+    print(f"\tframe #{frame_count}:\t{hex(lr_value_int)}\t{first_lr_desc}")
+    frame_count += 1
+
+    # print information about remaining frames
+    current_fp_value_int = general_purpose_registers.GetChildMemberWithName('fp').GetValueAsUnsigned()
+    previous_fp_value_int = HM.load_address_value(str(current_fp_value_int), exe_ctx)
+    while previous_fp_value_int > 0:
+        current_lr_value_int = HM.load_address_value(str(current_fp_value_int + 8), exe_ctx)
+        current_lr_value_int = HM.strip_pac_sign_address(current_lr_value_int, exe_ctx.GetProcess())
+        current_lr_desc = HM.get_image_lookup_summary_from_address(str(current_lr_value_int))
+        print(f"\tframe #{frame_count}:\t{hex(current_lr_value_int)}\t{current_lr_desc}")
+        frame_count += 1
+        current_fp_value_int = previous_fp_value_int
+        previous_fp_value_int = HM.load_address_value(str(current_fp_value_int), exe_ctx)
 

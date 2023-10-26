@@ -8,8 +8,8 @@
 - Some commands provide interactive UI within the APP
 
 ## Requirements
-- Xcode 14.3.1
-- 64-bit simulator or real device, iOS 12.0+
+- Xcode 15.0
+- 64-bit simulator or real device, iOS 13.0+
 - Some commands require debug configuration (or ***Optimization Level*** set [-O0]/[-Onone])
 
 ## Installation
@@ -42,6 +42,7 @@ For example, this is the command in my computer:
 | bpframe        | Set a breakpoint that stops only when the specified stack keyword is matched |
 | bpmessage      | Set a breakpoint for a selector on a class, even if the class itself doesn't override that selector |
 | bpmethod       | Set a breakpoint that stops when the next OC method is called(via objc_msgSend) in the current thread |
+| cbt            | Completely displays the current thread\'s call stack based on the fp/lr register |
 | rc             | Show general purpose registers changes |
 | rr             | Alias for 'register read' with additional -s/--sp arguments |
 | adrp           | Get the execution result of the adrp instruction |
@@ -349,6 +350,13 @@ When debugging the assembly instruction, it is very troublesome to see the `objc
 # --continue/-c; Continue program execution after executing bpmethod
 (lldb) bpmethod -c
 ```
+
+
+### cbt
+`cbt` command: Completely displays the current thread\'s call stack based on the fp/lr register.     
+Xcode's "Debug Navigator" & `bt` command: Displays the current thread\'s call stack based on the libunwind.dylib.    
+Notice: The `cbt` command only supports arm64 architecture devices.
+
 
 ### rc
 Show general purpose registers changes after stepping over instruction.    

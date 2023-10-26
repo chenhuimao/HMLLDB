@@ -1,6 +1,6 @@
 # The MIT License (MIT)
 #
-# Copyright (c) 2020 Huimao Chen
+# Copyright (c) 2023 Huimao Chen
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -28,10 +28,9 @@ import inspect
 import HMExpressionPrefix
 import HMLLDBClassInfo
 
-
 g_is_first_call = True
 
-g_class_prefixes: List[str] = []   # Class Prefixes that may be user-written
+g_class_prefixes: List[str] = []  # Class Prefixes that may be user-written
 g_class_prefixes_value: lldb.SBValue = lldb.SBValue()
 
 
@@ -45,6 +44,13 @@ def process_continue() -> None:
 def DPrint(obj: Any) -> None:
     print('[HMLLDB] ', end='')
     print(obj)
+
+
+def is_arm64(target: lldb.SBTarget = None) -> bool:
+    if target is None:
+        target = lldb.debugger.GetSelectedTarget()
+    result = "arm64" in target.GetTriple()
+    return result
 
 
 def int_value_from_string(integer_str: str) -> Tuple[bool, int]:
@@ -197,10 +203,38 @@ def get_module_name_from_address(address_str: str) -> str:
     return module_name
 
 
+def load_address_value(address_str: str, exe_ctx: lldb.SBExecutionContext) -> int:
+    is_valid_address, address_int = int_value_from_string(address_str)
+    if not is_valid_address:
+        DPrint(f"load_address_value: Invalid address: {address_str}")
+        return -1
+
+    ldr_return_object = lldb.SBCommandReturnObject()
+    lldb.debugger.GetCommandInterpreter().HandleCommand(f"x/a {address_int}", exe_ctx, ldr_return_object)
+    load_address_output = ldr_return_object.GetOutput()
+    if len(load_address_output) == 0:
+        DPrint(f"load_address_value: Invalid result: {address_str}")
+        return -1
+
+    ldr_result = load_address_output.split()[1]
+    return int(ldr_result, 16)
+
+
+def strip_pac_sign_address(address_int: int, process: lldb.SBProcess = None) -> int:
+    if process is None:
+        process = lldb.debugger.GetSelectedTarget().GetProcess()
+    region_info = lldb.SBMemoryRegionInfo()
+    process.GetMemoryRegionInfo(address_int, region_info)
+    region_end = region_info.GetRegionEnd()
+    bit_length = region_end.bit_length()
+    mask = pow(2, bit_length) - 1
+    return address_int & mask
+
+
 def get_image_lookup_summary_from_address(address_str: str) -> str:
     is_valid, address_int = int_value_from_string(address_str)
     if not is_valid:
-        return "[HMLLDB] Invalid address"
+        return "get_image_lookup_summary_from_address: Invalid address"
     return_object = lldb.SBCommandReturnObject()
     lldb.debugger.GetCommandInterpreter().HandleCommand(f"image lookup -a {address_str}", return_object)
     if return_object.GetErrorSize() > 0:
