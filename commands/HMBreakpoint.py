@@ -30,6 +30,7 @@ import re
 import HMExpressionPrefix
 import HMLLDBHelpers as HM
 import HMLLDBClassInfo
+import HMTrace
 
 
 def __lldb_init_module(debugger, internal_dict):
@@ -464,5 +465,9 @@ def bpmessage_breakpoint_handler(frame, bp_loc, extra_args, internal_dict) -> bo
 
     method: str = extra_args.GetStringValue(1000)
     HM.DPrint(f"Hit breakpoint in {method}.")
+
+    if HM.is_arm64(frame.GetThread().GetProcess().GetTarget()):
+        exe_ctx = lldb.SBExecutionContext(frame)
+        HMTrace.complete_backtrace(None, None, exe_ctx, None, None)
     return True
 
