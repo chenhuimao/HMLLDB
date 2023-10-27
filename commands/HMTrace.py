@@ -368,7 +368,7 @@ def complete_backtrace(debugger, command, exe_ctx, result, internal_dict):
     """
 
     if not HM.is_arm64(exe_ctx.GetTarget()):
-        HM.DPrint("x86_64 architecture does not require the \"cbt\" command, please use the \"bt\" command.")
+        HM.DPrint("x86_64 architecture does not support the \"cbt\" command, please use the \"bt\" command.")
         return
 
     # print current thread
