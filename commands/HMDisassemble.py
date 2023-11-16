@@ -66,16 +66,8 @@ def enhanced_disassemble(debugger, command, exe_ctx, result, internal_dict):
     address_count: int = 0
     assemble_lines = original_output.splitlines()
     for line in assemble_lines:
-        keywords = line.split()
-        if len(keywords) < 2:
-            continue
-
-        # find address
-        address_str = keywords[0].rstrip(':')
-        if keywords[0] == '->':
-            address_str = keywords[1].rstrip(':')
-        is_valid, address_int = HM.int_value_from_string(address_str)
-        if not is_valid:
+        address_int = get_address_from_assemble_line(line)
+        if address_int == -1:
             continue
         if start_address_int == 0:
             start_address_int = address_int
@@ -112,17 +104,8 @@ def enhanced_disassemble(debugger, command, exe_ctx, result, internal_dict):
 
     # Print result
     for line in assemble_lines:
-        keywords = line.split()
-        if len(keywords) < 2:
-            print(line)
-            continue
-
-        # find address
-        address_str = keywords[0].rstrip(':')
-        if keywords[0] == '->':
-            address_str = keywords[1].rstrip(':')
-        is_valid, address_int = HM.int_value_from_string(address_str)
-        if not is_valid:
+        address_int = get_address_from_assemble_line(line)
+        if address_int == -1:
             print(line)
             continue
 
@@ -130,6 +113,21 @@ def enhanced_disassemble(debugger, command, exe_ctx, result, internal_dict):
             print(f"{line}\t\t\t\t; {address_comment_dict[address_int]}")
         else:
             print(line)
+
+
+def get_address_from_assemble_line(assemble_line: str) -> int:
+    keywords = assemble_line.split()
+    if len(keywords) < 2:
+        return -1
+
+    address_str = keywords[0].rstrip(':')
+    if keywords[0] == '->':
+        address_str = keywords[1].rstrip(':')
+
+    is_valid, address_int = HM.int_value_from_string(address_str)
+    if is_valid:
+        return address_int
+    return -1
 
 
 def my_comment_for_instruction(instruction: lldb.SBInstruction, previous_instruction: Optional[lldb.SBInstruction], exe_ctx: lldb.SBExecutionContext) -> str:
