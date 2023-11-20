@@ -60,34 +60,30 @@ def enhanced_disassemble(debugger, command, exe_ctx, result, internal_dict):
             debugger.HandleCommand(f"disassemble {command}")
         return
 
-    # Find the starting address and the total number of addresses
-    # TODO: Adapt to multiple functions
-    start_address_int: int = 0
-    address_count: int = 0
+    # Read all instructions
+    target = exe_ctx.GetTarget()
+    instruction_list: List[lldb.SBInstruction] = []
     assemble_lines = original_output.splitlines()
     for line in assemble_lines:
         address_int = get_address_from_assemble_line(line)
         if address_int == -1:
             continue
-        if start_address_int == 0:
-            start_address_int = address_int
-        address_count += 1
 
-    if start_address_int == 0:
+        address: lldb.SBAddress = lldb.SBAddress(address_int, target)
+        instructions: lldb.SBInstructionList = target.ReadInstructions(address, 1)
+        instruction: lldb.SBInstruction = instructions.GetInstructionAtIndex(0)
+        instruction_list.append(instruction)
+
+    instruction_count = len(instruction_list)
+    if instruction_count == 0:
         print(original_output)
         return
 
-    # Read instructions
-    target = exe_ctx.GetTarget()
-    base_address: lldb.SBAddress = lldb.SBAddress(start_address_int, target)
-    instruction_list: lldb.SBInstructionList = target.ReadInstructions(base_address, address_count)
-
     # Find instructions without comment
     address_comment_dict: Dict[int, str] = {}
-    instruction_count = instruction_list.GetSize()
     # HM.DPrint(f"instruction_count:{instruction_count}")
     for i in range(instruction_count):
-        instruction: lldb.SBInstruction = instruction_list.GetInstructionAtIndex(i)
+        instruction: lldb.SBInstruction = instruction_list[i]
         comment = instruction.GetComment(target)
         # HMLLDBClassInfo.pSBInstruction(instruction)
         if len(comment) > 0:
@@ -97,7 +93,7 @@ def enhanced_disassemble(debugger, command, exe_ctx, result, internal_dict):
         if i == 0:
             my_comment = my_comment_for_instruction(instruction, None, exe_ctx)
         else:
-            my_comment = my_comment_for_instruction(instruction, instruction_list.GetInstructionAtIndex(i - 1), exe_ctx)
+            my_comment = my_comment_for_instruction(instruction, instruction_list[i - 1], exe_ctx)
         if len(my_comment) == 0:
             continue
         address_comment_dict[instruction.GetAddress().GetLoadAddress(target)] = my_comment
