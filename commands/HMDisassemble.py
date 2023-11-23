@@ -239,7 +239,7 @@ def comment_for_adrp_next_instruction(adrp_instruction: lldb.SBInstruction, next
 
 def comment_for_branch(instruction: lldb.SBInstruction, exe_ctx: lldb.SBExecutionContext) -> str:
     target = exe_ctx.GetTarget()
-    if not instruction.GetMnemonic(target).startswith('b'):
+    if not is_b_branch_instruction(instruction, target):
         return ""
 
     # Find the 3 instructions of the branch address
@@ -249,19 +249,20 @@ def comment_for_branch(instruction: lldb.SBInstruction, exe_ctx: lldb.SBExecutio
         return ""
 
     address: lldb.SBAddress = lldb.SBAddress(address_int, target)
-    instruction_list: lldb.SBInstructionList = target.ReadInstructions(address, 3)
+    instruction_list: lldb.SBInstructionList = target.ReadInstructions(address, 5)
     instruction_count = instruction_list.GetSize()
-    if instruction_count != 3:
+    if instruction_count != 5:
         return ""
 
     first_instruction = instruction_list.GetInstructionAtIndex(0)
     second_instruction = instruction_list.GetInstructionAtIndex(1)
     third_instruction = instruction_list.GetInstructionAtIndex(2)
+    fourth_instruction = instruction_list.GetInstructionAtIndex(3)
+    fifth_instruction = instruction_list.GetInstructionAtIndex(4)
 
     # Calculate the actual branch address and comments
     comment = ""
-    third_mnemonic = third_instruction.GetMnemonic(target)
-    if first_instruction.GetMnemonic(target) == 'adrp' and third_mnemonic.startswith('b'):
+    if is_b_branch_instruction(third_instruction, target) and first_instruction.GetMnemonic(target) == 'adrp':
         if second_instruction.GetMnemonic(target) == 'add':
             # adrp x16, -51447
             # add x16, x16, #0x4e0          ; objc_claimAutoreleasedReturnValue
@@ -273,7 +274,63 @@ def comment_for_branch(instruction: lldb.SBInstruction, exe_ctx: lldb.SBExecutio
                 add_result = adrp_result_tuple[0] + int(add_operands[2].lstrip('#'), 16)
                 branch_operands = third_instruction.GetOperands(target)
                 if branch_operands == add_operands[0]:
+                    third_mnemonic = third_instruction.GetMnemonic(target)
                     comment = f"{third_mnemonic} {hex(add_result)} {second_instruction.GetComment(target)}"
 
+    if len(comment) > 0:
+        return comment
+
+    if is_b_branch_instruction(fifth_instruction, target) and first_instruction.GetMnemonic(target) == 'adrp' and third_instruction.GetMnemonic(target) == 'adrp':
+        if second_instruction.GetMnemonic(target) == 'ldr' and fourth_instruction.GetMnemonic(target) == 'ldr':
+            # adrp   x1, 13437
+            # ldr    x1, [x1, #0x2b0]
+            # adrp   x16, 1731
+            # ldr    x16, [x16, #0xf98]
+            # br     x16
+
+            # resolve "br 16"
+            third_adrp_operands = third_instruction.GetOperands(target).split(', ')
+            third_adrp_result_tuple: Tuple[int, str] = HMCalculationHelper.calculate_adrp_result_with_immediate_and_pc_address(int(third_adrp_operands[1]), third_instruction.GetAddress().GetLoadAddress(target))
+            fourth_ldr_operands = fourth_instruction.GetOperands(target).split(', ')
+            fourth_ldr_operands[1] = fourth_ldr_operands[1].lstrip('[')
+            fourth_ldr_operands[2] = fourth_ldr_operands[2].rstrip(']')
+            if third_adrp_operands[0] == fourth_ldr_operands[1] and fourth_ldr_operands[2].startswith('#0x'):
+                fourth_ldr_load_address_int = third_adrp_result_tuple[0] + int(fourth_ldr_operands[2].lstrip('#'), 16)
+                fourth_ldr_return_object = lldb.SBCommandReturnObject()
+                lldb.debugger.GetCommandInterpreter().HandleCommand(f"x/a {fourth_ldr_load_address_int}", exe_ctx, fourth_ldr_return_object)
+                fourth_ldr_load_address_output = fourth_ldr_return_object.GetOutput()
+                fourth_ldr_result_list = fourth_ldr_load_address_output.split(": ", 1)
+                fourth_ldr_load_result = fourth_ldr_result_list[1]
+
+                fifth_branch_operands = fifth_instruction.GetOperands(target)
+                if fifth_branch_operands == fourth_ldr_operands[0]:
+                    fifth_mnemonic = fifth_instruction.GetMnemonic(target)
+                    comment = f"{fifth_mnemonic} {fourth_ldr_load_result}"
+
+            # resolve "x1" register when target is objc_msgSend
+            if 'objc_msgSend' in comment and second_instruction.GetOperands(target).split(', ')[0] == 'x1':
+                first_adrp_operands = first_instruction.GetOperands(target).split(', ')
+                first_adrp_result_tuple: Tuple[int, str] = HMCalculationHelper.calculate_adrp_result_with_immediate_and_pc_address(int(first_adrp_operands[1]), first_instruction.GetAddress().GetLoadAddress(target))
+                second_ldr_operands = second_instruction.GetOperands(target).split(', ')
+                second_ldr_operands[1] = second_ldr_operands[1].lstrip('[')
+                second_ldr_operands[2] = second_ldr_operands[2].rstrip(']')
+                if first_adrp_operands[0] == second_ldr_operands[1] and second_ldr_operands[2].startswith('#0x'):
+                    second_ldr_load_address_int = first_adrp_result_tuple[0] + int(second_ldr_operands[2].lstrip('#'), 16)
+                    second_ldr_return_object = lldb.SBCommandReturnObject()
+                    lldb.debugger.GetCommandInterpreter().HandleCommand(f"x/a {second_ldr_load_address_int}", exe_ctx, second_ldr_return_object)
+                    second_ldr_load_address_output = second_ldr_return_object.GetOutput()
+                    second_ldr_result_list = second_ldr_load_address_output.split(" ")
+                    second_ldr_load_result = second_ldr_result_list[1]
+
+                    x1_str_return_object = lldb.SBCommandReturnObject()
+                    lldb.debugger.GetCommandInterpreter().HandleCommand(f"x/s {second_ldr_load_result}", exe_ctx, x1_str_return_object)
+                    x1_str_result = x1_str_return_object.GetOutput().split(" ")[1]
+                    comment = f"{comment.rstrip()}, sel = {x1_str_result}"
+
     return comment
+
+
+def is_b_branch_instruction(instruction: lldb.SBInstruction, target: lldb.SBTarget) -> bool:
+    mnemonic = instruction.GetMnemonic(target)
+    return mnemonic in ['b', 'br', 'bl', 'blr']
 
