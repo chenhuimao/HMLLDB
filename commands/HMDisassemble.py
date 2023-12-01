@@ -40,8 +40,8 @@ def enhanced_disassemble(debugger, command, exe_ctx, result, internal_dict):
 
     Examples:
         (lldb) edisassemble -s 0x107ad4504
-        (lldb) edisassemble -a 0x107ad4504
-        (lldb) edisassemble -n "-[NSArray objectAtIndex:]"
+        (lldb) edis -a 0x107ad4504
+        (lldb) edis -n "-[UIDevice systemVersion]"
 
     This command is implemented in HMDisassemble.py
     """
