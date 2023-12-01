@@ -267,7 +267,12 @@ def breakpoint_next_oc_method_handler(frame, bp_loc, extra_args, internal_dict) 
 
     # Set breakpoint with object and selector.
     set_breakpoint_with_object_and_selector(object_value, selector_value)
-    return False
+
+    # If you use Xcode 15, an error will be reported here, and "return False" will be invalid.
+    # I switched to another way to skip stop, but the error still exists.
+    # return False
+    HM.process_continue()
+    return True
 
 
 def set_breakpoint_with_object_and_selector(object_value: lldb.SBValue, selector_value: lldb.SBValue):
