@@ -506,18 +506,18 @@ UIKitCore`-[UIDevice systemVersion]:
     0x18e84da7c <+4>:  stp    x20, x19, [sp, #-0x20]!
     0x18e84da80 <+8>:  stp    x29, x30, [sp, #0x10]
     0x18e84da84 <+12>: add    x29, sp, #0x10
-    0x18e84da88 <+16>: adrp   x2, 357042				; x2 = 0x1e5aff000
+    0x18e84da88 <+16>: adrp   x2, 357042                ; x2 = 0x1e5aff000
     0x18e84da8c <+20>: add    x2, x2, #0x680            ; @"ProductVersion"
     0x18e84da90 <+24>: bl     0x18fc32260               ; objc_msgSend$_deviceInfoForKey:
-    0x18e84da94 <+28>: bl     0x191ec2ec0				; br 0x1855cb4e0 objc_claimAutoreleasedReturnValue
+    0x18e84da94 <+28>: bl     0x191ec2ec0               ; br 0x1855cb4e0 objc_claimAutoreleasedReturnValue
     0x18e84da98 <+32>: mov    x19, x0
-    0x18e84da9c <+36>: adrp   x8, 357022				; x8 = 0x1e5aeb000
+    0x18e84da9c <+36>: adrp   x8, 357022                ; x8 = 0x1e5aeb000
     0x18e84daa0 <+40>: add    x8, x8, #0x860            ; @"Unknown"
     0x18e84daa4 <+44>: cmp    x0, #0x0
     0x18e84daa8 <+48>: csel   x0, x8, x0, eq
-    0x18e84daac <+52>: bl     0x191ec3190				; br 0x18559da18 objc_retainAutoreleaseReturnValue
+    0x18e84daac <+52>: bl     0x191ec3190               ; br 0x18559da18 objc_retainAutoreleaseReturnValue
     0x18e84dab0 <+56>: mov    x20, x0
-    0x18e84dab4 <+60>: bl     0x191ec3080				; br 0x18559c698 objc_release_x19
+    0x18e84dab4 <+60>: bl     0x191ec3080               ; br 0x18559c698 objc_release_x19
     0x18e84dab8 <+64>: mov    x0, x20
     0x18e84dabc <+68>: ldp    x29, x30, [sp, #0x10]
     0x18e84dac0 <+72>: ldp    x20, x19, [sp], #0x20
