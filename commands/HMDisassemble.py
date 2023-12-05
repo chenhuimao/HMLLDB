@@ -63,6 +63,8 @@ def enhanced_disassemble(debugger, command, exe_ctx, result, internal_dict):
     target = exe_ctx.GetTarget()
     assemble_lines = original_output.splitlines()
     address_comment_dict: Dict[int, str] = {}
+    original_comment_index = -1
+    max_assemble_line_length = 0
 
     # Read continuous instructions
     first_address_int = lldb.LLDB_INVALID_ADDRESS
@@ -75,6 +77,7 @@ def enhanced_disassemble(debugger, command, exe_ctx, result, internal_dict):
                 instruction_list: lldb.SBInstructionList = target.ReadInstructions(address, continuous_instructions_count)
                 # Find instructions without comment
                 set_my_comment_in_dict(address_comment_dict, instruction_list, exe_ctx)
+            # Reset variables
             first_address_int = lldb.LLDB_INVALID_ADDRESS
             continuous_instructions_count = 0
             continue
@@ -82,6 +85,15 @@ def enhanced_disassemble(debugger, command, exe_ctx, result, internal_dict):
         if first_address_int == lldb.LLDB_INVALID_ADDRESS:
             first_address_int = address_int
         continuous_instructions_count += 1
+
+        # Get comment index
+        if original_comment_index == -1 and line.rfind(';') >= 0:
+            original_comment_index = line.rfind(';')
+        max_assemble_line_length = max(max_assemble_line_length, len(line))
+
+    # Set comment index if needed
+    if original_comment_index == -1:
+        original_comment_index = max_assemble_line_length + 4
 
     # Read last continuous instructions
     if first_address_int != lldb.LLDB_INVALID_ADDRESS and continuous_instructions_count > 0:
@@ -98,7 +110,7 @@ def enhanced_disassemble(debugger, command, exe_ctx, result, internal_dict):
             continue
 
         if address_int in address_comment_dict:
-            print(f"{line}\t\t\t\t; {address_comment_dict[address_int]}")
+            print(f"{line.ljust(original_comment_index)}; {address_comment_dict[address_int]}")
         else:
             print(line)
 
