@@ -479,49 +479,49 @@ Examples:
 # The difference between disassemble and edisassemble commands
 (lldb) dis -n "-[UIDevice systemVersion]"
 UIKitCore`-[UIDevice systemVersion]:
-    0x18e84da78 <+0>:  pacibsp 
-    0x18e84da7c <+4>:  stp    x20, x19, [sp, #-0x20]!
-    0x18e84da80 <+8>:  stp    x29, x30, [sp, #0x10]
-    0x18e84da84 <+12>: add    x29, sp, #0x10
-    0x18e84da88 <+16>: adrp   x2, 357042
-    0x18e84da8c <+20>: add    x2, x2, #0x680            ; @"ProductVersion"
-    0x18e84da90 <+24>: bl     0x18fc32260               ; objc_msgSend$_deviceInfoForKey:
-    0x18e84da94 <+28>: bl     0x191ec2ec0
-    0x18e84da98 <+32>: mov    x19, x0
-    0x18e84da9c <+36>: adrp   x8, 357022
-    0x18e84daa0 <+40>: add    x8, x8, #0x860            ; @"Unknown"
-    0x18e84daa4 <+44>: cmp    x0, #0x0
-    0x18e84daa8 <+48>: csel   x0, x8, x0, eq
-    0x18e84daac <+52>: bl     0x191ec3190
-    0x18e84dab0 <+56>: mov    x20, x0
-    0x18e84dab4 <+60>: bl     0x191ec3080
-    0x18e84dab8 <+64>: mov    x0, x20
-    0x18e84dabc <+68>: ldp    x29, x30, [sp, #0x10]
-    0x18e84dac0 <+72>: ldp    x20, x19, [sp], #0x20
-    0x18e84dac4 <+76>: retab  
+    0x1afbe9e34 <+0>:  pacibsp 
+    0x1afbe9e38 <+4>:  stp    x20, x19, [sp, #-0x20]!
+    0x1afbe9e3c <+8>:  stp    x29, x30, [sp, #0x10]
+    0x1afbe9e40 <+12>: add    x29, sp, #0x10
+    0x1afbe9e44 <+16>: adrp   x2, 329379
+    0x1afbe9e48 <+20>: add    x2, x2, #0xef0            ; @"ProductVersion"
+    0x1afbe9e4c <+24>: bl     0x1b0b06000               ; objc_msgSend$_deviceInfoForKey:
+    0x1afbe9e50 <+28>: bl     0x1b2be97f0
+    0x1afbe9e54 <+32>: mov    x19, x0
+    0x1afbe9e58 <+36>: adrp   x8, 329342
+    0x1afbe9e5c <+40>: add    x8, x8, #0x90             ; @"Unknown"
+    0x1afbe9e60 <+44>: cmp    x0, #0x0
+    0x1afbe9e64 <+48>: csel   x0, x8, x0, eq
+    0x1afbe9e68 <+52>: bl     0x1b2be9ad0
+    0x1afbe9e6c <+56>: mov    x20, x0
+    0x1afbe9e70 <+60>: bl     0x1b2be99c0
+    0x1afbe9e74 <+64>: mov    x0, x20
+    0x1afbe9e78 <+68>: ldp    x29, x30, [sp, #0x10]
+    0x1afbe9e7c <+72>: ldp    x20, x19, [sp], #0x20
+    0x1afbe9e80 <+76>: retab  
     
 (lldb) edis -n "-[UIDevice systemVersion]"
 UIKitCore`-[UIDevice systemVersion]:
-    0x18e84da78 <+0>:  pacibsp 
-    0x18e84da7c <+4>:  stp    x20, x19, [sp, #-0x20]!
-    0x18e84da80 <+8>:  stp    x29, x30, [sp, #0x10]
-    0x18e84da84 <+12>: add    x29, sp, #0x10
-    0x18e84da88 <+16>: adrp   x2, 357042                ; x2 = 0x1e5aff000
-    0x18e84da8c <+20>: add    x2, x2, #0x680            ; @"ProductVersion"
-    0x18e84da90 <+24>: bl     0x18fc32260               ; objc_msgSend$_deviceInfoForKey:
-    0x18e84da94 <+28>: bl     0x191ec2ec0               ; br 0x1855cb4e0 objc_claimAutoreleasedReturnValue
-    0x18e84da98 <+32>: mov    x19, x0
-    0x18e84da9c <+36>: adrp   x8, 357022                ; x8 = 0x1e5aeb000
-    0x18e84daa0 <+40>: add    x8, x8, #0x860            ; @"Unknown"
-    0x18e84daa4 <+44>: cmp    x0, #0x0
-    0x18e84daa8 <+48>: csel   x0, x8, x0, eq
-    0x18e84daac <+52>: bl     0x191ec3190               ; br 0x18559da18 objc_retainAutoreleaseReturnValue
-    0x18e84dab0 <+56>: mov    x20, x0
-    0x18e84dab4 <+60>: bl     0x191ec3080               ; br 0x18559c698 objc_release_x19
-    0x18e84dab8 <+64>: mov    x0, x20
-    0x18e84dabc <+68>: ldp    x29, x30, [sp, #0x10]
-    0x18e84dac0 <+72>: ldp    x20, x19, [sp], #0x20
-    0x18e84dac4 <+76>: retab  
+    0x1afbe9e34 <+0>:  pacibsp 
+    0x1afbe9e38 <+4>:  stp    x20, x19, [sp, #-0x20]!
+    0x1afbe9e3c <+8>:  stp    x29, x30, [sp, #0x10]
+    0x1afbe9e40 <+12>: add    x29, sp, #0x10
+    0x1afbe9e44 <+16>: adrp   x2, 329379                ; x2 = 0x20028c000
+    0x1afbe9e48 <+20>: add    x2, x2, #0xef0            ; @"ProductVersion"
+    0x1afbe9e4c <+24>: bl     0x1b0b06000               ; objc_msgSend$_deviceInfoForKey:
+    0x1afbe9e50 <+28>: bl     0x1b2be97f0               ; br x16, x16 = 0x1a538ade4 objc_claimAutoreleasedReturnValue
+    0x1afbe9e54 <+32>: mov    x19, x0
+    0x1afbe9e58 <+36>: adrp   x8, 329342                ; x8 = 0x200267000
+    0x1afbe9e5c <+40>: add    x8, x8, #0x90             ; @"Unknown"
+    0x1afbe9e60 <+44>: cmp    x0, #0x0
+    0x1afbe9e64 <+48>: csel   x0, x8, x0, eq
+    0x1afbe9e68 <+52>: bl     0x1b2be9ad0               ; br x16, x16 = 0x1a537e148 objc_retainAutoreleaseReturnValue
+    0x1afbe9e6c <+56>: mov    x20, x0
+    0x1afbe9e70 <+60>: bl     0x1b2be99c0               ; br x16, x16 = 0x1a537fc28 objc_release_x19
+    0x1afbe9e74 <+64>: mov    x0, x20
+    0x1afbe9e78 <+68>: ldp    x29, x30, [sp, #0x10]
+    0x1afbe9e7c <+72>: ldp    x20, x19, [sp], #0x20
+    0x1afbe9e80 <+76>: retab  
 ```
 
 

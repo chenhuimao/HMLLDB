@@ -287,8 +287,10 @@ def comment_for_branch(instruction: lldb.SBInstruction, exe_ctx: lldb.SBExecutio
                 branch_operands = third_instruction.GetOperands(target)
                 if branch_operands == add_operands[0]:
                     third_mnemonic = third_instruction.GetMnemonic(target)
-                    comment = f"{third_mnemonic} {hex(add_result)} {second_instruction.GetComment(target)}"
+                    comment = f"{third_mnemonic} {branch_operands}, {branch_operands} = {hex(add_result)} {second_instruction.GetComment(target)}"
 
+        # TODO: second_instruction.GetMnemonic(target) == 'ldr'
+        
     if len(comment) > 0:
         return comment
 
@@ -317,7 +319,7 @@ def comment_for_branch(instruction: lldb.SBInstruction, exe_ctx: lldb.SBExecutio
                 fifth_branch_operands = fifth_instruction.GetOperands(target)
                 if fifth_branch_operands == fourth_ldr_operands[0]:
                     fifth_mnemonic = fifth_instruction.GetMnemonic(target)
-                    comment = f"{fifth_mnemonic} {fourth_ldr_load_result}"
+                    comment = f"{fifth_mnemonic} {fifth_branch_operands}, {fifth_branch_operands} = {fourth_ldr_load_result}"
 
             # resolve "x1" register when target is objc_msgSend
             if 'objc_msgSend' in comment and second_instruction.GetOperands(target).split(', ')[0] == 'x1':
