@@ -23,7 +23,7 @@
 # https://github.com/chenhuimao/HMLLDB
 
 import lldb
-from typing import Optional
+from typing import Optional, Dict
 import optparse
 import shlex
 import HMLLDBHelpers as HM
@@ -393,6 +393,74 @@ def get_string_from_return_status(return_status: int) -> str:
     return 'unknown'
 
 
+def get_string_from_section_type(section_type: int) -> str:
+    section_type_dic: Dict[int, str] = {
+        lldb.eSectionTypeInvalid: "eSectionTypeInvalid",
+        lldb.eSectionTypeCode: "eSectionTypeCode",
+        lldb.eSectionTypeContainer: "eSectionTypeContainer",
+        lldb.eSectionTypeData: "eSectionTypeData",
+        lldb.eSectionTypeDataCString: "eSectionTypeDataCString",
+        lldb.eSectionTypeDataCStringPointers: "eSectionTypeDataCStringPointers",
+        lldb.eSectionTypeDataSymbolAddress: "eSectionTypeDataSymbolAddress",
+        lldb.eSectionTypeData4: "eSectionTypeData4",
+        lldb.eSectionTypeData8: "eSectionTypeData8",
+        lldb.eSectionTypeData16: "eSectionTypeData16",
+        lldb.eSectionTypeDataPointers: "eSectionTypeDataPointers",
+        lldb.eSectionTypeDebug: "eSectionTypeDebug",
+        lldb.eSectionTypeZeroFill: "eSectionTypeZeroFill",
+        lldb.eSectionTypeDataObjCMessageRefs: "eSectionTypeDataObjCMessageRefs",
+        lldb.eSectionTypeDataObjCCFStrings: "eSectionTypeDataObjCCFStrings",
+        lldb.eSectionTypeDWARFDebugAbbrev: "eSectionTypeDWARFDebugAbbrev",
+        lldb.eSectionTypeDWARFDebugAddr: "eSectionTypeDWARFDebugAddr",
+        lldb.eSectionTypeDWARFDebugAranges: "eSectionTypeDWARFDebugAranges",
+        lldb.eSectionTypeDWARFDebugCuIndex: "eSectionTypeDWARFDebugCuIndex",
+        lldb.eSectionTypeDWARFDebugFrame: "eSectionTypeDWARFDebugFrame",
+        lldb.eSectionTypeDWARFDebugInfo: "eSectionTypeDWARFDebugInfo",
+        lldb.eSectionTypeDWARFDebugLine: "eSectionTypeDWARFDebugLine",
+        lldb.eSectionTypeDWARFDebugLoc: "eSectionTypeDWARFDebugLoc",
+        lldb.eSectionTypeDWARFDebugMacInfo: "eSectionTypeDWARFDebugMacInfo",
+        lldb.eSectionTypeDWARFDebugMacro: "eSectionTypeDWARFDebugMacro",
+        lldb.eSectionTypeDWARFDebugPubNames: "eSectionTypeDWARFDebugPubNames",
+        lldb.eSectionTypeDWARFDebugPubTypes: "eSectionTypeDWARFDebugPubTypes",
+        lldb.eSectionTypeDWARFDebugRanges: "eSectionTypeDWARFDebugRanges",
+        lldb.eSectionTypeDWARFDebugStr: "eSectionTypeDWARFDebugStr",
+        lldb.eSectionTypeDWARFDebugStrOffsets: "eSectionTypeDWARFDebugStrOffsets",
+        lldb.eSectionTypeDWARFAppleNames: "eSectionTypeDWARFAppleNames",
+        lldb.eSectionTypeDWARFAppleTypes: "eSectionTypeDWARFAppleTypes",
+        lldb.eSectionTypeDWARFAppleNamespaces: "eSectionTypeDWARFAppleNamespaces",
+        lldb.eSectionTypeDWARFAppleObjC: "eSectionTypeDWARFAppleObjC",
+        lldb.eSectionTypeELFSymbolTable: "eSectionTypeELFSymbolTable",
+        lldb.eSectionTypeELFDynamicSymbols: "eSectionTypeELFDynamicSymbols",
+        lldb.eSectionTypeELFRelocationEntries: "eSectionTypeELFRelocationEntries",
+        lldb.eSectionTypeELFDynamicLinkInfo: "eSectionTypeELFDynamicLinkInfo",
+        lldb.eSectionTypeEHFrame: "eSectionTypeEHFrame",
+        lldb.eSectionTypeSwiftModules: "eSectionTypeSwiftModules",
+        lldb.eSectionTypeARMexidx: "eSectionTypeARMexidx",
+        lldb.eSectionTypeARMextab: "eSectionTypeARMextab",
+        lldb.eSectionTypeCompactUnwind: "eSectionTypeCompactUnwind",
+        lldb.eSectionTypeGoSymtab: "eSectionTypeGoSymtab",
+        lldb.eSectionTypeAbsoluteAddress: "eSectionTypeAbsoluteAddress",
+        lldb.eSectionTypeDWARFGNUDebugAltLink: "eSectionTypeDWARFGNUDebugAltLink",
+        lldb.eSectionTypeDWARFDebugTypes: "eSectionTypeDWARFDebugTypes",
+        lldb.eSectionTypeDWARFDebugNames: "eSectionTypeDWARFDebugNames",
+        lldb.eSectionTypeOther: "eSectionTypeOther",
+        lldb.eSectionTypeDWARFDebugLineStr: "eSectionTypeDWARFDebugLineStr",
+        lldb.eSectionTypeDWARFDebugRngLists: "eSectionTypeDWARFDebugRngLists",
+        lldb.eSectionTypeDWARFDebugLocLists: "eSectionTypeDWARFDebugLocLists",
+        lldb.eSectionTypeDWARFDebugAbbrevDwo: "eSectionTypeDWARFDebugAbbrevDwo",
+        lldb.eSectionTypeDWARFDebugInfoDwo: "eSectionTypeDWARFDebugInfoDwo",
+        lldb.eSectionTypeDWARFDebugStrDwo: "eSectionTypeDWARFDebugStrDwo",
+        lldb.eSectionTypeDWARFDebugStrOffsetsDwo: "eSectionTypeDWARFDebugStrOffsetsDwo",
+        lldb.eSectionTypeDWARFDebugTypesDwo: "eSectionTypeDWARFDebugTypesDwo",
+        lldb.eSectionTypeDWARFDebugRngListsDwo: "eSectionTypeDWARFDebugRngListsDwo",
+        lldb.eSectionTypeDWARFDebugLocDwo: "eSectionTypeDWARFDebugLocDwo",
+        lldb.eSectionTypeDWARFDebugLocListsDwo: "eSectionTypeDWARFDebugLocListsDwo",
+        lldb.eSectionTypeDWARFDebugTuIndex: "eSectionTypeDWARFDebugTuIndex"
+    }
+
+    return section_type_dic.get(section_type, "unknown")
+
+
 def pSBHostOS(obj: Optional[lldb.SBHostOS]) -> None:
     if obj is not None:
         hostOS = obj
@@ -491,8 +559,8 @@ def pSBTarget(obj: Optional[lldb.SBTarget]) -> None:
     print_format("FindFirstType", target.FindFirstType("UIResponder"))  # SBType
     print_format("FindTypes", target.FindTypes("UIView"))  # SBTypeList
     print_format("GetSourceManager", target.GetSourceManager())  # SBSourceManager
-    print_format("FindFirstGlobalVariable", target.FindFirstGlobalVariable("shared"))  # SBValue
-    print_format("FindGlobalVariables", target.FindGlobalVariables("shared", 2))  # SBValueList
+    print_format("FindFirstGlobalVariable", target.FindFirstGlobalVariable("sharedInstance"))  # SBValue
+    print_format("FindGlobalVariables", target.FindGlobalVariables("sharedInstance", 2))  # SBValueList
     print_format("FindGlobalFunctions.first", target.FindGlobalFunctions("viewDidLoad", 1, 0)[0])  # SBSymbolContext
     print_format("GetEnvironment", target.GetEnvironment())  # SBEnvironment
     print_format("GetNumBreakpoints", target.GetNumBreakpoints())
@@ -780,8 +848,8 @@ def pSBModule(obj: Optional[lldb.SBModule]) -> None:
     if obj is not None:
         module = obj
     else:
-        # module = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetModule()
-        module = lldb.debugger.GetSelectedTarget().FindFunctions(functionName)[0].GetModule()
+        module = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame().GetModule()
+        # module = lldb.debugger.GetSelectedTarget().FindFunctions(functionName)[0].GetModule()
         # module = lldb.debugger.GetSelectedTarget().GetModuleAtIndex(0)
 
     print_class_name("SBModule")
@@ -798,7 +866,7 @@ def pSBModule(obj: Optional[lldb.SBModule]) -> None:
     print_format("FindSymbols", module.FindSymbols(functionName))  # SBSymbolContextList
     print_format("GetNumSections", module.GetNumSections())
     print_format("FindFunctions", module.FindFunctions(functionName, lldb.eFunctionNameTypeAny))  # SBSymbolContextList
-    print_format("GetTypes", module.GetTypes())  # SBTypeList
+    # print_format("GetTypes", module.GetTypes())  # SBTypeList
     byte_order = module.GetByteOrder()  # ByteOrder int
     print_format("GetByteOrder(raw)", byte_order)
     print_format("GetByteOrder(resolved)", get_string_from_byte_order(byte_order))
@@ -1656,7 +1724,9 @@ def pSBSection(obj: Optional[lldb.SBSection]) -> None:
     print_format("GetFileOffset", section.GetFileOffset())
     print_format("GetFileByteSize", section.GetFileByteSize())
     # print_format("GetSectionData", section.GetSectionData())  # SBData
-    print_format("GetSectionType", section.GetSectionType())  # SectionType int
+    section_type = section.GetSectionType()  # SectionType int
+    print_format("GetSectionType(raw)", section_type)
+    print_format("GetSectionType(resolved)", get_string_from_section_type(section_type))
     print_format("GetPermissions", section.GetPermissions())
     print_format("GetTargetByteSize", section.GetTargetByteSize())
     print_format("GetAlignment", section.GetAlignment())
