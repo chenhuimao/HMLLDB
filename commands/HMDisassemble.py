@@ -206,29 +206,26 @@ def comment_for_adrp_next_instruction(adrp_instruction: lldb.SBInstruction, next
     adrp_result_tuple: Tuple[int, str] = HMCalculationHelper.calculate_adrp_result_with_immediate_and_pc_address(int(adrp_operands[1]), adrp_instruction.GetAddress().GetLoadAddress(target))
     comment = ''
     mnemonic = next_instruction.GetMnemonic(target)
-    operands = next_instruction.GetOperands(target).split(', ')
     if mnemonic == 'ldr':
         # adrp x2, 325020
         # ldr x2, [x2, #0x9c8]
-        operands[1] = operands[1].lstrip('[')
-        operands[2] = operands[2].rstrip(']')
-        if adrp_operands[0] == operands[1] and operands[2].startswith('#0x'):
-            load_address_int = adrp_result_tuple[0] + int(operands[2].lstrip('#'), 16)
+        operand_tuple: Tuple[str, str, int] = resolve_ldr_operands(next_instruction.GetOperands(target))
+        if adrp_operands[0] == operand_tuple[1]:
+            load_address_int = adrp_result_tuple[0] + operand_tuple[2]
             ldr_return_object = lldb.SBCommandReturnObject()
             lldb.debugger.GetCommandInterpreter().HandleCommand(f"x/a {load_address_int}", exe_ctx, ldr_return_object)
             load_address_output = ldr_return_object.GetOutput()
             if len(load_address_output) > 0:
                 ldr_result_list = load_address_output.split(": ", 1)
                 ldr_result = ldr_result_list[1]
-                comment = f"{operands[0]} = {ldr_result}"
+                comment = f"{operand_tuple[0]} = {ldr_result}"
 
     elif mnemonic == 'ldrsw':
         # adrp x8, 61167
         # ldrsw x8, [x8, #0xaac]
-        operands[1] = operands[1].lstrip('[')
-        operands[2] = operands[2].rstrip(']')
-        if adrp_operands[0] == operands[1] and operands[2].startswith('#0x'):
-            load_address_int = adrp_result_tuple[0] + int(operands[2].lstrip('#'), 16)
+        operand_tuple: Tuple[str, str, int] = resolve_ldr_operands(next_instruction.GetOperands(target))
+        if adrp_operands[0] == operand_tuple[1]:
+            load_address_int = adrp_result_tuple[0] + operand_tuple[2]
             ldrsw_return_object = lldb.SBCommandReturnObject()
             lldb.debugger.GetCommandInterpreter().HandleCommand(f"x/a {load_address_int}", exe_ctx, ldrsw_return_object)
             load_address_output = ldrsw_return_object.GetOutput()
@@ -237,14 +234,15 @@ def comment_for_adrp_next_instruction(adrp_instruction: lldb.SBInstruction, next
                 ldrsw_result = int(ldrsw_result_list[1], 16) & 0xFFFFFFFF
                 if ldrsw_result & 0x80000000 > 0:
                     ldrsw_result += 0xFFFFFFFF00000000
-                comment = f"{operands[0]} = {hex(ldrsw_result)}"
+                comment = f"{operand_tuple[0]} = {hex(ldrsw_result)}"
 
     elif mnemonic == 'add':
         # adrp x8, -24587
         # add x1, x8, #0xbbb
-        if adrp_operands[0] == operands[1] and operands[2].startswith('#0x'):
-            add_result = adrp_result_tuple[0] + int(operands[2].lstrip('#'), 16)
-            comment = f"{operands[0]} = {hex(add_result)}"
+        operand_tuple: Tuple[str, str, int] = resolve_add_operands(next_instruction.GetOperands(target))
+        if adrp_operands[0] == operand_tuple[1]:
+            add_result = adrp_result_tuple[0] + operand_tuple[2]
+            comment = f"{operand_tuple[0]} = {hex(add_result)}"
 
     return comment
 
@@ -281,11 +279,11 @@ def comment_for_branch(instruction: lldb.SBInstruction, exe_ctx: lldb.SBExecutio
             # br x16
             adrp_operands = first_instruction.GetOperands(target).split(', ')
             adrp_result_tuple: Tuple[int, str] = HMCalculationHelper.calculate_adrp_result_with_immediate_and_pc_address(int(adrp_operands[1]), first_instruction.GetAddress().GetLoadAddress(target))
-            add_operands = second_instruction.GetOperands(target).split(', ')
-            if adrp_operands[0] == add_operands[1] and add_operands[2].startswith('#0x'):
-                add_result = adrp_result_tuple[0] + int(add_operands[2].lstrip('#'), 16)
+            add_operand_tuple: Tuple[str, str, int] = resolve_add_operands(second_instruction.GetOperands(target))
+            if adrp_operands[0] == add_operand_tuple[1]:
+                add_result = adrp_result_tuple[0] + add_operand_tuple[2]
                 branch_operands = third_instruction.GetOperands(target)
-                if branch_operands == add_operands[0]:
+                if branch_operands == add_operand_tuple[0]:
                     third_mnemonic = third_instruction.GetMnemonic(target)
                     comment = f"{third_mnemonic} {branch_operands}, {branch_operands} = {hex(add_result)} {second_instruction.GetComment(target)}"
 
@@ -305,11 +303,9 @@ def comment_for_branch(instruction: lldb.SBInstruction, exe_ctx: lldb.SBExecutio
             # resolve "br 16"
             third_adrp_operands = third_instruction.GetOperands(target).split(', ')
             third_adrp_result_tuple: Tuple[int, str] = HMCalculationHelper.calculate_adrp_result_with_immediate_and_pc_address(int(third_adrp_operands[1]), third_instruction.GetAddress().GetLoadAddress(target))
-            fourth_ldr_operands = fourth_instruction.GetOperands(target).split(', ')
-            fourth_ldr_operands[1] = fourth_ldr_operands[1].lstrip('[')
-            fourth_ldr_operands[2] = fourth_ldr_operands[2].rstrip(']')
-            if third_adrp_operands[0] == fourth_ldr_operands[1] and fourth_ldr_operands[2].startswith('#0x'):
-                fourth_ldr_load_address_int = third_adrp_result_tuple[0] + int(fourth_ldr_operands[2].lstrip('#'), 16)
+            fourth_ldr_operand_tuple: Tuple[str, str, int] = resolve_ldr_operands(fourth_instruction.GetOperands(target))
+            if third_adrp_operands[0] == fourth_ldr_operand_tuple[1]:
+                fourth_ldr_load_address_int = third_adrp_result_tuple[0] + fourth_ldr_operand_tuple[2]
                 fourth_ldr_return_object = lldb.SBCommandReturnObject()
                 lldb.debugger.GetCommandInterpreter().HandleCommand(f"x/a {fourth_ldr_load_address_int}", exe_ctx, fourth_ldr_return_object)
                 fourth_ldr_load_address_output = fourth_ldr_return_object.GetOutput()
@@ -317,7 +313,7 @@ def comment_for_branch(instruction: lldb.SBInstruction, exe_ctx: lldb.SBExecutio
                 fourth_ldr_load_result = fourth_ldr_result_list[1]
 
                 fifth_branch_operands = fifth_instruction.GetOperands(target)
-                if fifth_branch_operands == fourth_ldr_operands[0]:
+                if fifth_branch_operands == fourth_ldr_operand_tuple[0]:
                     fifth_mnemonic = fifth_instruction.GetMnemonic(target)
                     comment = f"{fifth_mnemonic} {fifth_branch_operands}, {fifth_branch_operands} = {fourth_ldr_load_result}"
 
@@ -325,11 +321,9 @@ def comment_for_branch(instruction: lldb.SBInstruction, exe_ctx: lldb.SBExecutio
             if 'objc_msgSend' in comment and second_instruction.GetOperands(target).split(', ')[0] == 'x1':
                 first_adrp_operands = first_instruction.GetOperands(target).split(', ')
                 first_adrp_result_tuple: Tuple[int, str] = HMCalculationHelper.calculate_adrp_result_with_immediate_and_pc_address(int(first_adrp_operands[1]), first_instruction.GetAddress().GetLoadAddress(target))
-                second_ldr_operands = second_instruction.GetOperands(target).split(', ')
-                second_ldr_operands[1] = second_ldr_operands[1].lstrip('[')
-                second_ldr_operands[2] = second_ldr_operands[2].rstrip(']')
-                if first_adrp_operands[0] == second_ldr_operands[1] and second_ldr_operands[2].startswith('#0x'):
-                    second_ldr_load_address_int = first_adrp_result_tuple[0] + int(second_ldr_operands[2].lstrip('#'), 16)
+                second_ldr_operand_tuple: Tuple[str, str, int] = resolve_ldr_operands(second_instruction.GetOperands(target))
+                if first_adrp_operands[0] == second_ldr_operand_tuple[1]:
+                    second_ldr_load_address_int = first_adrp_result_tuple[0] + second_ldr_operand_tuple[2]
                     second_ldr_return_object = lldb.SBCommandReturnObject()
                     lldb.debugger.GetCommandInterpreter().HandleCommand(f"x/a {second_ldr_load_address_int}", exe_ctx, second_ldr_return_object)
                     second_ldr_load_address_output = second_ldr_return_object.GetOutput()
@@ -348,3 +342,35 @@ def is_b_branch_instruction(instruction: lldb.SBInstruction, target: lldb.SBTarg
     mnemonic = instruction.GetMnemonic(target)
     return mnemonic in ['b', 'br', 'bl', 'blr']
 
+
+def resolve_ldr_operands(operands: str) -> Tuple[str, str, int]:
+    # ldr x1, [x2, #0x9c8] -> (x1, x2, 0x9c8)
+    # ldr x1, [x2] -> (x1, x2, 0)
+    operand_list = operands.split(', ')
+    if len(operand_list) == 2:
+        return operand_list[0], operand_list[1].lstrip('[').rstrip(']'), 0
+    elif len(operand_list) == 3:
+        operand_list[1] = operand_list[1].lstrip('[')
+        operand_list[2] = operand_list[2].rstrip(']')
+        return operand_list[0], operand_list[1], int_value_from_string(operand_list[2])
+
+    raise Exception("Mismatched ldr instruction format")
+
+
+def resolve_add_operands(operands: str) -> Tuple[str, str, int]:
+    # add x1, x8, #0xbbb -> (x1, x8, 0xbbb)
+    operand_list = operands.split(', ')
+    if len(operand_list) == 3:
+        return operand_list[0], operand_list[1], int_value_from_string(operand_list[2])
+
+    raise Exception("Mismatched add instruction format")
+
+
+def int_value_from_string(integer_str: str) -> int:
+    integer_str = integer_str.lstrip("#")
+    if integer_str.startswith("0x") or integer_str.startswith("-0x"):
+        integer_value = int(integer_str, 16)
+    else:
+        integer_value = int(integer_str)
+
+    return integer_value

@@ -55,7 +55,7 @@ def is_arm64(target: lldb.SBTarget = None) -> bool:
 
 def int_value_from_string(integer_str: str) -> Tuple[bool, int]:
     try:
-        if integer_str.startswith("0x"):
+        if integer_str.startswith("0x") or integer_str.startswith("-0x"):
             integer_value = int(integer_str, 16)
         else:
             integer_value = int(integer_str)
