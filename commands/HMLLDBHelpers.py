@@ -149,7 +149,7 @@ def get_function_address(name: str, module_name='') -> int:
         module = target.GetModuleAtIndex(i)
         if len(module_name) > 0:
             file_name = module.GetFileSpec().GetFilename()
-            if not module_name in file_name:
+            if module_name not in file_name:
                 continue
 
         sc_list: lldb.SBSymbolContextList = module.FindFunctions(name, lldb.eFunctionNameTypeAny)
