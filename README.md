@@ -45,6 +45,7 @@ For example, this is the command in my computer:
 | cbt            | Completely displays the current thread\'s call stack based on the fp/lr register |
 | rc             | Show general purpose registers changes |
 | rr             | Alias for 'register read' with additional -s/--sp arguments |
+| reference    | Scan the image section to obtain all reference addresses of a certain address |
 | adrp           | Get the execution result of the adrp instruction |
 | edisassemble | Enhanced disassemble |
 | tracefunction  | Trace functions step by step until the next breakpoint is hit |
@@ -439,6 +440,31 @@ General Purpose Registers:
 0x16fb2cdf8: 0x00000001002e5008 "clickBtn:"
 0x16fb2ce00: 0x0000000101137b80
 ```
+
+
+### reference
+Scan the image section to obtain all reference addresses of a certain address.     
+```
+Syntax:
+    reference <address> <image_name>
+
+Examples:
+    (lldb) reference 0x12345678 MyApp
+    (lldb) reference 0x12345678 UIKitCore
+
+
+(lldb) reference 0x18e9b27a0 UIKitCore
+[HMLLDB] These are the scan results:
+0x18d43b730: UIKitCore`-[UIControl sendAction:to:forEvent:] + 108
+0x18d875624: UIKitCore`-[UITabBar _sendAction:withEvent:] + 388
+0x18d87ed14: UIKitCore`-[UIToolbar _sendAction:withEvent:] + 328
+0x18df4e8f0: UIKitCore`-[UIApplication _performKeyCommandInvocation:allowsRepeat:] + 280
+0x18e087250: UIKitCore`-[UITableView _updateCell:withValue:] + 224
+[HMLLDB] Reference count:5
+```
+Notice:
+- This command is **expensive** to scan large modules. For example, it takes 100 seconds to scan UIKitCore.
+- Currently, the query is only based on the b/bl instruction. You should consider the **"stub" function** and **"island" function** when using it.
 
 ### adrp
 Get the execution result of the `adrp` instruction.    

@@ -50,7 +50,8 @@ def reference(debugger, command, exe_ctx, result, internal_dict):
         (lldb) reference 0x12345678 UIKitCore
 
     Notice:
-        This command is very expensive to scan large modules. For example, it takes 100 seconds to scan UIKitCore.
+        1.This command is expensive to scan large modules. For example, it takes 100 seconds to scan UIKitCore.
+        2.Currently, the query is only based on the b/bl instruction. You should consider the "stub" function and "island" function when using it.
 
     This command is implemented in HMReference.py
     """
