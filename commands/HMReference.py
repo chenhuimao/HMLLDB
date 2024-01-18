@@ -56,6 +56,10 @@ def reference(debugger, command, exe_ctx, result, internal_dict):
     This command is implemented in HMReference.py
     """
 
+    if not HM.is_arm64(exe_ctx.GetTarget()):
+        HM.DPrint("x86_64 architecture does not support the \"reference\" command.")
+        return
+
     command_args: List[str] = command.split()
     if len(command_args) != 2:
         HM.DPrint("Error input. Please enter \"help reference\" for help.")

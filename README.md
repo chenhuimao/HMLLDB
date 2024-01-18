@@ -94,6 +94,9 @@ The `target symbols add [<symfile>]` command needs to specify the address of the
 # The following two commands have the same effect
 (lldb) autodsym
 (lldb) target symbol add /path/to/dSYM
+
+Notice:
+The autodsym command automatically finds the path of the debug symbol file. Xcode needs permission to access the path. The autodsym command does not prompt for authorization.
 ```
 
 
@@ -356,7 +359,8 @@ When debugging the assembly instruction, it is very troublesome to see the `objc
 
 ### cbt
 `cbt` command: Completely displays the current thread\'s call stack based on the fp/lr register.     
-Xcode's "Debug Navigator" & `bt` command: Displays the current thread\'s call stack based on the libunwind.dylib.    
+Xcode's "Debug Navigator" & `bt` command: Displays the current thread\'s call stack based on the libunwind.dylib.   
+In some cases, the traceback based on libunwind.dylib may lose the call frame, and the actual execution process of the arm64 architecture application is based on the fp/lr register. Therefore, the `cbt` command was developed.    
 Notice: The `cbt` command only supports arm64 architecture devices.
 
 
@@ -719,8 +723,28 @@ The `trace-step-over-instruction` command solves these problems.
 Syntax:
     trace-step-over-instruction <count>
 
-Examples:
-    (lldb) trace-step-over-instruction 20
+(lldb) trace-step-over-instruction 20
+UIKitCore`-[UIApplication sendAction:to:from:forEvent:]		pacibsp		(0x19b1d79d0)
+UIKitCore`-[UIApplication sendAction:to:from:forEvent:] + 4		stp	x22, x21, [sp, #-0x30]!	(0x19b1d79d4)
+UIKitCore`-[UIApplication sendAction:to:from:forEvent:] + 8		stp	x20, x19, [sp, #0x10]	(0x19b1d79d8)
+UIKitCore`-[UIApplication sendAction:to:from:forEvent:] + 12		stp	x29, x30, [sp, #0x20]	(0x19b1d79dc)
+UIKitCore`-[UIApplication sendAction:to:from:forEvent:] + 16		add	x29, sp, #0x20	(0x19b1d79e0)
+UIKitCore`-[UIApplication sendAction:to:from:forEvent:] + 20		mov	x19, x5	(0x19b1d79e4)
+UIKitCore`-[UIApplication sendAction:to:from:forEvent:] + 24		mov	x21, x4	(0x19b1d79e8)
+UIKitCore`-[UIApplication sendAction:to:from:forEvent:] + 28		mov	x20, x3	(0x19b1d79ec)
+UIKitCore`-[UIApplication sendAction:to:from:forEvent:] + 32		mov	x22, x2	(0x19b1d79f0)
+UIKitCore`-[UIApplication sendAction:to:from:forEvent:] + 36		cbnz	x3, 0x19b1d7a10			; <+64>	(0x19b1d79f4)
+UIKitCore`-[UIApplication sendAction:to:from:forEvent:] + 64		mov	x0, #0x2	(0x19b1d7a10)
+UIKitCore`-[UIApplication sendAction:to:from:forEvent:] + 68		movk	x0, #0x10, lsl #48	(0x19b1d7a14)
+UIKitCore`-[UIApplication sendAction:to:from:forEvent:] + 72		bl	0x19e8d6820	(0x19b1d7a18)
+UIKitCore`-[UIApplication sendAction:to:from:forEvent:] + 76		cbz	w0, 0x19b1d7a38			; <+104>	(0x19b1d7a1c)
+UIKitCore`-[UIApplication sendAction:to:from:forEvent:] + 80		mov	x0, x20	(0x19b1d7a20)
+UIKitCore`-[UIApplication sendAction:to:from:forEvent:] + 84		mov	x1, x22	(0x19b1d7a24)
+UIKitCore`-[UIApplication sendAction:to:from:forEvent:] + 88		mov	x2, x21	(0x19b1d7a28)
+UIKitCore`-[UIApplication sendAction:to:from:forEvent:] + 92		mov	x3, x19	(0x19b1d7a2c)
+UIKitCore`-[UIApplication sendAction:to:from:forEvent:] + 96		bl	0x19e8d6fc0	(0x19b1d7a30)
+UIKitCore`-[UIApplication sendAction:to:from:forEvent:] + 100		b	0x19b1d7a54			; <+132>	(0x19b1d7a34)
+UIKitCore`-[UIApplication sendAction:to:from:forEvent:] + 132		cmp	x20, #0x0	(0x19b1d7a54)
 ```
 
 

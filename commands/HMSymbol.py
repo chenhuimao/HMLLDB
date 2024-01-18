@@ -39,6 +39,9 @@ def autodsym(debugger, command, exe_ctx, result, internal_dict):
     Examples:
         (lldb) autodsym
 
+    Notice:
+        The command automatically finds the path of the debug symbol file. Xcode needs permission to access the path. The autodsym command does not prompt for authorization.
+
     This command is implemented in HMSymbol.py
     """
 
