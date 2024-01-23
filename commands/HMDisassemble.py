@@ -103,16 +103,22 @@ def enhanced_disassemble(debugger, command, exe_ctx, result, internal_dict):
         set_my_comment_in_dict(address_comment_dict, instruction_list, exe_ctx)
 
     # Print result
+    # Sometimes printing in sequence will lack line breaks, so save the result in a variable and finally print it out
+    result_str = ""
     for line in assemble_lines:
         address_int = get_address_from_assemble_line(line)
         if address_int == lldb.LLDB_INVALID_ADDRESS:
-            print(line)
+            result_str += line + '\n'
             continue
 
         if address_int in address_comment_dict:
-            print(f"{line.ljust(original_comment_index)}; {address_comment_dict[address_int]}")
+            my_comment = address_comment_dict[address_int]
+            instruction_with_blank = line.ljust(original_comment_index)
+            result_str += f"{instruction_with_blank}; {my_comment}\n"
         else:
-            print(line)
+            result_str += line + '\n'
+
+    print(result_str)
 
 
 def get_address_from_assemble_line(assemble_line: str) -> int:
