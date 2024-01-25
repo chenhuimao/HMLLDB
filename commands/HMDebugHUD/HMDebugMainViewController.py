@@ -273,7 +273,7 @@ def addFeatureMethods() -> bool:
 def makeSelectedAPPInfoIMP() -> lldb.SBValue:
     command_script = f'''
         void (^IMPBlock)(UIViewController *) = ^(UIViewController *vc) {{
-            Class objClass = (Class)objc_lookUpClass("{HMDebugInfoViewController.gClassName}");
+            Class objClass = (Class)objc_lookUpClass("{HMDebugInfoViewController.g_class_name}");
             UIViewController * objVC = (UIViewController *)[[objClass alloc] init];
             [vc.navigationController pushViewController:objVC animated:YES];
         }};

@@ -45,6 +45,7 @@ def environment(debugger, command, exe_ctx, result, internal_dict):
 
     # Python version
     # LLDB version
+    # Host program path
     # Target triple
     # Git commit hash
     # Optimized
@@ -57,54 +58,57 @@ def environment(debugger, command, exe_ctx, result, internal_dict):
 
     HM.DPrint('[LLDB version] ' + debugger.GetVersionString().replace('\n', '\n\t\t'))
 
+    host_program_file_path = lldb.SBHostOS.GetProgramFileSpec().fullpath
+    HM.DPrint('[Host program path] ' + host_program_file_path)
+
     HM.DPrint('[Target triple] ' + debugger.GetSelectedTarget().GetTriple())
 
-    HM.DPrint('[Git commit hash] ' + getGitCommitHash())
+    HM.DPrint('[Git commit hash] ' + get_git_commit_hash())
 
-    HM.DPrint('[Optimized] ' + getOptimizedStr())
+    HM.DPrint('[Optimized] ' + get_optimized_str())
 
-    XcodeVersionValue = HM.evaluate_expression_value('(NSString *)([NSBundle mainBundle].infoDictionary[@"DTXcode"] ?: @"-")')
-    HM.DPrint('[Xcode version] ' + XcodeVersionValue.GetObjectDescription())
+    xcode_version_value = HM.evaluate_expression_value('(NSString *)([NSBundle mainBundle].infoDictionary[@"DTXcode"] ?: @"-")')
+    HM.DPrint('[Xcode version] ' + xcode_version_value.GetObjectDescription())
 
-    XcodeBuildVersionValue = HM.evaluate_expression_value('(NSString *)([NSBundle mainBundle].infoDictionary[@"DTXcodeBuild"] ?: @"-")')
-    HM.DPrint('[Xcode build version] ' + XcodeBuildVersionValue.GetObjectDescription())
+    xcode_build_version_value = HM.evaluate_expression_value('(NSString *)([NSBundle mainBundle].infoDictionary[@"DTXcodeBuild"] ?: @"-")')
+    HM.DPrint('[Xcode build version] ' + xcode_build_version_value.GetObjectDescription())
 
-    HM.DPrint('[Model identifier] ' + getModelIdentifier())
+    HM.DPrint('[Model identifier] ' + get_model_identifier())
 
-    SystemVersionValue = HM.evaluate_expression_value('(NSString *)[[NSString alloc] initWithFormat:@"%@ %@", [[UIDevice currentDevice] systemName], [[UIDevice currentDevice] systemVersion]]')
-    HM.DPrint('[System version] ' + SystemVersionValue.GetObjectDescription())
+    system_version_value = HM.evaluate_expression_value('(NSString *)[[NSString alloc] initWithFormat:@"%@ %@", [[UIDevice currentDevice] systemName], [[UIDevice currentDevice] systemVersion]]')
+    HM.DPrint('[System version] ' + system_version_value.GetObjectDescription())
 
 
-def getGitCommitHash() -> str:
+def get_git_commit_hash() -> str:
     file_path = os.path.realpath(__file__)  # Absolute path
     dir_name = os.path.dirname(file_path)
-    gitCommit = os.popen(f"git -C {dir_name} log --pretty=format:'%H'").readline()
-    return gitCommit.replace('\n', '')
+    git_commit = os.popen(f"git -C {dir_name} log --pretty=format:'%H'").readline()
+    return git_commit.replace('\n', '')
 
 
-def getOptimizedStr() -> str:
-    optimizedFalseCount = 0
-    optimizedTrueCount = 0
-    symbolContextList = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")
-    for i in range(symbolContextList.GetSize()):
+def get_optimized_str() -> str:
+    optimized_false_count = 0
+    optimized_true_count = 0
+    symbol_context_list: lldb.SBSymbolContextList = lldb.debugger.GetSelectedTarget().FindFunctions("viewDidLoad")
+    for i in range(symbol_context_list.GetSize()):
         if i == 800:
             break
-        ctx = symbolContextList.GetContextAtIndex(i)
+        ctx = symbol_context_list.GetContextAtIndex(i)
         if ctx.GetFunction().IsValid():
             if ctx.GetFunction().GetIsOptimized():
-                optimizedTrueCount += 1
+                optimized_true_count += 1
             else:
-                optimizedFalseCount += 1
+                optimized_false_count += 1
 
-    return f'False: {optimizedFalseCount}  True: {optimizedTrueCount}'
+    return f'False: {optimized_false_count}  True: {optimized_true_count}'
 
 
-def getModelIdentifier() -> str:
+def get_model_identifier() -> str:
     command_script = '''
         struct utsname systemInfo;
         (int)uname(&systemInfo);
         NSString *modelIdentifier = [NSString stringWithCString:systemInfo.machine encoding:(NSStringEncoding)4];
         modelIdentifier;
     '''
-    modelIDValue = HM.evaluate_expression_value(command_script)
-    return modelIDValue.GetObjectDescription()
+    model_id_value = HM.evaluate_expression_value(command_script)
+    return model_id_value.GetObjectDescription()

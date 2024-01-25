@@ -106,13 +106,13 @@ def enhanced_disassemble(debugger, command, exe_ctx, result, internal_dict):
     for line in assemble_lines:
         address_int = get_address_from_assemble_line(line)
         if address_int == lldb.LLDB_INVALID_ADDRESS:
-            print(line)
+            result.AppendMessage(line)
             continue
 
         if address_int in address_comment_dict:
-            print(f"{line.ljust(original_comment_index)}; {address_comment_dict[address_int]}")
+            result.AppendMessage(f"{line.ljust(original_comment_index)}; {address_comment_dict[address_int]}")
         else:
-            print(line)
+            result.AppendMessage(line)
 
 
 def get_address_from_assemble_line(assemble_line: str) -> int:

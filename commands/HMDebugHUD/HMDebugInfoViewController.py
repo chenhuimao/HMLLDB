@@ -32,52 +32,53 @@ import HMLLDBHelpers as HM
 import HMProgressHUD
 
 
-gClassName = "HMDebugInfoViewController"
+g_class_name = "HMDebugInfoViewController"
 
 
 def register() -> None:
+    global g_class_name
 
-    if HM.is_existing_class(gClassName):
+    if HM.is_existing_class(g_class_name):
         return
 
     # Register class
-    HMProgressHUD.show(f"Register {gClassName}...")
-    HM.DPrint(f"Register {gClassName}...")
+    HMProgressHUD.show(f"Register {g_class_name}...")
+    HM.DPrint(f"Register {g_class_name}...")
 
-    classValue = HM.allocate_class(gClassName, HMDebugBaseViewController.gClassName)
-    HM.add_ivar(classValue.GetValue(), "_leftTextArray", "NSMutableArray *")
-    HM.add_ivar(classValue.GetValue(), "_rightTextArray", "NSMutableArray *")
-    HM.register_class(classValue.GetValue())
+    class_value = HM.allocate_class(g_class_name, HMDebugBaseViewController.gClassName)
+    HM.add_ivar(class_value.GetValue(), "_leftTextArray", "NSMutableArray *")
+    HM.add_ivar(class_value.GetValue(), "_rightTextArray", "NSMutableArray *")
+    HM.register_class(class_value.GetValue())
 
     # Add methods
-    HM.DPrint(f"Add methods to {gClassName}...")
-    viewDidLoadIMPValue = makeViewDidLoadIMP()
-    if not HM.is_SBValue_has_value(viewDidLoadIMPValue):
+    HM.DPrint(f"Add methods to {g_class_name}...")
+    viewDidLoad_imp_value = make_ViewDidLoad_IMP()
+    if not HM.is_SBValue_has_value(viewDidLoad_imp_value):
         HMProgressHUD.hide()
         return
-    HM.add_instance_method(gClassName, "viewDidLoad", viewDidLoadIMPValue.GetValue(), "v@:")
+    HM.add_instance_method(g_class_name, "viewDidLoad", viewDidLoad_imp_value.GetValue(), "v@:")
 
     # Methods related to tableView.
-    HM.DPrint(f"Add methods to {gClassName}......")
+    HM.DPrint(f"Add methods to {g_class_name}......")
 
-    if not addTableViewMethods():
+    if not add_tableView_methods():
         HMProgressHUD.hide()
         return
 
-    HM.DPrint(f"Register {gClassName} done!")
+    HM.DPrint(f"Register {g_class_name} done!")
     HMProgressHUD.hide()
 
 
-def makeViewDidLoadIMP() -> lldb.SBValue:
-    lldbVersion = lldb.debugger.GetVersionString().replace('\n', '\\n')
-    targetTriple = lldb.debugger.GetSelectedTarget().GetTriple()
-    pythonVersion = sys.version.replace('\n', '\\n')
-    commitHash = HMEnvironment.getGitCommitHash()
-    optimizedStr = HMEnvironment.getOptimizedStr()
+def make_ViewDidLoad_IMP() -> lldb.SBValue:
+    lldb_version = lldb.debugger.GetVersionString().replace('\n', '\\n')
+    target_triple = lldb.debugger.GetSelectedTarget().GetTriple()
+    python_version = sys.version.replace('\n', '\\n')
+    commit_hash = HMEnvironment.get_git_commit_hash()
+    optimized_str = HMEnvironment.get_optimized_str()
 
     command_script = f'''
         void (^IMPBlock)(UIViewController *) = ^(UIViewController *vc) {{
-            Class cls = objc_lookUpClass("{gClassName}");
+            Class cls = objc_lookUpClass("{g_class_name}");
             struct objc_super superInfo = {{
                 .receiver = vc,
                 .super_class = (Class)class_getSuperclass((Class)cls)
@@ -111,7 +112,7 @@ def makeViewDidLoadIMP() -> lldb.SBValue:
             [rightTextArray addObject:modelIdentifier];
     
             [leftTextArray addObject:@"Target triple"];
-            NSString *targetTriple = @"{targetTriple}";
+            NSString *targetTriple = @"{target_triple}";
             [rightTextArray addObject:targetTriple];
 
             [leftTextArray addObject:@"System version"];
@@ -139,19 +140,19 @@ def makeViewDidLoadIMP() -> lldb.SBValue:
             [rightTextArray addObject:XcodeBuildVersion];
             
             [leftTextArray addObject:@"LLDB version"];
-            NSString *LLDBVersion = @"{lldbVersion}";
+            NSString *LLDBVersion = @"{lldb_version}";
             [rightTextArray addObject:LLDBVersion];
 
             [leftTextArray addObject:@"Python version"];
-            NSString *pythonVersion = @"{pythonVersion}";
+            NSString *pythonVersion = @"{python_version}";
             [rightTextArray addObject:pythonVersion];
             
             [leftTextArray addObject:@"(HM)Commit hash"];
-            NSString *commitHash = @"{commitHash}";
+            NSString *commitHash = @"{commit_hash}";
             [rightTextArray addObject:commitHash];
             
             [leftTextArray addObject:@"Optimized"];
-            NSString *optimized = @"{optimizedStr}";
+            NSString *optimized = @"{optimized_str}";
             [rightTextArray addObject:optimized];
             
             // property initialize
@@ -178,23 +179,23 @@ def makeViewDidLoadIMP() -> lldb.SBValue:
     return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
-def addTableViewMethods() -> bool:
-    global gClassName
+def add_tableView_methods() -> bool:
+    global g_class_name
 
-    numberOfRowsInSectionIMPValue = makeNumberOfRowsInSectionIMP()
-    if not HM.is_SBValue_has_value(numberOfRowsInSectionIMPValue):
+    numberOfRowsInSection_imp_value = make_numberOfRowsInSection_imp()
+    if not HM.is_SBValue_has_value(numberOfRowsInSection_imp_value):
         return False
-    HM.add_instance_method(gClassName, "tableView:numberOfRowsInSection:", numberOfRowsInSectionIMPValue.GetValue(), "q@:@q")
+    HM.add_instance_method(g_class_name, "tableView:numberOfRowsInSection:", numberOfRowsInSection_imp_value.GetValue(), "q@:@q")
 
-    cellForRowAtIndexPathIMPValue = makeCellForRowAtIndexPathIMP()
-    if not HM.is_SBValue_has_value(cellForRowAtIndexPathIMPValue):
+    cellForRowAtIndexPath_imp_value = make_cellForRowAtIndexPath_imp()
+    if not HM.is_SBValue_has_value(cellForRowAtIndexPath_imp_value):
         return False
-    HM.add_instance_method(gClassName, "tableView:cellForRowAtIndexPath:", cellForRowAtIndexPathIMPValue.GetValue(), "@@:@@")
+    HM.add_instance_method(g_class_name, "tableView:cellForRowAtIndexPath:", cellForRowAtIndexPath_imp_value.GetValue(), "@@:@@")
 
     return True
 
 
-def makeNumberOfRowsInSectionIMP() -> lldb.SBValue:
+def make_numberOfRowsInSection_imp() -> lldb.SBValue:
     command_script = '''
         long (^IMPBlock)(UIViewController *, UITableView *, long) = ^long(UIViewController *vc, UITableView *tv, long section) {
             NSMutableArray *leftTextArray = (NSMutableArray *)[vc valueForKey:@"_leftTextArray"];
@@ -207,7 +208,7 @@ def makeNumberOfRowsInSectionIMP() -> lldb.SBValue:
     return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
-def makeCellForRowAtIndexPathIMP() -> lldb.SBValue:
+def make_cellForRowAtIndexPath_imp() -> lldb.SBValue:
     command_script = '''
         UITableViewCell * (^IMPBlock)(UIViewController *, UITableView *, NSIndexPath *) = ^UITableViewCell *(UIViewController *vc, UITableView *tv, NSIndexPath *indexPath) {
             NSString * reuseIdentifier = @"Cell";
