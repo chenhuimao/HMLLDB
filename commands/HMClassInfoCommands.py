@@ -95,12 +95,12 @@ def methods(debugger, command, exe_ctx, result, internal_dict):
         HM.DPrint(result_with_module)
         return
 
-    class_prefixes_value = HM.get_class_prefixes()[1]
+    class_prefixes_array_address: str = HM.get_class_prefixes()[1]
     command_script = f'''
         Class inputClass = objc_lookUpClass("{input_str}");
 
         if (inputClass == nil) {{   //  Find prefixed class
-            for (NSString *prefix in (NSMutableArray *){class_prefixes_value.GetValue()}) {{
+            for (NSString *prefix in (NSMutableArray *)({class_prefixes_array_address})) {{
                 NSString *clsName = [prefix stringByAppendingString:@".{input_str}"];
                 inputClass = objc_lookUpClass((char *)[clsName UTF8String]);
                 if (inputClass) {{
@@ -168,12 +168,12 @@ def properties(debugger, command, exe_ctx, result, internal_dict):
         HM.DPrint(value.GetObjectDescription())
         return
 
-    class_prefixes_value = HM.get_class_prefixes()[1]
+    class_prefixes_array_address: str = HM.get_class_prefixes()[1]
     command_script = f'''
         Class inputClass = objc_lookUpClass("{command}");
 
         if (inputClass == nil) {{   //  Find prefixed class
-            for (NSString *prefix in (NSMutableArray *){class_prefixes_value.GetValue()}) {{
+            for (NSString *prefix in (NSMutableArray *)({class_prefixes_array_address})) {{
                 NSString *clsName = [prefix stringByAppendingString:@".{command}"];
                 inputClass = objc_lookUpClass((char *)[clsName UTF8String]);
                 if (inputClass) {{
@@ -387,12 +387,12 @@ def find_subclass(debugger, command, exe_ctx, result, internal_dict):
             }
         '''
 
-    class_prefixes_value = HM.get_class_prefixes()[1]
+    class_prefixes_array_address: str = HM.get_class_prefixes()[1]
     command_script = f'''
         Class inputClass = objc_lookUpClass("{args[0]}");
 
         if (inputClass == nil) {{   //  Find prefixed class
-            for (NSString *prefix in (NSMutableArray *){class_prefixes_value.GetValue()}) {{
+            for (NSString *prefix in (NSMutableArray *)({class_prefixes_array_address})) {{
                 NSString *clsName = [prefix stringByAppendingString:@".{args[0]}"];
                 inputClass = objc_lookUpClass((char *)[clsName UTF8String]);
                 if (inputClass) {{
@@ -461,12 +461,12 @@ def find_super_class(debugger, command, exe_ctx, result, internal_dict):
         HM.DPrint("Requires a argument, Please enter \"help fsuperclass\" for help.")
         return
 
-    class_prefixes_value = HM.get_class_prefixes()[1]
+    class_prefixes_array_address: str = HM.get_class_prefixes()[1]
     command_script = f'''
         Class inputClass = objc_lookUpClass("{command}");
 
         if (inputClass == nil) {{   //  Find prefixed class
-            for (NSString *prefix in (NSMutableArray *){class_prefixes_value.GetValue()}) {{
+            for (NSString *prefix in (NSMutableArray *)({class_prefixes_array_address})) {{
                 NSString *clsName = [prefix stringByAppendingString:@".{command}"];
                 inputClass = objc_lookUpClass((char *)[clsName UTF8String]);
                 if (inputClass) {{
@@ -531,12 +531,12 @@ def find_method(debugger, command, exe_ctx, result, internal_dict):
     HM.DPrint("Waiting...")
 
     if options.cls:
-        class_prefixes_value = HM.get_class_prefixes()[1]
+        class_prefixes_array_address: str = HM.get_class_prefixes()[1]
         command_script = f'''
             NSMutableString *result = [[NSMutableString alloc] init];
             Class inputClass = objc_lookUpClass("{options.cls}");
             if (inputClass == nil) {{   //  Find prefixed class
-                for (NSString *prefix in (NSMutableArray *){class_prefixes_value.GetValue()}) {{
+                for (NSString *prefix in (NSMutableArray *)({class_prefixes_array_address})) {{
                     NSString *clsName = [prefix stringByAppendingString:@".{options.cls}"];
                     inputClass = objc_lookUpClass((char *)[clsName UTF8String]);
                     if (inputClass) {{
@@ -678,12 +678,12 @@ def print_ivars_info(debugger, command, exe_ctx, result, internal_dict):
         HM.DPrint("Requires a argument, Please enter \"help ivarsinfo\" for help.")
         return
 
-    cls_prefixes_value = HM.get_class_prefixes()[1]
+    class_prefixes_array_address: str = HM.get_class_prefixes()[1]
 
     command_script = f'''        
         Class inputClass = objc_lookUpClass("{command}");
         if (inputClass == nil) {{
-            for (NSString *prefix in (NSMutableArray *){cls_prefixes_value.GetValue()}) {{
+            for (NSString *prefix in (NSMutableArray *)({class_prefixes_array_address})) {{
                 NSString *clsName = [prefix stringByAppendingString:@".{command}"];
                 inputClass = objc_lookUpClass((char *)[clsName UTF8String]);
                 if (inputClass) {{

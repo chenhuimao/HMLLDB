@@ -31,7 +31,7 @@ import HMLLDBClassInfo
 g_is_first_call = True
 
 g_class_prefixes: List[str] = []  # Class Prefixes that may be user-written
-g_class_prefixes_value: lldb.SBValue = lldb.SBValue()
+g_class_prefixes_array_address: str = "0"
 
 
 def process_continue() -> None:
@@ -247,38 +247,43 @@ def get_image_lookup_summary_from_address(address_str: str) -> str:
     return ""
 
 
-def get_class_prefixes() -> Tuple[List[str], lldb.SBValue]:
+def get_class_prefixes() -> Tuple[List[str], str]:
     global g_class_prefixes
-    global g_class_prefixes_value
+    global g_class_prefixes_array_address
 
-    if is_SBValue_has_value(g_class_prefixes_value):
-        return g_class_prefixes, g_class_prefixes_value
+    if len(g_class_prefixes) > 0:
+        return g_class_prefixes, g_class_prefixes_array_address
 
     DPrint("Getting class prefixes when using this function for the first time")
 
     command_script = '''
-        unsigned int classCount;
-        Class *classList = objc_copyClassList(&classCount);
-        NSMutableArray *clsPrefixes = [[NSMutableArray alloc] init];
-        for (int i = 0; i < classCount; i++) {
-            NSString *name = [[NSString alloc] initWithUTF8String:class_getName(classList[i])];
-            if ([name containsString:@"."]) {
-                NSString *prefix = [name substringToIndex:[name rangeOfString:@"."].location];
-                if (![clsPrefixes containsObject:prefix] && ![prefix containsString:@"NSKVONotifying_"] && ![prefix containsString:@"_NSZombie_"]) {
-                    [clsPrefixes addObject:prefix];
+        unsigned int hm_classCount;
+        Class *hm_classList = objc_copyClassList(&hm_classCount);
+        NSMutableArray *hm_clsPrefixes = [[NSMutableArray alloc] init];
+        for (int i = 0; i < hm_classCount; i++) {
+            NSString *hm_class_name = [[NSString alloc] initWithUTF8String:class_getName(hm_classList[i])];
+            if ([hm_class_name containsString:@"."]) {
+                NSString *hm_prefix = [hm_class_name substringToIndex:[hm_class_name rangeOfString:@"."].location];
+                if (![hm_clsPrefixes containsObject:hm_prefix] && ![hm_prefix containsString:@"NSKVONotifying_"] && ![hm_prefix containsString:@"_NSZombie_"]) {
+                    [hm_clsPrefixes addObject:hm_prefix];
                 }
             }
         }
-        free(classList);
-        (NSMutableArray *)clsPrefixes;
+        free(hm_classList);
+        (NSMutableArray *)hm_clsPrefixes;
     '''
 
-    g_class_prefixes_value = evaluate_expression_value(expression=command_script)
-    for i in range(g_class_prefixes_value.GetNumChildren()):
-        prefix_value = g_class_prefixes_value.GetChildAtIndex(i)
+    class_prefixes_value = evaluate_expression_value(expression=command_script)
+    if not is_successful_of_SBError(class_prefixes_value.GetError()):
+        DPrint("Failed to get class prefix! You need to enter the complete Swift class name including the namespace.")
+        return g_class_prefixes, g_class_prefixes_array_address
+
+    g_class_prefixes_array_address = class_prefixes_value.GetValue()
+    for i in range(class_prefixes_value.GetNumChildren()):
+        prefix_value = class_prefixes_value.GetChildAtIndex(i)
         g_class_prefixes.append(prefix_value.GetObjectDescription())
 
-    return g_class_prefixes, g_class_prefixes_value
+    return g_class_prefixes, g_class_prefixes_array_address
 
 
 def is_existing_class(class_name: str) -> bool:
