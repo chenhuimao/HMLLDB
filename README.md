@@ -8,7 +8,7 @@
 - Some commands provide interactive UI within the APP
 
 ## Requirements
-- Xcode 15.0
+- Xcode 15.2
 - 64-bit simulator or real device, iOS 13.0+
 - Some commands require debug configuration (or ***Optimization Level*** set [-O0]/[-Onone])
 
@@ -841,6 +841,7 @@ You can see that one of items is `[Git commit hash]`, which is one of the reason
 		[Clang 12.0.0 (clang-1200.0.32.28)]
 [HMLLDB] [LLDB version] lldb-1200.0.44.2
 		Apple Swift version 5.3.2 (swiftlang-1200.0.45 clang-1200.0.32.28)
+[HMLLDB] [Host program path] /Applications/Xcode.app/Contents/SharedFrameworks/LLDBRPC.framework/Resources/lldb-rpc-server
 [HMLLDB] [Target triple] x86_64h-apple-ios-simulator
 [HMLLDB] [Git commit hash] 088f654cb158ffb16019b2deca5dce36256837ad
 [HMLLDB] [Optimized] False: 28  True: 0

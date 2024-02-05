@@ -105,7 +105,14 @@ def get_optimized_str() -> str:
 
 def get_model_identifier() -> str:
     command_script = '''
-        struct utsname systemInfo;
+        struct hmlldb_utsname {
+            char    sysname[256];
+            char    nodename[256];
+            char    release[256];
+            char    version[256];
+            char    machine[256];
+        };
+        struct hmlldb_utsname systemInfo;
         (int)uname(&systemInfo);
         NSString *modelIdentifier = [NSString stringWithCString:systemInfo.machine encoding:(NSStringEncoding)4];
         modelIdentifier;
