@@ -352,25 +352,20 @@ def get_string_from_instruction_control_flow_kind(kind: int) -> str:
 
 
 def get_string_from_structured_data_type(structured_data_type: int) -> str:
-    if structured_data_type == lldb.eStructuredDataTypeInvalid:
-        return 'eStructuredDataTypeInvalid'
-    elif structured_data_type == lldb.eStructuredDataTypeNull:
-        return 'eStructuredDataTypeNull'
-    elif structured_data_type == lldb.eStructuredDataTypeGeneric:
-        return 'eStructuredDataTypeGeneric'
-    elif structured_data_type == lldb.eStructuredDataTypeArray:
-        return 'eStructuredDataTypeArray'
-    elif structured_data_type == lldb.eStructuredDataTypeInteger:
-        return 'eStructuredDataTypeInteger'
-    elif structured_data_type == lldb.eStructuredDataTypeFloat:
-        return 'eStructuredDataTypeFloat'
-    elif structured_data_type == lldb.eStructuredDataTypeBoolean:
-        return 'eStructuredDataTypeBoolean'
-    elif structured_data_type == lldb.eStructuredDataTypeString:
-        return 'eStructuredDataTypeString'
-    elif structured_data_type == lldb.eStructuredDataTypeDictionary:
-        return 'eStructuredDataTypeDictionary'
-    return "unknown"
+    structured_data_type_dic: Dict[int, str] = {
+        lldb.eStructuredDataTypeInvalid: "eStructuredDataTypeInvalid",
+        lldb.eStructuredDataTypeNull: "eStructuredDataTypeNull",
+        lldb.eStructuredDataTypeGeneric: "eStructuredDataTypeGeneric",
+        lldb.eStructuredDataTypeArray: "eStructuredDataTypeArray",
+        lldb.eStructuredDataTypeInteger: "eStructuredDataTypeInteger",
+        lldb.eStructuredDataTypeFloat: "eStructuredDataTypeFloat",
+        lldb.eStructuredDataTypeBoolean: "eStructuredDataTypeBoolean",
+        lldb.eStructuredDataTypeString: "eStructuredDataTypeString",
+        lldb.eStructuredDataTypeDictionary: "eStructuredDataTypeDictionary",
+        lldb.eStructuredDataTypeSignedInteger: "eStructuredDataTypeSignedInteger",
+        lldb.eStructuredDataTypeUnsignedInteger: "eStructuredDataTypeUnsignedInteger"
+    }
+    return structured_data_type_dic.get(structured_data_type, "unknown")
 
 
 def get_string_from_return_status(return_status: int) -> str:
@@ -461,6 +456,15 @@ def get_string_from_section_type(section_type: int) -> str:
     return section_type_dic.get(section_type, "unknown")
 
 
+def get_string_from_queue_kind(queue_kind: int) -> str:
+    queue_kind_dic: Dict[int, str] = {
+        lldb.eQueueKindUnknown: "eQueueKindUnknown",
+        lldb.eQueueKindSerial: "eQueueKindSerial",
+        lldb.eQueueKindConcurrent: "eQueueKindConcurrent"
+    }
+    return queue_kind_dic.get(queue_kind, "unknown")
+
+
 def pSBHostOS(obj: Optional[lldb.SBHostOS]) -> None:
     if obj is not None:
         hostOS = obj
@@ -493,11 +497,9 @@ def pSBDebugger(obj: Optional[lldb.SBDebugger]) -> None:
     print_class_name("SBDebugger")
     print_format("SBDebugger", debugger)
     print_format("IsValid", debugger.IsValid())
+    print_format("GetBroadcasterClass", lldb.SBDebugger.GetBroadcasterClass())
     print_format("GetBroadcaster", debugger.GetBroadcaster())  # SBBroadcaster
     print_format("GetAsync", debugger.GetAsync())
-    # print_format("GetInputFileHandle", debugger.GetInputFileHandle())  # FileSP
-    # print_format("GetOutputFileHandle", debugger.GetOutputFileHandle())  # FileSP
-    # print_format("GetErrorFileHandle", debugger.GetErrorFileHandle())  # FileSP
     print_format("GetSetting", debugger.GetSetting())  # SBStructuredData
     print_format("GetInputFile", debugger.GetInputFile())  # SBFile
     print_format("GetOutputFile", debugger.GetOutputFile())  # SBFile
@@ -514,6 +516,7 @@ def pSBDebugger(obj: Optional[lldb.SBDebugger]) -> None:
     print_format("GetSourceManager", debugger.GetSourceManager())  # SBSourceManager
     print_format("GetUseExternalEditor", debugger.GetUseExternalEditor())
     print_format("GetUseColor", debugger.GetUseColor())
+    print_format("GetUseSourceCache", debugger.GetUseSourceCache())
     print_format("GetVersionString", debugger.GetVersionString())
     print_format("GetBuildConfiguration", debugger.GetBuildConfiguration())  # SBStructuredData
     print_format("GetInstanceName", debugger.GetInstanceName())
@@ -522,9 +525,13 @@ def pSBDebugger(obj: Optional[lldb.SBDebugger]) -> None:
     print_format("GetPrompt", debugger.GetPrompt())
     print_format("GetReproducerPath", debugger.GetReproducerPath())
     print_format("GetScriptLanguage", debugger.GetScriptLanguage())  # ScriptLanguage int
+    print_format("GetREPLLanguage", debugger.GetREPLLanguage())  # lldb::LanguageType int
     print_format("GetCloseInputOnEOF", debugger.GetCloseInputOnEOF())
     print_format("GetNumCategories", debugger.GetNumCategories())
     print_format("GetDefaultCategory", debugger.GetDefaultCategory())  # SBTypeCategory
+    print_format("GetInputFileHandle", debugger.GetInputFileHandle())  # FileSP
+    print_format("GetOutputFileHandle", debugger.GetOutputFileHandle())  # FileSP
+    print_format("GetErrorFileHandle", debugger.GetErrorFileHandle())  # FileSP
 
     print_traversal(debugger, "GetNumTargets", "GetTargetAtIndex")  # [SBTarget]
     print_traversal(debugger, "GetNumPlatforms", "GetPlatformAtIndex")  # [SBPlatform]
@@ -540,7 +547,7 @@ def pSBTarget(obj: Optional[lldb.SBTarget]) -> None:
     print_class_name("SBTarget")
     print_format("SBTarget", target)
     print_format("IsValid", target.IsValid())
-    print_format("GetBroadcasterClassName", target.GetBroadcasterClassName())
+    print_format("GetBroadcasterClassName", lldb.SBTarget.GetBroadcasterClassName())
     print_format("GetProcess", target.GetProcess())  # SBProcess
     print_format("GetPlatform", target.GetPlatform())  # SBPlatform
     print_format("GetExecutable", target.GetExecutable())  # SBFileSpec
@@ -552,6 +559,7 @@ def pSBTarget(obj: Optional[lldb.SBTarget]) -> None:
     print_format("GetAddressByteSize", target.GetAddressByteSize())
     print_format("GetTriple", target.GetTriple())
     print_format("GetABIName", target.GetABIName())
+    print_format("GetLabel", target.GetLabel())
     print_format("GetDataByteSize", target.GetDataByteSize())
     print_format("GetCodeByteSize", target.GetCodeByteSize())
     print_format("GetMaximumNumberOfChildrenToDisplay", target.GetMaximumNumberOfChildrenToDisplay())
@@ -659,7 +667,7 @@ def pSBThread(obj: Optional[lldb.SBThread]) -> None:
 
     print_class_name("SBThread")
     print_format("SBThread", thread)
-    print_format("GetBroadcasterClassName", thread.GetBroadcasterClassName())
+    print_format("GetBroadcasterClassName", lldb.SBThread.GetBroadcasterClassName())
     print_format("IsValid", thread.IsValid())
     stop_reason = thread.GetStopReason()  # StopReason int
     print_format("GetStopReason(raw)", stop_reason)
@@ -740,6 +748,7 @@ def pSBFrame(obj: Optional[lldb.SBFrame]) -> None:
     print_format("GetDisplayFunctionName", frame.GetDisplayFunctionName())
     print_format("GetFunctionName", frame.GetFunctionName())
     print_format("GuessLanguage", frame.GuessLanguage())  # LanguageType int
+    print_format("IsSwiftThunk", frame.IsSwiftThunk())
     print_format("IsInlined", frame.IsInlined())
     print_format("IsArtificial", frame.IsArtificial())
     print_format("GetFrameBlock", frame.GetFrameBlock())  # SBBlock
@@ -859,6 +868,7 @@ def pSBModule(obj: Optional[lldb.SBModule]) -> None:
     print_format("GetFileSpec", module.GetFileSpec())  # SBFileSpec
     print_format("GetPlatformFileSpec", module.GetPlatformFileSpec())  # SBFileSpec
     print_format("GetRemoteInstallFileSpec", module.GetRemoteInstallFileSpec())  # SBFileSpec
+    print_format("GetUUIDBytes", module.GetUUIDBytes())
     print_format("GetUUIDString", module.GetUUIDString())
     print_format("GetNumCompileUnits", module.GetNumCompileUnits())
     print_format("GetNumSymbols", module.GetNumSymbols())
@@ -1042,7 +1052,7 @@ def pSBFile(obj: Optional[lldb.SBFile]) -> None:
     print_class_name("SBFile")
     print_format("SBFile", file)
     print_format("IsValid", file.IsValid())
-    # print_format("GetFile", file.GetFile())  # FileSP
+    print_format("GetFile", file.GetFile())  # lldb::FileSP
 
 
 def pSBFileSpec(obj: Optional[lldb.SBFileSpec]) -> None:
@@ -1492,6 +1502,8 @@ def pSBStructuredData(obj: Optional[lldb.SBStructuredData]) -> None:
     string_list = lldb.SBStringList()
     sd.GetKeys(string_list)
     print_format("GetKeys", get_string_from_SBStringList(string_list))
+    print_format("GetUnsignedIntegerValue", sd.GetUnsignedIntegerValue())
+    print_format("GetSignedIntegerValue", sd.GetSignedIntegerValue())
     print_format("GetIntegerValue", sd.GetIntegerValue())
     print_format("GetFloatValue", sd.GetFloatValue())
     print_format("GetBooleanValue", sd.GetBooleanValue())
@@ -1524,7 +1536,10 @@ def pSBPlatform(obj: Optional[lldb.SBPlatform]) -> None:
     print_format("GetOSMajorVersion", platform.GetOSMajorVersion())
     print_format("GetOSMinorVersion", platform.GetOSMinorVersion())
     print_format("GetOSUpdateVersion", platform.GetOSUpdateVersion())
+    error = lldb.SBError()
+    print_format("GetAllProcesses", platform.GetAllProcesses(error))  # SBProcessInfoList
     print_format("GetUnixSignals", platform.GetUnixSignals())  # SBUnixSignals
+    print_format("GetEnvironment", platform.GetEnvironment())  # SBEnvironment
 
 
 def pSBSourceManager(obj: Optional[lldb.SBSourceManager]) -> None:
@@ -1696,7 +1711,9 @@ def pSBQueue(obj: Optional[lldb.SBQueue]) -> None:
     print_format("GetProcess", queue.GetProcess())  # SBProcess
     print_format("GetQueueID", queue.GetQueueID())
     print_format("GetName", queue.GetName())
-    print_format("GetKind", queue.GetKind())
+    queue_kind = queue.GetKind()  # lldb::QueueKind int
+    print_format("GetKind(raw)", queue_kind)
+    print_format("GetKind(resolved)", get_string_from_queue_kind(queue_kind))
     print_format("GetIndexID", queue.GetIndexID())
     print_format("GetNumThreads", queue.GetNumThreads())
     print_format("GetNumPendingItems", queue.GetNumPendingItems())
@@ -1799,6 +1816,7 @@ def pSBExpressionOptions(obj: Optional[lldb.SBExpressionOptions]) -> None:
     print_format("GetStopOthers", options.GetStopOthers())
     print_format("GetTrapExceptions", options.GetTrapExceptions())
     print_format("GetPlaygroundTransformEnabled", options.GetPlaygroundTransformEnabled())
+    print_format("GetPlaygroundTransformHighPerformance", options.GetPlaygroundTransformHighPerformance())
     print_format("GetREPLMode", options.GetREPLMode())
     print_format("GetGenerateDebugInfo", options.GetGenerateDebugInfo())
     print_format("GetSuppressPersistentResult", options.GetSuppressPersistentResult())
