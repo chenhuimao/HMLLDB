@@ -393,13 +393,16 @@ def complete_backtrace(debugger, command, exe_ctx, result, internal_dict):
 
     # print information about remaining frames
     current_fp_value_int = general_purpose_registers.GetChildMemberWithName('fp').GetValueAsUnsigned()
-    previous_fp_value_int = HM.load_address_value(str(current_fp_value_int), exe_ctx)
+    previous_fp_value_int = HM.load_address_value(exe_ctx, current_fp_value_int)
     while previous_fp_value_int > 0:
-        current_lr_value_int = HM.load_address_value(str(current_fp_value_int + 8), exe_ctx)
+        current_lr_value_int = HM.load_address_value(exe_ctx, current_fp_value_int + 8)
+        if current_lr_value_int == -1:
+            HM.DPrint(f"load address value: Invalid result: {hex(current_fp_value_int + 8)}")
+            break
         current_lr_value_int = HM.strip_pac_sign_address(current_lr_value_int, exe_ctx.GetProcess())
         current_lr_desc = HM.get_image_lookup_summary_from_address(str(current_lr_value_int))
         print(f"\tframe #{frame_count}:\t{hex(current_lr_value_int)}\t{current_lr_desc}")
         frame_count += 1
         current_fp_value_int = previous_fp_value_int
-        previous_fp_value_int = HM.load_address_value(str(current_fp_value_int), exe_ctx)
+        previous_fp_value_int = HM.load_address_value(exe_ctx, current_fp_value_int)
 

@@ -447,14 +447,12 @@ General Purpose Registers:
 
 
 ### reference
-Scan the image section to obtain all reference addresses of a certain address.     
+Scan the image section to obtain all reference addresses of a certain address. You can query the address outside the image range.      
+
+This command is similar to the "References to" function of the "Hopper Disassembler".     
 ```
 Syntax:
     reference <address> <image_name>
-
-Examples:
-    (lldb) reference 0x12345678 MyApp
-    (lldb) reference 0x12345678 UIKitCore
 
 
 (lldb) reference 0x18e9b27a0 UIKitCore
@@ -465,10 +463,31 @@ Examples:
 0x18df4e8f0: UIKitCore`-[UIApplication _performKeyCommandInvocation:allowsRepeat:] + 280
 0x18e087250: UIKitCore`-[UITableView _updateCell:withValue:] + 224
 [HMLLDB] Reference count:5
+
+
+# Query the setenv function address. This address is outside the image(DemoApp) range.
+(lldb) dis -n setenv
+libsystem_c.dylib`setenv:
+    0x19fa6c6d0 <+0>:   pacibsp 
+    0x19fa6c6d4 <+4>:   stp    x22, x21, [sp, #-0x30]!
+    ...
+
+(lldb) reference 0x19fa6c6d0 DemoApp
+[HMLLDB] These are the scan results:
+0x100f045e4: DemoApp`symbol stub for: setenv + 8
+[HMLLDB] Reference count:1
+
+# 0x100f045dc = 0x100f045e4 - 8
+(lldb) reference 0x100f045dc DemoApp
+[HMLLDB] These are the scan results:
+0x100efb0ec: DemoApp`-[ViewController viewDidLoad] + 660 at ViewController.mm:46:5
+0x100efb378: DemoApp`-[ViewController clickBtn1:] + 20 at ViewController.mm:72:5
+[HMLLDB] Reference count:2
 ```
 Notice:
-- This command is **expensive** to scan large modules. For example, it takes 100 seconds to scan UIKitCore.
-- Currently, the query is only based on the b/bl instruction. You should consider the **"stub" function** and **"island" function** when using it.
+- This command is **expensive** to scan large modules. For example, it takes 240 seconds to scan UIKitCore.
+- This command will query the targets of **all b/bl instructions** and analyze **most of the adr/adrp instructions** and subsequent instructions.
+- You should consider the **"stub" function** and **"island" function** when using it.
 
 ### adrp
 Get the execution result of the `adrp` instruction.    

@@ -204,21 +204,29 @@ def get_module_name_from_address(address_str: str) -> str:
     return module_name
 
 
-def load_address_value(address_str: str, exe_ctx: lldb.SBExecutionContext) -> int:
-    is_valid_address, address_int = int_value_from_string(address_str)
-    if not is_valid_address:
-        DPrint(f"load_address_value: Invalid address: {address_str}")
-        return -1
-
+def load_address_value(exe_ctx: lldb.SBExecutionContext, address_int: int) -> int:
     ldr_return_object = lldb.SBCommandReturnObject()
     lldb.debugger.GetCommandInterpreter().HandleCommand(f"x/a {address_int}", exe_ctx, ldr_return_object)
     load_address_output = ldr_return_object.GetOutput()
     if len(load_address_output) == 0:
-        DPrint(f"load_address_value: Invalid result: {address_str}")
         return -1
 
     ldr_result = load_address_output.split()[1]
     return int(ldr_result, 16)
+
+
+def load_address_value_signed_word(exe_ctx: lldb.SBExecutionContext, address_int: int) -> int:
+    ldrsw_return_object = lldb.SBCommandReturnObject()
+    lldb.debugger.GetCommandInterpreter().HandleCommand(f"x/a {address_int}", exe_ctx, ldrsw_return_object)
+    load_address_output = ldrsw_return_object.GetOutput()
+    if len(load_address_output) == 0:
+        return -1
+
+    ldrsw_result_list = load_address_output.split()
+    ldrsw_result = int(ldrsw_result_list[1], 16) & 0xFFFFFFFF
+    if ldrsw_result & 0x80000000 > 0:
+        ldrsw_result += 0xFFFFFFFF00000000
+    return ldrsw_result
 
 
 def strip_pac_sign_address(address_int: int, process: lldb.SBProcess = None) -> int:

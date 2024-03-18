@@ -191,7 +191,7 @@ def comment_for_adrp(instruction: lldb.SBInstruction, exe_ctx: lldb.SBExecutionC
     target = exe_ctx.GetTarget()
     if instruction.GetMnemonic(target) != 'adrp':
         return ""
-    # # adrp x8, -24587
+    # adrp x8, -24587
     operands = instruction.GetOperands(target).split(', ')
     adrp_result_tuple: Tuple[int, str] = HMCalculationHelper.calculate_adrp_result_with_immediate_and_pc_address(int(operands[1]), instruction.GetAddress().GetLoadAddress(target))
     comment = f"{operands[0]} = {adrp_result_tuple[1]}"
