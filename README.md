@@ -447,42 +447,73 @@ General Purpose Registers:
 
 
 ### reference
-Scan the image section to obtain all reference addresses of a certain address. You can query the address outside the image range.      
+Scan the image section to obtain all reference addresses of a certain address. You can query addresses stored in memory, which means you can query addresses outside the image range.      
 
-This command is similar to the "References to" function of the "Hopper Disassembler".     
+The "reference" command is similar to the "References to" function of "Hopper Disassembler". The difference is:    
+
+- In a few cases, the search results are not as complete as those found by "Hopper Disassembler".
+- Supports querying the address loaded into memory, which means you can query addresses outside the image range.
+
 ```
 Syntax:
     reference <address> <image_name>
 
+# Example 1: Query the address in the image(UIKitCore)
+(lldb) dis -n "-[UIControl sendAction:to:forEvent:]"
+UIKitCore`-[UIControl sendAction:to:forEvent:]:
+    ...
+    0x19a7eb730 <+108>: bl     0x19bd627a0               ; objc_msgSend$sendAction:toTarget:fromSender:forEvent:
+    ...
 
-(lldb) reference 0x18e9b27a0 UIKitCore
+# Want to query which addresses will jump to the "objc_msgSend$sendAction:toTarget:fromSender:forEvent:" function in UIKitCore
+(lldb) reference 0x19bd627a0 UIKitCore
 [HMLLDB] These are the scan results:
-0x18d43b730: UIKitCore`-[UIControl sendAction:to:forEvent:] + 108
-0x18d875624: UIKitCore`-[UITabBar _sendAction:withEvent:] + 388
-0x18d87ed14: UIKitCore`-[UIToolbar _sendAction:withEvent:] + 328
-0x18df4e8f0: UIKitCore`-[UIApplication _performKeyCommandInvocation:allowsRepeat:] + 280
-0x18e087250: UIKitCore`-[UITableView _updateCell:withValue:] + 224
-[HMLLDB] Reference count:5
+0x19a7eb730: UIKitCore`-[UIControl sendAction:to:forEvent:] + 108
+0x19ac25624: UIKitCore`-[UITabBar _sendAction:withEvent:] + 388
+0x19ac2ed14: UIKitCore`-[UIToolbar _sendAction:withEvent:] + 328
+0x19b2fe8f0: UIKitCore`-[UIApplication _performKeyCommandInvocation:allowsRepeat:] + 280
+0x19b437250: UIKitCore`-[UITableView _updateCell:withValue:] + 224
+[HMLLDB] Scan result count:5
+[HMLLDB] Scan result count in memory:0
 
 
-# Query the setenv function address. This address is outside the image(DemoApp) range.
+# Example 2: Query the address of using UIPasteboard class in DemoApp. This address is outside the image(DemoApp) range.
+# 1.lookup OBJC_CLASS_$_UIPasteboard load address
+(lldb) image lookup -vs UIPasteboard
+        ...
+        Symbol: id = {0x00036667}, range = [0x00000001eef79138-0x00000001eef79160), name="UIPasteboard", mangled="OBJC_CLASS_$_UIPasteboard"
+        
+# 2.Query the address of using UIPasteboard class in DemoApp
+(lldb) reference 0x00000001eef79138 DemoApp
+[HMLLDB] Scan result count:0
+[HMLLDB] These are the scan results in memory:
+0x100a2ae9c: DemoApp`-[ViewController viewDidLoad] + 68 at ViewController.mm:27:6
+[HMLLDB] Scan result count in memory:1
+
+
+# Example 3 :Query the address of the setenv function used in the DemoApp. This address is outside the image(DemoApp) range.
+# 1.Get the loading address of the setenv function
 (lldb) dis -n setenv
 libsystem_c.dylib`setenv:
     0x19fa6c6d0 <+0>:   pacibsp 
     0x19fa6c6d4 <+4>:   stp    x22, x21, [sp, #-0x30]!
     ...
 
+# 2.Get the setenv stub function address in the DemoApp
 (lldb) reference 0x19fa6c6d0 DemoApp
-[HMLLDB] These are the scan results:
-0x100f045e4: DemoApp`symbol stub for: setenv + 8
-[HMLLDB] Reference count:1
+[HMLLDB] Scan result count:0
+[HMLLDB] These are the scan results in memory:
+0x104a50768: DemoApp`symbol stub for: setenv + 4
+[HMLLDB] Scan result count in memory:1
 
-# 0x100f045dc = 0x100f045e4 - 8
-(lldb) reference 0x100f045dc DemoApp
+# 3.Get the address of the setenv stub function used in the DemoApp
+# 0x104a50764 = 0x104a50768 - 4
+(lldb) reference 0x104a50764 DemoApp
 [HMLLDB] These are the scan results:
-0x100efb0ec: DemoApp`-[ViewController viewDidLoad] + 660 at ViewController.mm:46:5
-0x100efb378: DemoApp`-[ViewController clickBtn1:] + 20 at ViewController.mm:72:5
-[HMLLDB] Reference count:2
+0x104a470ec: DemoApp`-[ViewController viewDidLoad] + 660 at ViewController.mm:46:5
+0x104a47388: DemoApp`-[ViewController clickBtn1:] + 36 at ViewController.mm:72:5
+[HMLLDB] Scan result count:2
+[HMLLDB] Scan result count in memory:0
 ```
 Notice:
 - This command is **expensive** to scan large modules. For example, it takes 240 seconds to scan UIKitCore.

@@ -34,6 +34,7 @@ import HMLLDBHelpers as HM
 
 
 g_image_address_target_dic: Dict[str, Dict[int, int]] = {}
+g_image_address_ldr_dic: Dict[str, Dict[int, int]] = {}
 
 
 def __lldb_init_module(debugger, internal_dict):
@@ -72,7 +73,7 @@ def reference(debugger, command, exe_ctx, result, internal_dict):
         return
 
     image_name = command_args[1]
-    global g_image_address_target_dic
+    global g_image_address_target_dic, g_image_address_ldr_dic
 
     start_time = datetime.now().strftime("%H:%M:%S")
     is_first_scan_target_image = False
@@ -92,25 +93,44 @@ def reference(debugger, command, exe_ctx, result, internal_dict):
             HM.DPrint(f"Unable to find module:{image_name}. Please enter the \"image list\" command to view all modules.")
             return
 
+        # Initialize variables corresponding to the module
+        address_target_dic: Dict[int, int] = {}
+        g_image_address_target_dic[image_name] = address_target_dic
+        address_ldr_dic: Dict[int, int] = {}
+        g_image_address_ldr_dic[image_name] = address_ldr_dic
         # Scan module
-        g_image_address_target_dic[image_name] = {}
         section_num = target_module.GetNumSections()
         for i in range(section_num):
             section = target_module.GetSectionAtIndex(i)
-            scan_section_code(exe_ctx, image_name, section)
+            scan_section_code(exe_ctx, section, address_target_dic, address_ldr_dic)
+
+    else:
+        address_target_dic: Dict[int, int] = g_image_address_target_dic[image_name]
+        address_ldr_dic: Dict[int, int] = g_image_address_ldr_dic[image_name]
 
     # Traverse records and print matching results
-    address_target_dic: Dict[int, int] = g_image_address_target_dic[image_name]
-    # HM.DPrint(f"address_target_dic length:{len(address_target_dic)}")
-    HM.DPrint("These are the scan results:")
     result_count = 0
     for key, value in address_target_dic.items():
         if value == target_address_int:
             result_count += 1
             result_address: str = hex(key)
+            if result_count == 1:
+                HM.DPrint("These are the scan results:")
             print(f"{result_address}: {HM.get_image_lookup_summary_from_address(result_address)}")
 
-    HM.DPrint(f"Reference count:{result_count}")
+    HM.DPrint(f"Scan result count:{result_count}")
+
+    # Traverse memory records and print matching results
+    result_count = 0
+    for key, value in address_ldr_dic.items():
+        if value == target_address_int:
+            result_count += 1
+            result_address: str = hex(key)
+            if result_count == 1:
+                HM.DPrint("These are the scan results in memory:")
+            print(f"{result_address}: {HM.get_image_lookup_summary_from_address(result_address)}")
+
+    HM.DPrint(f"Scan result count in memory:{result_count}")
 
     # Print time when scanning moudle for the first time
     if is_first_scan_target_image:
@@ -119,14 +139,14 @@ def reference(debugger, command, exe_ctx, result, internal_dict):
         HM.DPrint(f"Stop time: {stop_time}")
 
 
-def scan_section_code(exe_ctx: lldb.SBExecutionContext, module_name: str, section: lldb.SBSection) -> None:
+def scan_section_code(exe_ctx: lldb.SBExecutionContext, section: lldb.SBSection, address_target_dic: Dict[int, int], address_ldr_dic: Dict[int, int]) -> None:
     target: lldb.SBTarget = exe_ctx.GetTarget()
     section_type_int = section.GetSectionType()
     if section_type_int == lldb.eSectionTypeContainer:
         sub_sections_num = section.GetNumSubSections()
         for i in range(sub_sections_num):
             sub_section = section.GetSubSectionAtIndex(i)
-            scan_section_code(exe_ctx, module_name, sub_section)
+            scan_section_code(exe_ctx, sub_section, address_target_dic, address_ldr_dic)
     elif section_type_int == lldb.eSectionTypeCode:
         HM.DPrint(f"Analyzing section:{get_description_of_section(section)}")
         section_load_address_start = section.GetLoadAddress(target)
@@ -138,7 +158,7 @@ def scan_section_code(exe_ctx: lldb.SBExecutionContext, module_name: str, sectio
         analyzing_snippet_count = 0
         last_percentage: float = 0.0
         while current_address + span < section_load_address_end:
-            instruction_analysis(exe_ctx, module_name, current_address, current_address + span)
+            instruction_analysis(exe_ctx, current_address, current_address + span, address_target_dic, address_ldr_dic)
             current_address = current_address + span
             # print percentage if necessary
             if snippet_count > 120:
@@ -151,16 +171,14 @@ def scan_section_code(exe_ctx: lldb.SBExecutionContext, module_name: str, sectio
 
         # analysis last snippet
         if section_load_address_end - current_address >= 4:
-            instruction_analysis(exe_ctx, module_name, current_address, section_load_address_end)
+            instruction_analysis(exe_ctx, current_address, section_load_address_end, address_target_dic, address_ldr_dic)
 
 
-def instruction_analysis(exe_ctx: lldb.SBExecutionContext, module_name: str, start_address: int, end_address: int) -> None:
+def instruction_analysis(exe_ctx: lldb.SBExecutionContext, start_address: int, end_address: int, address_target_dic: Dict[int, int], address_ldr_dic: Dict[int, int]) -> None:
     target: lldb.SBTarget = exe_ctx.GetTarget()
     instruction_count = int((end_address - start_address) / 4)
     address: lldb.SBAddress = lldb.SBAddress(start_address, target)
     instruction_list: lldb.SBInstructionList = target.ReadInstructions(address, instruction_count)
-    global g_image_address_target_dic
-    address_target_dic: Dict[int, int] = g_image_address_target_dic[module_name]
     for i in range(instruction_count):
         instruction: lldb.SBInstruction = instruction_list.GetInstructionAtIndex(i)
         mnemonic: str = instruction.GetMnemonic(target)
@@ -170,9 +188,11 @@ def instruction_analysis(exe_ctx: lldb.SBExecutionContext, module_name: str, sta
             is_valid_address, target_address_int = HM.int_value_from_string(target_address_str)
             if is_valid_address:
                 address_target_dic[instruction.GetAddress().GetLoadAddress(target)] = target_address_int
+            else:
+                HM.DPrint("Error: Unsupported format in b/bl.")
         elif mnemonic in ['adr', 'adrp']:
             # Record all adr/adrp logic
-            record_adrp_logic(exe_ctx, instruction, address_target_dic)
+            record_adrp_logic(exe_ctx, instruction, address_target_dic, address_ldr_dic)
 
         # For testing
         # if mnemonic in ['nop']:
@@ -194,9 +214,9 @@ def get_module_name(module: lldb.SBModule) -> str:
     return os.path.basename(module.GetFileSpec().GetFilename())
 
 
-def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_instruction: lldb.SBInstruction, address_target_dic: Dict[int, int]) -> None:
+def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_instruction: lldb.SBInstruction, address_target_dic: Dict[int, int], address_ldr_dic: Dict[int, int]) -> None:
     # Analyze the specified instructions after adrp in sequence, and analyze up to 5 instructions.
-    # FIXME: The current x0 and w0 registers are independent and need to be merged.
+    # FIXME: x0 and w0 registers are independent and need to be merged.
     register_dic: Dict[str, int] = {}
     target = exe_ctx.GetTarget()
 
@@ -209,7 +229,7 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_instruction: lldb.S
         # adr x17, #-0x8000
         operands = adrp_instruction.GetOperands(target).split(', ')
         if not (operands[1].startswith('#0x') or operands[1].startswith('#-0x')):
-            HM.DPrint("Error: Unsupported format.")
+            # HM.DPrint(f"Error: Unsupported format in adr. Load address:{hex(adrp_instruction_load_address)}")
             return
         adrp_result = adrp_instruction_load_address + int(operands[1].lstrip('#'), 16)
         adrp_target_register = operands[0]
@@ -234,16 +254,13 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_instruction: lldb.S
             if not analyze_add(exe_ctx, instruction, register_dic, address_target_dic):
                 break
         elif mnemonic == 'ldr':
-            if not analyze_ldr(exe_ctx, instruction, register_dic, address_target_dic):
+            if not analyze_ldr(exe_ctx, instruction, register_dic, address_target_dic, address_ldr_dic):
                 break
         elif mnemonic == 'ldrsw':
-            if not analyze_ldr(exe_ctx, instruction, register_dic, address_target_dic):
+            if not analyze_ldr(exe_ctx, instruction, register_dic, address_target_dic, address_ldr_dic):
                 break
         elif mnemonic == 'mov':
             if not analyze_mov(exe_ctx, instruction, register_dic, address_target_dic):
-                break
-        elif mnemonic != 'brk' and (mnemonic.startswith("br") or mnemonic.startswith("blr")):
-            if not analyze_branch(exe_ctx, instruction, register_dic, address_target_dic):
                 break
         elif mnemonic == 'str':
             if not analyze_str(exe_ctx, instruction, register_dic, address_target_dic):
@@ -283,7 +300,7 @@ def analyze_add(exe_ctx: lldb.SBExecutionContext, add_instruction: lldb.SBInstru
     return True
 
 
-def analyze_ldr(exe_ctx: lldb.SBExecutionContext, ldr_instruction: lldb.SBInstruction, register_dic: Dict[str, int], address_target_dic: Dict[int, int]) -> None:
+def analyze_ldr(exe_ctx: lldb.SBExecutionContext, ldr_instruction: lldb.SBInstruction, register_dic: Dict[str, int], address_target_dic: Dict[int, int], address_ldr_dic: Dict[int, int]) -> None:
     target = exe_ctx.GetTarget()
     operand_tuple: Tuple[bool, str, str, str] = resolve_ldr_operands(ldr_instruction.GetOperands(target))
     if not operand_tuple[0]:
@@ -301,7 +318,8 @@ def analyze_ldr(exe_ctx: lldb.SBExecutionContext, ldr_instruction: lldb.SBInstru
 
     load_address: int = register_dic[operand_tuple[2]] + op3_value
     # The ldr instruction records the loading address
-    address_target_dic[ldr_instruction.GetAddress().GetLoadAddress(target)] = load_address
+    ldr_instruction_load_address_int: int = ldr_instruction.GetAddress().GetLoadAddress(target)
+    address_target_dic[ldr_instruction_load_address_int] = load_address
 
     mnemonic = ldr_instruction.GetMnemonic(target)
     if mnemonic == 'ldr':
@@ -313,10 +331,12 @@ def analyze_ldr(exe_ctx: lldb.SBExecutionContext, ldr_instruction: lldb.SBInstru
         raise Exception("Parameter error, unsupported instruction type")
 
     if ldr_result == -1:
-        # HM.DPrint(f"Invalid load address, instruction:{ldr_instruction}, instruction load address: {hex(ldr_instruction.GetAddress().GetLoadAddress(target))}")
+        # HM.DPrint(f"Invalid load address, instruction:{ldr_instruction}, instruction load address: {hex(ldr_instruction_load_address_int)}")
         return False
 
     register_dic[operand_tuple[1]] = ldr_result
+    # The ldr instruction records the result address in memory
+    address_ldr_dic[ldr_instruction_load_address_int] = ldr_result
     return True
 
 
@@ -333,16 +353,6 @@ def analyze_mov(exe_ctx: lldb.SBExecutionContext, mov_instruction: lldb.SBInstru
 
     register_dic[operands[0]] = op1_value
     address_target_dic[mov_instruction.GetAddress().GetLoadAddress(target)] = op1_value
-    return True
-
-
-def analyze_branch(exe_ctx: lldb.SBExecutionContext, branch_instruction: lldb.SBInstruction, register_dic: Dict[str, int], address_target_dic: Dict[int, int]) -> bool:
-    target = exe_ctx.GetTarget()
-    target_register_str = branch_instruction.GetOperands(target).split(', ')[0]
-    if target_register_str not in register_dic:
-        return False
-
-    address_target_dic[branch_instruction.GetAddress().GetLoadAddress(target)] = register_dic[target_register_str]
     return True
 
 
