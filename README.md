@@ -482,7 +482,13 @@ UIKitCore`-[UIControl sendAction:to:forEvent:]:
 (lldb) image lookup -vs UIPasteboard
         ...
         Symbol: id = {0x00036667}, range = [0x00000001eef79138-0x00000001eef79160), name="UIPasteboard", mangled="OBJC_CLASS_$_UIPasteboard"
-        
+
+# You can also find its loading address using the "fclass" command.
+(lldb) fclass UIPasteboard
+...
+UIPasteboard (0x1eef79138, UIKitCore)
+...
+
 # 2.Query the address of using UIPasteboard class in DemoApp
 (lldb) reference 0x00000001eef79138 DemoApp
 [HMLLDB] Scan result count:0
