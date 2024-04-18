@@ -364,6 +364,9 @@ def complete_backtrace(debugger, command, exe_ctx, result, internal_dict):
     Examples:
         (lldb) cbt
 
+    Notice:
+        If the -fomit-frame-pointer parameter is added when compiling, the 'cbt' command cannot find the hidden frame. Therefore, it is recommended to use 'cbt' and 'bt' commands together.
+
     This command is implemented in HMTrace.py
     """
 

@@ -300,6 +300,12 @@ _animationInfo
 
 ### bpframe
 Set a  breakpoint that stops only when the specified stack keyword is matched.    
+
+Notice:
+- Separate keywords with spaces.
+- Match keywords in order.
+- Hitting a breakpoint is expensive even if it doesn't stop. Do not set breakpoint on high frequency symbol or address.
+
 ```
 Syntax:
 bpframe [--one-shot] <symbol or address> <stack keyword 1> <stack keyword 2> ... <stack keyword n>
@@ -359,9 +365,11 @@ When debugging the assembly instruction, it is very troublesome to see the `objc
 
 ### cbt
 `cbt` command: Completely displays the current thread\'s call stack based on the fp/lr register.     
-Xcode's "Debug Navigator" & `bt` command: Displays the current thread\'s call stack based on the libunwind.dylib.   
+Xcode's "Debug Navigator" & `bt` command: Displays the current thread\'s call stack based on DWARF information.   
 In some cases, the traceback based on libunwind.dylib may lose the call frame, and the actual execution process of the arm64 architecture application is based on the fp/lr register. Therefore, the `cbt` command was developed.    
-Notice: The `cbt` command only supports arm64 architecture devices.
+Notice:
+- The `cbt` command only supports arm64 architecture devices.
+- If the `-fomit-frame-pointer` parameter is added when compiling, the `cbt` command cannot find the hidden frame. Therefore, it is recommended to use `cbt` and `bt` commands together.
 
 
 ### rc
