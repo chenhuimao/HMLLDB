@@ -197,19 +197,46 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_instruction: lldb.S
     instruction_list: lldb.SBInstructionList = target.ReadInstructions(address, instruction_count)
     for i in range(instruction_count):
         instruction: lldb.SBInstruction = instruction_list.GetInstructionAtIndex(i)
+        comment = instruction.GetComment(target)
         mnemonic: str = instruction.GetMnemonic(target)
+        instruction_load_address_int: int = instruction.GetAddress().GetLoadAddress(target)
         if mnemonic == 'add':
-            if not analyze_add(exe_ctx, instruction, register_dic, address_comment_dict):
+            can_analyze_add, target_register_str, add_value = HMReference.analyze_add(exe_ctx, instruction, register_dic)
+            if not can_analyze_add:
                 break
+            if len(comment) == 0:
+                lookup_summary = HM.get_image_lookup_summary_from_address(hex(add_value))
+                add_comment = f"{target_register_str} = {hex(add_value)} {lookup_summary}"
+                address_comment_dict[instruction_load_address_int] = add_comment
         elif mnemonic == 'ldr':
-            if not analyze_ldr(exe_ctx, instruction, register_dic, address_comment_dict):
+            can_analyze_ldr, can_load_address, target_register_str, load_address_int, load_result_int = HMReference.analyze_ldr(exe_ctx, instruction, register_dic)
+            # TODO: image lookup -a <load_address_int>
+            # if can_load_address:
+
+            if not can_analyze_ldr:
                 break
+            # The ldr instruction records the result address in memory
+            if len(comment) == 0:
+                lookup_summary = HM.get_image_lookup_summary_from_address(hex(load_result_int))
+                ldr_comment = f"{target_register_str} = {hex(load_result_int)} {lookup_summary}"
+                address_comment_dict[instruction_load_address_int] = ldr_comment
+
         elif mnemonic == 'ldrsw':
-            if not analyze_ldr(exe_ctx, instruction, register_dic, address_comment_dict):
+            can_analyze_ldrsw, _, target_register_str, _, load_result_int = HMReference.analyze_ldr(exe_ctx, instruction, register_dic)
+            if not can_analyze_ldrsw:
                 break
+            # The ldrsw instruction records the result address in memory
+            if len(comment) == 0:
+                lookup_summary = HM.get_image_lookup_summary_from_address(hex(load_result_int))
+                ldr_comment = f"{target_register_str} = {hex(load_result_int)} {lookup_summary}"
+                address_comment_dict[instruction_load_address_int] = ldr_comment
         elif mnemonic == 'mov':
-            if not analyze_mov(exe_ctx, instruction, register_dic, address_comment_dict):
+            can_analyze_mov, target_register_str, mov_value = HMReference.analyze_mov(exe_ctx, instruction, register_dic)
+            if not can_analyze_mov:
                 break
+            if len(comment) == 0:
+                mov_comment = f"{target_register_str} = {hex(mov_value)}"
+                address_comment_dict[instruction_load_address_int] = mov_comment
         elif mnemonic == 'str':
             continue
         elif mnemonic == 'nop':
@@ -218,96 +245,6 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_instruction: lldb.S
             break
 
     return
-
-
-def analyze_add(exe_ctx: lldb.SBExecutionContext, add_instruction: lldb.SBInstruction, register_dic: Dict[str, int], address_comment_dict: Dict[int, str]) -> bool:
-    target = exe_ctx.GetTarget()
-    operands = add_instruction.GetOperands(target).split(', ')
-    if operands[1] in register_dic:
-        op1_value = register_dic[operands[1]]
-    else:
-        is_valid_value, immediate_operand_value = HM.int_value_from_string(operands[1].lstrip("#"))
-        if not is_valid_value:
-            return False
-        op1_value = immediate_operand_value
-
-    if operands[2] in register_dic:
-        op2_value = register_dic[operands[2]]
-    else:
-        is_valid_value, immediate_operand_value = HM.int_value_from_string(operands[2].lstrip("#"))
-        if not is_valid_value:
-            return False
-        op2_value = immediate_operand_value
-
-    register_dic[operands[0]] = op1_value + op2_value
-
-    comment = add_instruction.GetComment(target)
-    if len(comment) == 0:
-        lookup_summary = HM.get_image_lookup_summary_from_address(hex(op1_value + op2_value))
-        add_comment = f"{operands[0]} = {hex(op1_value + op2_value)} {lookup_summary}"
-        address_comment_dict[add_instruction.GetAddress().GetLoadAddress(target)] = add_comment
-    return True
-
-
-def analyze_ldr(exe_ctx: lldb.SBExecutionContext, ldr_instruction: lldb.SBInstruction, register_dic: Dict[str, int], address_comment_dict: Dict[int, str]) -> None:
-    target = exe_ctx.GetTarget()
-    operand_tuple: Tuple[bool, str, str, str] = HMReference.resolve_ldr_operands(ldr_instruction.GetOperands(target))
-    if not operand_tuple[0]:
-        return False
-    if operand_tuple[2] not in register_dic:
-        return False
-
-    if operand_tuple[3] in register_dic:
-        op3_value = register_dic[operand_tuple[3]]
-    else:
-        is_valid_value, immediate_operand_value = HM.int_value_from_string(operand_tuple[3].lstrip("#"))
-        if not is_valid_value:
-            return False
-        op3_value = immediate_operand_value
-
-    load_address: int = register_dic[operand_tuple[2]] + op3_value
-    ldr_instruction_load_address_int: int = ldr_instruction.GetAddress().GetLoadAddress(target)
-
-    mnemonic = ldr_instruction.GetMnemonic(target)
-    if mnemonic == 'ldr':
-        ldr_result = HM.load_address_value(exe_ctx, load_address)
-    elif mnemonic == 'ldrsw':
-        ldr_result = HM.load_address_value_signed_word(exe_ctx, load_address)
-    else:
-        ldr_result = -1
-        raise Exception("Parameter error, unsupported instruction type")
-
-    if ldr_result == -1:
-        # HM.DPrint(f"Invalid load address, instruction:{ldr_instruction}, instruction load address: {hex(ldr_instruction_load_address_int)}")
-        return False
-
-    register_dic[operand_tuple[1]] = ldr_result
-    # The ldr instruction records the result address in memory
-    comment = ldr_instruction.GetComment(target)
-    if len(comment) == 0:
-        lookup_summary = HM.get_image_lookup_summary_from_address(hex(ldr_result))
-        ldr_comment = f"{operand_tuple[1]} = {hex(ldr_result)} {lookup_summary}"
-        address_comment_dict[ldr_instruction_load_address_int] = ldr_comment
-    return True
-
-
-def analyze_mov(exe_ctx: lldb.SBExecutionContext, mov_instruction: lldb.SBInstruction, register_dic: Dict[str, int], address_comment_dict: Dict[int, str]) -> bool:
-    target = exe_ctx.GetTarget()
-    operands = mov_instruction.GetOperands(target).split(', ')
-    if operands[1] in register_dic:
-        op1_value = register_dic[operands[1]]
-    else:
-        is_valid_value, immediate_operand_value = HM.int_value_from_string(operands[1].lstrip("#"))
-        if not is_valid_value:
-            return False
-        op1_value = immediate_operand_value
-
-    register_dic[operands[0]] = op1_value
-    comment = mov_instruction.GetComment(target)
-    if len(comment) == 0:
-        mov_comment = f"{operands[0]} = {hex(op1_value)}"
-        address_comment_dict[mov_instruction.GetAddress().GetLoadAddress(target)] = mov_comment
-    return True
 
 
 def comment_for_branch(exe_ctx: lldb.SBExecutionContext, instruction: lldb.SBInstruction) -> str:

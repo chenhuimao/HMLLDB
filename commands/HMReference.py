@@ -251,17 +251,36 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_instruction: lldb.S
         instruction: lldb.SBInstruction = instruction_list.GetInstructionAtIndex(i)
         mnemonic: str = instruction.GetMnemonic(target)
         if mnemonic == 'add':
-            if not analyze_add(exe_ctx, instruction, register_dic, address_target_dic):
+            can_analyze_add, _, value = analyze_add(exe_ctx, instruction, register_dic)
+            if not can_analyze_add:
                 break
+            address_target_dic[instruction.GetAddress().GetLoadAddress(target)] = value
         elif mnemonic == 'ldr':
-            if not analyze_ldr(exe_ctx, instruction, register_dic, address_target_dic, address_ldr_dic):
+            ldr_instruction_load_address_int: int = instruction.GetAddress().GetLoadAddress(target)
+            can_analyze_ldr, can_load_address, _, load_address_int, load_result_int = analyze_ldr(exe_ctx, instruction, register_dic)
+            if can_load_address:
+                # The ldr instruction records the loading address
+                address_target_dic[ldr_instruction_load_address_int] = load_address_int
+            if not can_analyze_ldr:
                 break
+            # The ldr instruction records the result address in memory
+            address_ldr_dic[ldr_instruction_load_address_int] = load_result_int
         elif mnemonic == 'ldrsw':
-            if not analyze_ldr(exe_ctx, instruction, register_dic, address_target_dic, address_ldr_dic):
+            ldr_instruction_load_address_int: int = instruction.GetAddress().GetLoadAddress(target)
+            can_analyze_ldrsw, can_load_address, _, load_address_int, load_result_int = analyze_ldr(exe_ctx, instruction, register_dic)
+            if can_load_address:
+                # The ldrsw instruction records the loading address
+                address_target_dic[ldr_instruction_load_address_int] = load_address_int
+            if not can_analyze_ldrsw:
                 break
+            # The ldrsw instruction records the result address in memory
+            address_ldr_dic[ldr_instruction_load_address_int] = load_result_int
         elif mnemonic == 'mov':
-            if not analyze_mov(exe_ctx, instruction, register_dic, address_target_dic):
+            can_analyze_mov, _, mov_value = analyze_mov(exe_ctx, instruction, register_dic)
+            if not can_analyze_mov:
                 break
+            address_target_dic[instruction.GetAddress().GetLoadAddress(target)] = mov_value
+
         elif mnemonic == 'str':
             if not analyze_str(exe_ctx, instruction, register_dic, address_target_dic):
                 break
@@ -276,7 +295,8 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_instruction: lldb.S
         address_target_dic[adrp_instruction_load_address] = adrp_result
 
 
-def analyze_add(exe_ctx: lldb.SBExecutionContext, add_instruction: lldb.SBInstruction, register_dic: Dict[str, int], address_target_dic: Dict[int, int]) -> bool:
+def analyze_add(exe_ctx: lldb.SBExecutionContext, add_instruction: lldb.SBInstruction, register_dic: Dict[str, int]) -> Tuple[bool, str, int]:
+    # return (analyze_result, target_register_str, add_value)
     target = exe_ctx.GetTarget()
     operands = add_instruction.GetOperands(target).split(', ')
     if operands[1] in register_dic:
@@ -284,7 +304,7 @@ def analyze_add(exe_ctx: lldb.SBExecutionContext, add_instruction: lldb.SBInstru
     else:
         is_valid_value, immediate_operand_value = HM.int_value_from_string(operands[1].lstrip("#"))
         if not is_valid_value:
-            return False
+            return False, "", 0
         op1_value = immediate_operand_value
 
     if operands[2] in register_dic:
@@ -292,34 +312,31 @@ def analyze_add(exe_ctx: lldb.SBExecutionContext, add_instruction: lldb.SBInstru
     else:
         is_valid_value, immediate_operand_value = HM.int_value_from_string(operands[2].lstrip("#"))
         if not is_valid_value:
-            return False
+            return False, "", 0
         op2_value = immediate_operand_value
 
     register_dic[operands[0]] = op1_value + op2_value
-    address_target_dic[add_instruction.GetAddress().GetLoadAddress(target)] = op1_value + op2_value
-    return True
+    return True, operands[0], op1_value + op2_value
 
 
-def analyze_ldr(exe_ctx: lldb.SBExecutionContext, ldr_instruction: lldb.SBInstruction, register_dic: Dict[str, int], address_target_dic: Dict[int, int], address_ldr_dic: Dict[int, int]) -> None:
+def analyze_ldr(exe_ctx: lldb.SBExecutionContext, ldr_instruction: lldb.SBInstruction, register_dic: Dict[str, int]) -> Tuple[bool, bool, str, int, int]:
+    # return (analyze_result, load_address_result, target_register_str, load_address_int, load_result_int)
     target = exe_ctx.GetTarget()
     operand_tuple: Tuple[bool, str, str, str] = resolve_ldr_operands(ldr_instruction.GetOperands(target))
     if not operand_tuple[0]:
-        return False
+        return False, False, "", 0, 0
     if operand_tuple[2] not in register_dic:
-        return False
+        return False, False, "", 0, 0
 
     if operand_tuple[3] in register_dic:
         op3_value = register_dic[operand_tuple[3]]
     else:
         is_valid_value, immediate_operand_value = HM.int_value_from_string(operand_tuple[3].lstrip("#"))
         if not is_valid_value:
-            return False
+            return False, False, "", 0, 0
         op3_value = immediate_operand_value
 
     load_address: int = register_dic[operand_tuple[2]] + op3_value
-    # The ldr instruction records the loading address
-    ldr_instruction_load_address_int: int = ldr_instruction.GetAddress().GetLoadAddress(target)
-    address_target_dic[ldr_instruction_load_address_int] = load_address
 
     mnemonic = ldr_instruction.GetMnemonic(target)
     if mnemonic == 'ldr':
@@ -331,16 +348,16 @@ def analyze_ldr(exe_ctx: lldb.SBExecutionContext, ldr_instruction: lldb.SBInstru
         raise Exception("Parameter error, unsupported instruction type")
 
     if ldr_result == -1:
+        # ldr_instruction_load_address_int: int = ldr_instruction.GetAddress().GetLoadAddress(target)
         # HM.DPrint(f"Invalid load address, instruction:{ldr_instruction}, instruction load address: {hex(ldr_instruction_load_address_int)}")
-        return False
+        return False, True, "", load_address, 0
 
     register_dic[operand_tuple[1]] = ldr_result
-    # The ldr instruction records the result address in memory
-    address_ldr_dic[ldr_instruction_load_address_int] = ldr_result
-    return True
+    return True, True, operand_tuple[1], load_address, ldr_result
 
 
-def analyze_mov(exe_ctx: lldb.SBExecutionContext, mov_instruction: lldb.SBInstruction, register_dic: Dict[str, int], address_target_dic: Dict[int, int]) -> bool:
+def analyze_mov(exe_ctx: lldb.SBExecutionContext, mov_instruction: lldb.SBInstruction, register_dic: Dict[str, int]) -> Tuple[bool, str, int]:
+    # return (analyze_result, target_register_str, mov_value)
     target = exe_ctx.GetTarget()
     operands = mov_instruction.GetOperands(target).split(', ')
     if operands[1] in register_dic:
@@ -348,12 +365,11 @@ def analyze_mov(exe_ctx: lldb.SBExecutionContext, mov_instruction: lldb.SBInstru
     else:
         is_valid_value, immediate_operand_value = HM.int_value_from_string(operands[1].lstrip("#"))
         if not is_valid_value:
-            return False
+            return False, "", 0
         op1_value = immediate_operand_value
 
     register_dic[operands[0]] = op1_value
-    address_target_dic[mov_instruction.GetAddress().GetLoadAddress(target)] = op1_value
-    return True
+    return True, operands[0], op1_value
 
 
 def analyze_str(exe_ctx: lldb.SBExecutionContext, str_instruction: lldb.SBInstruction, register_dic: Dict[str, int], address_target_dic: Dict[int, int]) -> None:
