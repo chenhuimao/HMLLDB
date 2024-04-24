@@ -221,30 +221,13 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_instruction: lldb.S
     target = exe_ctx.GetTarget()
 
     # Calculate and save the value of adr/adrp instruction
-    adrp_instruction_load_address: int = adrp_instruction.GetAddress().GetLoadAddress(target)
-    adrp_instruction_mnemonic = adrp_instruction.GetMnemonic(target)
-    adrp_target_register = ""
-    adrp_result = -1
-    if adrp_instruction_mnemonic == 'adr':
-        # adr x17, #-0x8000
-        operands = adrp_instruction.GetOperands(target).split(', ')
-        if not (operands[1].startswith('#0x') or operands[1].startswith('#-0x')):
-            # HM.DPrint(f"Error: Unsupported format in adr. Load address:{hex(adrp_instruction_load_address)}")
-            return
-        adrp_result = adrp_instruction_load_address + int(operands[1].lstrip('#'), 16)
-        adrp_target_register = operands[0]
-    elif adrp_instruction_mnemonic == 'adrp':
-        # adrp x8, -24587
-        operands = adrp_instruction.GetOperands(target).split(', ')
-        adrp_result_tuple: Tuple[int, str] = HMCalculationHelper.calculate_adrp_result_with_immediate_and_pc_address(int(operands[1]), adrp_instruction_load_address)
-        adrp_result = adrp_result_tuple[0]
-        adrp_target_register = operands[0]
-    else:
+    can_analyze_adrp, _, adrp_result = analyze_adrp(exe_ctx, adrp_instruction, register_dic)
+    if not can_analyze_adrp:
         return
-    register_dic[adrp_target_register] = adrp_result
 
     # Analyze the specified instructions after adr/adrp
     instruction_count = 5
+    adrp_instruction_load_address: int = adrp_instruction.GetAddress().GetLoadAddress(target)
     address: lldb.SBAddress = lldb.SBAddress(adrp_instruction_load_address + 4, target)
     instruction_list: lldb.SBInstructionList = target.ReadInstructions(address, instruction_count)
     for i in range(instruction_count):
@@ -257,8 +240,8 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_instruction: lldb.S
             address_target_dic[instruction.GetAddress().GetLoadAddress(target)] = value
         elif mnemonic == 'ldr':
             ldr_instruction_load_address_int: int = instruction.GetAddress().GetLoadAddress(target)
-            can_analyze_ldr, can_load_address, _, load_address_int, load_result_int = analyze_ldr(exe_ctx, instruction, register_dic)
-            if can_load_address:
+            can_analyze_ldr, can_get_load_address, _, load_address_int, load_result_int = analyze_ldr(exe_ctx, instruction, register_dic)
+            if can_get_load_address:
                 # The ldr instruction records the loading address
                 address_target_dic[ldr_instruction_load_address_int] = load_address_int
             if not can_analyze_ldr:
@@ -267,8 +250,8 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_instruction: lldb.S
             address_ldr_dic[ldr_instruction_load_address_int] = load_result_int
         elif mnemonic == 'ldrsw':
             ldr_instruction_load_address_int: int = instruction.GetAddress().GetLoadAddress(target)
-            can_analyze_ldrsw, can_load_address, _, load_address_int, load_result_int = analyze_ldr(exe_ctx, instruction, register_dic)
-            if can_load_address:
+            can_analyze_ldrsw, can_get_load_address, _, load_address_int, load_result_int = analyze_ldr(exe_ctx, instruction, register_dic)
+            if can_get_load_address:
                 # The ldrsw instruction records the loading address
                 address_target_dic[ldr_instruction_load_address_int] = load_address_int
             if not can_analyze_ldrsw:
@@ -293,6 +276,33 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_instruction: lldb.S
     next_instruction: lldb.SBInstruction = instruction_list.GetInstructionAtIndex(0)
     if next_instruction.GetMnemonic(target) == 'nop':
         address_target_dic[adrp_instruction_load_address] = adrp_result
+
+
+def analyze_adrp(exe_ctx: lldb.SBExecutionContext, adrp_instruction: lldb.SBInstruction, register_dic: Dict[str, int]) -> Tuple[bool, str, int]:
+    # return (analyze_result, target_register_str, adrp_value)
+    target = exe_ctx.GetTarget()
+    adrp_instruction_load_address: int = adrp_instruction.GetAddress().GetLoadAddress(target)
+    adrp_instruction_mnemonic = adrp_instruction.GetMnemonic(target)
+    adrp_target_register = ""
+    adrp_result = -1
+    if adrp_instruction_mnemonic == 'adr':
+        # adr x17, #-0x8000
+        operands = adrp_instruction.GetOperands(target).split(', ')
+        if not (operands[1].startswith('#0x') or operands[1].startswith('#-0x')):
+            # HM.DPrint(f"Error: Unsupported format in adr. Load address:{hex(adrp_instruction_load_address)}")
+            return False, "", 0
+        adrp_result = adrp_instruction_load_address + int(operands[1].lstrip('#'), 16)
+        adrp_target_register = operands[0]
+    elif adrp_instruction_mnemonic == 'adrp':
+        # adrp x8, -24587
+        operands = adrp_instruction.GetOperands(target).split(', ')
+        adrp_result_tuple: Tuple[int, str] = HMCalculationHelper.calculate_adrp_result_with_immediate_and_pc_address(int(operands[1]), adrp_instruction_load_address)
+        adrp_result = adrp_result_tuple[0]
+        adrp_target_register = operands[0]
+    else:
+        return False, "", 0
+    register_dic[adrp_target_register] = adrp_result
+    return True, adrp_target_register, adrp_result
 
 
 def analyze_add(exe_ctx: lldb.SBExecutionContext, add_instruction: lldb.SBInstruction, register_dic: Dict[str, int]) -> Tuple[bool, str, int]:
@@ -320,7 +330,7 @@ def analyze_add(exe_ctx: lldb.SBExecutionContext, add_instruction: lldb.SBInstru
 
 
 def analyze_ldr(exe_ctx: lldb.SBExecutionContext, ldr_instruction: lldb.SBInstruction, register_dic: Dict[str, int]) -> Tuple[bool, bool, str, int, int]:
-    # return (analyze_result, load_address_result, target_register_str, load_address_int, load_result_int)
+    # return (analyze_result, can_get_load_address, target_register_str, load_address_int, load_result_int)
     target = exe_ctx.GetTarget()
     operand_tuple: Tuple[bool, str, str, str] = resolve_ldr_operands(ldr_instruction.GetOperands(target))
     if not operand_tuple[0]:
