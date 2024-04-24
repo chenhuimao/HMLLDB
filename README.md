@@ -603,15 +603,15 @@ UIKitCore`-[UIDevice systemVersion]:
     0x1afbe9e44 <+16>: adrp   x2, 329379                ; x2 = 0x20028c000
     0x1afbe9e48 <+20>: add    x2, x2, #0xef0            ; @"ProductVersion"
     0x1afbe9e4c <+24>: bl     0x1b0b06000               ; objc_msgSend$_deviceInfoForKey:
-    0x1afbe9e50 <+28>: bl     0x1b2be97f0               ; br x16, x16 = 0x1a538ade4 objc_claimAutoreleasedReturnValue
+    0x1afbe9e50 <+28>: bl     0x1b2be97f0               ; br x16, x16 = 0x1a538ade4 libobjc.A.dylib`objc_claimAutoreleasedReturnValue
     0x1afbe9e54 <+32>: mov    x19, x0
     0x1afbe9e58 <+36>: adrp   x8, 329342                ; x8 = 0x200267000
     0x1afbe9e5c <+40>: add    x8, x8, #0x90             ; @"Unknown"
     0x1afbe9e60 <+44>: cmp    x0, #0x0
     0x1afbe9e64 <+48>: csel   x0, x8, x0, eq
-    0x1afbe9e68 <+52>: bl     0x1b2be9ad0               ; br x16, x16 = 0x1a537e148 objc_retainAutoreleaseReturnValue
+    0x1afbe9e68 <+52>: bl     0x1b2be9ad0               ; br x16, x16 = 0x1a537e148 libobjc.A.dylib`objc_retainAutoreleaseReturnValue
     0x1afbe9e6c <+56>: mov    x20, x0
-    0x1afbe9e70 <+60>: bl     0x1b2be99c0               ; br x16, x16 = 0x1a537fc28 objc_release_x19
+    0x1afbe9e70 <+60>: bl     0x1b2be99c0               ; br x16, x16 = 0x1a537fc28 libobjc.A.dylib`objc_release_x19
     0x1afbe9e74 <+64>: mov    x0, x20
     0x1afbe9e78 <+68>: ldp    x29, x30, [sp, #0x10]
     0x1afbe9e7c <+72>: ldp    x20, x19, [sp], #0x20
