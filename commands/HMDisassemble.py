@@ -120,6 +120,16 @@ def enhanced_disassemble(debugger, command, exe_ctx, result, internal_dict):
 
 
 def get_address_from_assemble_line(assemble_line: str) -> int:
+    # 0x102b8f544 <+0>:  sub    sp, sp, #0x20
+    # -> 0x102b8f544 <+0>:  sub    sp, sp, #0x20
+
+    # 0x1d8ebff50: adrp   x16, -243123
+    # ->  0x1a31bc2f0: adrp   x16, 235058
+
+    # DemoApp[0x102b8f544] <+0>:  sub    sp, sp, #0x20
+
+    # DemoApp[0x10ed465e0]: adrp   x1, 15197
+
     keywords = assemble_line.split()
     if len(keywords) < 2:
         return lldb.LLDB_INVALID_ADDRESS
@@ -127,6 +137,12 @@ def get_address_from_assemble_line(assemble_line: str) -> int:
     address_str = keywords[0].rstrip(':')
     if keywords[0] == '->':
         address_str = keywords[1].rstrip(':')
+
+    # Get the contents of []
+    start = address_str.find('[')
+    end = address_str.find(']')
+    if 0 <= start < end:
+        address_str = address_str[start + 1:end]
 
     is_valid, address_int = HM.int_value_from_string(address_str)
     if is_valid:
@@ -264,7 +280,7 @@ def comment_for_branch(exe_ctx: lldb.SBExecutionContext, branch_instruction: lld
         if mnemonic in ['br', 'blr']:
             # Get the comment of the target address of the next branch instruction
             operands = instruction.GetOperands(target)
-            if not operands in register_dic:
+            if operands not in register_dic:
                 return ""
             target_result = register_dic[operands]
             lookup_summary = HM.get_image_lookup_summary_from_address(hex(target_result))
@@ -273,8 +289,13 @@ def comment_for_branch(exe_ctx: lldb.SBExecutionContext, branch_instruction: lld
             # resolve "x1" register when target is objc_msgSend
             if 'objc_msgSend' in lookup_summary and 'x1' in register_dic:
                 x1_value = register_dic['x1']
-                x1_lookup_summary = HM.get_image_lookup_summary_from_address(hex(x1_value))
-                my_comment = f"{my_comment}, sel = {x1_lookup_summary}"
+                # Sometimes the summary is missing when using "image lookup", so use the "x/s" command instead.
+                x1_str_return_object = lldb.SBCommandReturnObject()
+                exe_ctx.GetTarget().GetDebugger().GetCommandInterpreter().HandleCommand(f"x/s {x1_value}", exe_ctx, x1_str_return_object)
+                output_list = x1_str_return_object.GetOutput().split(" ")
+                if len(output_list) >= 2:
+                    x1_str_result = output_list[1]
+                    my_comment = f"{my_comment}, sel = {x1_str_result}"
             return my_comment
         elif mnemonic in ['adr', 'adrp']:
             can_analyze_adrp, _, _ = HMReference.analyze_adrp(exe_ctx, instruction, register_dic)
