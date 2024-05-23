@@ -541,11 +541,15 @@ When I see the above line of assembly code, I want to **quickly** get the value 
 
 ```
 Syntax:
+    adrp <pc address>
     adrp <immediate> <pc address>
     adrp <pc address> <adrp> <register> <immediate>
     adrp <pc address> <+offset> <adrp> <register> <immediate>
 
 Examples:
+    (lldb) adrp 0x189aef040
+    [HMLLDB] x8: 0x1debec000, 8032010240
+    
     (lldb) adrp 348413 0x189aef040
     [HMLLDB] result: 0x1debec000, 8032010240
 

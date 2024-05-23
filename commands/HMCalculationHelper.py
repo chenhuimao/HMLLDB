@@ -35,11 +35,15 @@ def __lldb_init_module(debugger, internal_dict):
 def adrp(debugger, command, exe_ctx, result, internal_dict):
     """
     Syntax:
+        adrp <pc address>
         adrp <immediate> <pc address>
         adrp <pc address> <adrp> <register> <immediate>
         adrp <pc address> <+offset> <adrp> <register> <immediate>
 
     Examples:
+        (lldb) adrp 0x189aef040
+        [HMLLDB] x8: 0x1debec000, 8032010240
+
         (lldb) adrp 348413 0x189aef040
         [HMLLDB] result: 0x1debec000, 8032010240
 
@@ -53,21 +57,42 @@ def adrp(debugger, command, exe_ctx, result, internal_dict):
     """
 
     command_args: List[str] = command.split()
-
-    if len(command_args) == 2:
+    n_args = len(command_args)
+    target_register = None
+    if n_args == 1:
+        addr_str = command_args[0]
+        addr = int(addr_str, 16)
+        target = debugger.GetSelectedTarget()
+        addr_obj = lldb.SBAddress(addr, target)
+        instructions = target.ReadInstructions(addr_obj, 1)
+        if instructions.GetSize() == 1:
+            instruction = instructions.GetInstructionAtIndex(0)
+            mnemonic = instruction.GetMnemonic(target)
+            if mnemonic != 'adrp':
+                print('instruction at {} isn\'t adrp'.format(addr_str))
+                return
+            operands = instruction.GetOperands(target)
+            pc_address_value = addr
+            comps = operands.split(',')
+            target_register = comps[0]
+            immediate_value = int(comps[1].strip())
+        else:
+            print('read instructions at {} failed'.format(addr_str))
+            return
+    elif n_args == 2:
         immediate_is_valid, immediate_value = HM.int_value_from_string(command_args[0])
         pc_address_is_valid, pc_address_value = HM.int_value_from_string(command_args[1])
         if (not immediate_is_valid) or (not pc_address_is_valid):
             HM.DPrint("Error input, Some input arguments do not support conversion to integers. Please enter \"help adrp\" for help.")
             return
-    elif len(command_args) == 4:
+    elif n_args == 4:
         immediate_is_valid, immediate_value = HM.int_value_from_string(command_args[3])
         pc_address_str = command_args[0].rstrip(':')
         pc_address_is_valid, pc_address_value = HM.int_value_from_string(pc_address_str)
         if (not immediate_is_valid) or (not pc_address_is_valid):
             HM.DPrint("Error input, Some input arguments do not support conversion to integers. Please enter \"help adrp\" for help.")
             return
-    elif len(command_args) == 5:
+    elif n_args == 5:
         immediate_is_valid, immediate_value = HM.int_value_from_string(command_args[4])
         pc_address_is_valid, pc_address_value = HM.int_value_from_string(command_args[0])
         if (not immediate_is_valid) or (not pc_address_is_valid):
@@ -78,12 +103,14 @@ def adrp(debugger, command, exe_ctx, result, internal_dict):
         return
 
     result_tuple: Tuple[int, str] = calculate_adrp_result_with_immediate_and_pc_address(immediate_value, pc_address_value)
-    if len(command_args) == 2:
+    if n_args == 1:
+        HM.DPrint(f"{target_register}: {result_tuple[1]}, {result_tuple[0]}")
+    elif n_args == 2:
         HM.DPrint(f"result: {result_tuple[1]}, {result_tuple[0]}")
-    elif len(command_args) == 4:
+    elif n_args == 4:
         target_register = command_args[2].rstrip(',')
         HM.DPrint(f"{target_register}: {result_tuple[1]}, {result_tuple[0]}")
-    elif len(command_args) == 5:
+    elif n_args == 5:
         target_register = command_args[3].rstrip(',')
         HM.DPrint(f"{target_register}: {result_tuple[1]}, {result_tuple[0]}")
 
