@@ -376,7 +376,7 @@ def breakpoint_message(debugger, command, exe_ctx, result, internal_dict):
             Method *instanceMethodList = class_copyMethodList(cls, &instanceMethodCount);
             for (int i = 0; i < instanceMethodCount; ++i) {{
                 Method method = instanceMethodList[i];
-                if (strcmp((const char *)methodSelector, (const char *)sel_getName(method_getName(method))) == 0) {{
+                if (strcmp((const char *)sel_getName(methodSelector), (const char *)sel_getName(method_getName(method))) == 0) {{
                     originalIMP = (void (*)(void))method_getImplementation(method);
                     break;
                 }}
@@ -400,10 +400,10 @@ def breakpoint_message(debugger, command, exe_ctx, result, internal_dict):
             originalIMP = (void (*)(void))method_getImplementation(originalMethod);
     
             void (^IMPBlock_hm)(id) = ^(id instance_hm) {{
-                ((void (*)(id, char *)) originalIMP)(instance_hm, (char *)methodSelector);
+                ((void (*)(id, char *)) originalIMP)(instance_hm, (char *)sel_getName(methodSelector));
             }};
             
-            IMP newIMP = imp_implementationWithBlock(IMPBlock_hm);
+            void (*newIMP)(void) = imp_implementationWithBlock(IMPBlock_hm);
             class_addMethod(cls, methodSelector, newIMP, method_getTypeEncoding(originalMethod));
             
             NSString *adddressValue = [[NSString alloc] initWithFormat:@"0x%lx", (long)newIMP];
@@ -444,7 +444,7 @@ def breakpoint_message(debugger, command, exe_ctx, result, internal_dict):
     target_address: str = address_value.GetObjectDescription()
 
 
-    # add breakpoint
+    # set breakpoint
     HM.DPrint(f"Will add a breakpoint in address:{target_address}")
 
     target = lldb.debugger.GetSelectedTarget()
