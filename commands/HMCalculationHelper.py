@@ -36,7 +36,7 @@ def adrp(debugger, command, exe_ctx, result, internal_dict):
     """
     Syntax:
         adrp <pc address>
-        adrp <immediate> <pc address>
+        adrp <pc address> <immediate>
         adrp <pc address> <adrp> <register> <immediate>
         adrp <pc address> <+offset> <adrp> <register> <immediate>
 
@@ -44,7 +44,7 @@ def adrp(debugger, command, exe_ctx, result, internal_dict):
         (lldb) adrp 0x189aef040
         [HMLLDB] x8: 0x1debec000, 8032010240
 
-        (lldb) adrp 348413 0x189aef040
+        (lldb) adrp 0x189aef040 348413
         [HMLLDB] result: 0x1debec000, 8032010240
 
         (lldb) adrp 0x189aef040: adrp   x8, 348413
@@ -61,42 +61,44 @@ def adrp(debugger, command, exe_ctx, result, internal_dict):
     target_register = None
     if n_args == 1:
         addr_str = command_args[0]
-        addr = int(addr_str, 16)
+        pc_address_is_valid, pc_address_value = HM.int_value_from_string(addr_str)
+        if not pc_address_is_valid:
+            HM.DPrint(f"Error input, {addr_str} cannot be converted to an integer.")
+            return
         target = debugger.GetSelectedTarget()
-        addr_obj = lldb.SBAddress(addr, target)
+        addr_obj = lldb.SBAddress(pc_address_value, target)
         instructions = target.ReadInstructions(addr_obj, 1)
         if instructions.GetSize() == 1:
             instruction = instructions.GetInstructionAtIndex(0)
             mnemonic = instruction.GetMnemonic(target)
             if mnemonic != 'adrp':
-                print('instruction at {} isn\'t adrp'.format(addr_str))
+                HM.DPrint(f'instruction at {addr_str} isn\'t adrp')
                 return
             operands = instruction.GetOperands(target)
-            pc_address_value = addr
             comps = operands.split(',')
             target_register = comps[0]
             immediate_value = int(comps[1].strip())
         else:
-            print('read instructions at {} failed'.format(addr_str))
+            HM.DPrint(f'read instruction at {addr_str} failed')
             return
     elif n_args == 2:
-        immediate_is_valid, immediate_value = HM.int_value_from_string(command_args[0])
-        pc_address_is_valid, pc_address_value = HM.int_value_from_string(command_args[1])
+        pc_address_is_valid, pc_address_value = HM.int_value_from_string(command_args[0])
+        immediate_is_valid, immediate_value = HM.int_value_from_string(command_args[1])
         if (not immediate_is_valid) or (not pc_address_is_valid):
-            HM.DPrint("Error input, Some input arguments do not support conversion to integers. Please enter \"help adrp\" for help.")
+            HM.DPrint("Error input, some input parameters cannot be converted to integers. Please enter \"help adrp\" for help.")
             return
     elif n_args == 4:
         immediate_is_valid, immediate_value = HM.int_value_from_string(command_args[3])
         pc_address_str = command_args[0].rstrip(':')
         pc_address_is_valid, pc_address_value = HM.int_value_from_string(pc_address_str)
         if (not immediate_is_valid) or (not pc_address_is_valid):
-            HM.DPrint("Error input, Some input arguments do not support conversion to integers. Please enter \"help adrp\" for help.")
+            HM.DPrint("Error input, some input parameters cannot be converted to integers. Please enter \"help adrp\" for help.")
             return
     elif n_args == 5:
         immediate_is_valid, immediate_value = HM.int_value_from_string(command_args[4])
         pc_address_is_valid, pc_address_value = HM.int_value_from_string(command_args[0])
         if (not immediate_is_valid) or (not pc_address_is_valid):
-            HM.DPrint("Error input, Some input arguments do not support conversion to integers. Please enter \"help adrp\" for help.")
+            HM.DPrint("Error input, some input parameters cannot be converted to integers. Please enter \"help adrp\" for help.")
             return
     else:
         HM.DPrint("Error input, incorrect number of parameters. Please enter \"help adrp\" for help.")
