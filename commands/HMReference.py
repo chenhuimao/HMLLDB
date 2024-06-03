@@ -51,7 +51,7 @@ def reference(debugger, command, exe_ctx, result, internal_dict):
         (lldb) reference 0x12345678 UIKitCore
 
     Notice:
-        1.This command is expensive to scan large modules. For example, it takes 240 seconds to scan UIKitCore.
+        1.This command is expensive to scan large modules. For example, it takes 160 seconds to scan UIKitCore.
         2.This command will query the targets of all b/bl instructions and analyze most of the adr/adrp instructions and subsequent instructions.
         3.You should consider the "stub" function and "island" function when using it.
 
@@ -176,27 +176,78 @@ def scan_section_code(exe_ctx: lldb.SBExecutionContext, section: lldb.SBSection,
 
 def instruction_analysis(exe_ctx: lldb.SBExecutionContext, start_address: int, end_address: int, address_target_dic: Dict[int, int], address_ldr_dic: Dict[int, int]) -> None:
     target: lldb.SBTarget = exe_ctx.GetTarget()
-    instruction_count = int((end_address - start_address) / 4)
     address: lldb.SBAddress = lldb.SBAddress(start_address, target)
-    instruction_list: lldb.SBInstructionList = target.ReadInstructions(address, instruction_count)
-    for i in range(instruction_count):
-        instruction: lldb.SBInstruction = instruction_list.GetInstructionAtIndex(i)
-        mnemonic: str = instruction.GetMnemonic(target)
-        if mnemonic in ['b', 'bl']:
-            # Record all b/bl logic
-            target_address_str = instruction.GetOperands(target)
-            is_valid_address, target_address_int = HM.int_value_from_string(target_address_str)
-            if is_valid_address:
-                address_target_dic[instruction.GetAddress().GetLoadAddress(target)] = target_address_int
-            else:
-                HM.DPrint("Error: Unsupported format in b/bl.")
-        elif mnemonic in ['adr', 'adrp']:
+    error = lldb.SBError()
+    data: bytes = target.ReadMemory(address, end_address - start_address, error)
+    if not error.Success():
+        HM.DPrint(error)
+        return
+    for i in range(0, len(data), 4):
+        instruction_data = data[i:i+4]
+        if is_adrp_bytes(instruction_data) or is_adr_bytes(instruction_data):
             # Record all adr/adrp logic
+            instruction_list: lldb.SBInstructionList = target.ReadInstructions(lldb.SBAddress(start_address + i, target), 1)
+            instruction = instruction_list.GetInstructionAtIndex(0)
             record_adrp_logic(exe_ctx, instruction, address_target_dic, address_ldr_dic)
+        elif is_b_bytes(instruction_data) or is_bl_bytes(instruction_data):
+            # Record all b/bl logic
+            offset = resolve_b_bytes(instruction_data)
+            address_target_dic[start_address + i] = start_address + i + offset
+
+    # instruction_count = int((end_address - start_address) / 4)
+    # instruction_list: lldb.SBInstructionList = target.ReadInstructions(address, instruction_count)
+    # for i in range(instruction_count):
+    #     instruction: lldb.SBInstruction = instruction_list.GetInstructionAtIndex(i)
+    #     mnemonic: str = instruction.GetMnemonic(target)
+    #     if mnemonic in ['b', 'bl']:
+    #         # Record all b/bl logic
+    #         target_address_str = instruction.GetOperands(target)
+    #         is_valid_address, target_address_int = HM.int_value_from_string(target_address_str)
+    #         if is_valid_address:
+    #             address_target_dic[instruction.GetAddress().GetLoadAddress(target)] = target_address_int
+    #         else:
+    #             HM.DPrint("Error: Unsupported format in b/bl.")
+    #     elif mnemonic in ['adr', 'adrp']:
+    #         # Record all adr/adrp logic
+    #         record_adrp_logic(exe_ctx, instruction, address_target_dic, address_ldr_dic)
 
         # For testing
         # if mnemonic in ['nop']:
         #     HM.DPrint(f"{hex(instruction.GetAddress().GetLoadAddress(target))}:{instruction}")
+
+
+def is_adr_bytes(data: bytes) -> bool:
+    # little endian
+    return (data[3] & 0x9f) == 0x10
+
+
+def is_adrp_bytes(data: bytes) -> bool:
+    # little endian
+    return (data[3] & 0x9f) == 0x90
+
+
+def is_b_bytes(data: bytes) -> bool:
+    # little endian
+    return (data[3] & 0xfc) == 0x14
+
+
+def is_bl_bytes(data: bytes) -> bool:
+    # little endian
+    return (data[3] & 0xfc) == 0x94
+
+
+# resolve b/bl and return offset
+def resolve_b_bytes(data: bytes) -> int:
+    value = int.from_bytes(data, 'little')
+    imm26_mask = 0b11111111111111111111111111  # (1 << 26) - 1
+    unsigned_value = value & imm26_mask
+    sign_bit_mask = 0b10000000000000000000000000  # 1 << 25
+    sign_bit_flag = value & sign_bit_mask
+    if sign_bit_flag == 0:
+        signed_value = unsigned_value
+    else:
+        signed_value = unsigned_value - 0b100000000000000000000000000  # (1 << 26)
+    return signed_value * 4
 
 
 def get_description_of_section(section: lldb.SBSection) -> str:

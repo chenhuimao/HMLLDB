@@ -530,7 +530,7 @@ libsystem_c.dylib`setenv:
 [HMLLDB] Scan result count in memory:0
 ```
 Notice:
-- This command is **expensive** to scan large modules. For example, it takes 240 seconds to scan UIKitCore.
+- This command is **expensive** to scan large modules. For example, it takes 160 seconds to scan UIKitCore.
 - This command will query the targets of **all b/bl instructions** and analyze **most of the adr/adrp instructions** and subsequent instructions.
 - You should consider the **"stub" function** and **"island" function** when using it.
 
