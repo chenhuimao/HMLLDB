@@ -51,7 +51,7 @@ def reference(debugger, command, exe_ctx, result, internal_dict):
         (lldb) reference 0x12345678 UIKitCore
 
     Notice:
-        1.This command is expensive to scan large modules. For example, it takes 160 seconds to scan UIKitCore.
+        1.This command is expensive to scan large modules. For example, it takes 130 seconds to scan UIKitCore.
         2.This command will query the targets of all b/bl instructions and analyze most of the adr/adrp instructions and subsequent instructions.
         3.You should consider the "stub" function and "island" function when using it.
 
@@ -186,9 +186,7 @@ def instruction_analysis(exe_ctx: lldb.SBExecutionContext, start_address: int, e
         instruction_data = data[i:i+4]
         if is_adrp_bytes(instruction_data) or is_adr_bytes(instruction_data):
             # Record all adr/adrp logic
-            instruction_list: lldb.SBInstructionList = target.ReadInstructions(lldb.SBAddress(start_address + i, target), 1)
-            instruction = instruction_list.GetInstructionAtIndex(0)
-            record_adrp_logic(exe_ctx, instruction, address_target_dic, address_ldr_dic)
+            record_adrp_logic(exe_ctx, instruction_data, start_address + i, address_target_dic, address_ldr_dic)
         elif is_b_bytes(instruction_data) or is_bl_bytes(instruction_data):
             # Record all b/bl logic
             offset = resolve_b_bytes(instruction_data)
@@ -241,13 +239,29 @@ def resolve_b_bytes(data: bytes) -> int:
     value = int.from_bytes(data, 'little')
     imm26_mask = 0b11111111111111111111111111  # (1 << 26) - 1
     unsigned_value = value & imm26_mask
-    sign_bit_mask = 0b10000000000000000000000000  # 1 << 25
-    sign_bit_flag = value & sign_bit_mask
-    if sign_bit_flag == 0:
-        signed_value = unsigned_value
+
+    return twos_complement_to_int(unsigned_value, 26) * 4
+
+
+# resolve adr/adrp and return (Rd, offset)
+def resolve_adr_bytes(data: bytes) -> (int, int):
+    value = int.from_bytes(data, 'little')
+    immhi = (value >> 5) & 0b1111111111111111111  # (value >> 5) & ((1 << 19) - 1)
+    immlo = (value >> 29) & 0b11
+    unsigned_value = (immhi << 2) | immlo
+    offset = twos_complement_to_int(unsigned_value, 21)
+
+    rd = value & 0b11111
+    return rd, offset
+
+
+def twos_complement_to_int(twos_complement: int, bit_width: int) -> int:
+    sign_bit_mask = 1 << (bit_width - 1)
+    if twos_complement & sign_bit_mask == 0:
+        result = twos_complement
     else:
-        signed_value = unsigned_value - 0b100000000000000000000000000  # (1 << 26)
-    return signed_value * 4
+        result = twos_complement - (1 << bit_width)
+    return result
 
 
 def get_description_of_section(section: lldb.SBSection) -> str:
@@ -265,20 +279,23 @@ def get_module_name(module: lldb.SBModule) -> str:
     return os.path.basename(module.GetFileSpec().GetFilename())
 
 
-def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_instruction: lldb.SBInstruction, address_target_dic: Dict[int, int], address_ldr_dic: Dict[int, int]) -> None:
+def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_data: bytes, adrp_instruction_load_address: int, address_target_dic: Dict[int, int], address_ldr_dic: Dict[int, int]) -> None:
     # Analyze the specified instructions after adrp in sequence, and analyze up to 5 instructions.
     # FIXME: x0 and w0 registers are independent and need to be merged.
     register_dic: Dict[str, int] = {}
     target = exe_ctx.GetTarget()
 
     # Calculate and save the value of adr/adrp instruction
-    can_analyze_adrp, _, adrp_result = analyze_adrp(exe_ctx, adrp_instruction, register_dic)
-    if not can_analyze_adrp:
-        return
+    adrp_rd, adrp_offset = resolve_adr_bytes(adrp_data)
+    adrp_rd_str = f"x{adrp_rd}"
+    if is_adr_bytes(adrp_data):
+        adrp_result = adrp_instruction_load_address + adrp_offset
+    else:
+        adrp_result, _ = HMCalculationHelper.calculate_adrp_result_with_immediate_and_pc_address(adrp_offset, adrp_instruction_load_address)
+    register_dic[adrp_rd_str] = adrp_result
 
     # Analyze the specified instructions after adr/adrp
     instruction_count = 5
-    adrp_instruction_load_address: int = adrp_instruction.GetAddress().GetLoadAddress(target)
     address: lldb.SBAddress = lldb.SBAddress(adrp_instruction_load_address + 4, target)
     instruction_list: lldb.SBInstructionList = target.ReadInstructions(address, instruction_count)
     for i in range(instruction_count):
