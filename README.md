@@ -459,8 +459,10 @@ Scan the image section to obtain all reference addresses of a certain address. Y
 
 The "reference" command is similar to the "References to" function of "Hopper Disassembler". The difference is:    
 
-- In a few cases, the search results are not as complete as those found by "Hopper Disassembler".
-- Supports querying the address loaded into memory, which means you can query addresses outside the image range.
+- "reference" is faster than "Hopper Disassembler".
+- In a few cases, search results of "reference" are not as complete as those found by "Hopper Disassembler".
+- "reference" supports querying the address loaded into memory, which means you can query addresses outside the image range.
+
 
 ```
 Syntax:
@@ -530,7 +532,7 @@ libsystem_c.dylib`setenv:
 [HMLLDB] Scan result count in memory:0
 ```
 Notice:
-- This command is **expensive** to scan large modules. For example, it takes 240 seconds to scan UIKitCore.
+- This command is **expensive** to scan large modules. For example, it takes 130 seconds to scan UIKitCore.
 - This command will query the targets of **all b/bl instructions** and analyze **most of the adr/adrp instructions** and subsequent instructions.
 - You should consider the **"stub" function** and **"island" function** when using it.
 

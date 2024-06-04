@@ -51,7 +51,7 @@ def reference(debugger, command, exe_ctx, result, internal_dict):
         (lldb) reference 0x12345678 UIKitCore
 
     Notice:
-        1.This command is expensive to scan large modules. For example, it takes 240 seconds to scan UIKitCore.
+        1.This command is expensive to scan large modules. For example, it takes 130 seconds to scan UIKitCore.
         2.This command will query the targets of all b/bl instructions and analyze most of the adr/adrp instructions and subsequent instructions.
         3.You should consider the "stub" function and "island" function when using it.
 
@@ -176,27 +176,92 @@ def scan_section_code(exe_ctx: lldb.SBExecutionContext, section: lldb.SBSection,
 
 def instruction_analysis(exe_ctx: lldb.SBExecutionContext, start_address: int, end_address: int, address_target_dic: Dict[int, int], address_ldr_dic: Dict[int, int]) -> None:
     target: lldb.SBTarget = exe_ctx.GetTarget()
-    instruction_count = int((end_address - start_address) / 4)
     address: lldb.SBAddress = lldb.SBAddress(start_address, target)
-    instruction_list: lldb.SBInstructionList = target.ReadInstructions(address, instruction_count)
-    for i in range(instruction_count):
-        instruction: lldb.SBInstruction = instruction_list.GetInstructionAtIndex(i)
-        mnemonic: str = instruction.GetMnemonic(target)
-        if mnemonic in ['b', 'bl']:
-            # Record all b/bl logic
-            target_address_str = instruction.GetOperands(target)
-            is_valid_address, target_address_int = HM.int_value_from_string(target_address_str)
-            if is_valid_address:
-                address_target_dic[instruction.GetAddress().GetLoadAddress(target)] = target_address_int
-            else:
-                HM.DPrint("Error: Unsupported format in b/bl.")
-        elif mnemonic in ['adr', 'adrp']:
+    error = lldb.SBError()
+    data: bytes = target.ReadMemory(address, end_address - start_address, error)
+    if not error.Success():
+        HM.DPrint(error)
+        return
+    for i in range(0, len(data), 4):
+        instruction_data = data[i:i+4]
+        if is_adrp_bytes(instruction_data) or is_adr_bytes(instruction_data):
             # Record all adr/adrp logic
-            record_adrp_logic(exe_ctx, instruction, address_target_dic, address_ldr_dic)
+            record_adrp_logic(exe_ctx, instruction_data, start_address + i, address_target_dic, address_ldr_dic)
+        elif is_b_bytes(instruction_data) or is_bl_bytes(instruction_data):
+            # Record all b/bl logic
+            offset = resolve_b_bytes(instruction_data)
+            address_target_dic[start_address + i] = start_address + i + offset
+
+    # instruction_count = int((end_address - start_address) / 4)
+    # instruction_list: lldb.SBInstructionList = target.ReadInstructions(address, instruction_count)
+    # for i in range(instruction_count):
+    #     instruction: lldb.SBInstruction = instruction_list.GetInstructionAtIndex(i)
+    #     mnemonic: str = instruction.GetMnemonic(target)
+    #     if mnemonic in ['b', 'bl']:
+    #         # Record all b/bl logic
+    #         target_address_str = instruction.GetOperands(target)
+    #         is_valid_address, target_address_int = HM.int_value_from_string(target_address_str)
+    #         if is_valid_address:
+    #             address_target_dic[instruction.GetAddress().GetLoadAddress(target)] = target_address_int
+    #         else:
+    #             HM.DPrint("Error: Unsupported format in b/bl.")
+    #     elif mnemonic in ['adr', 'adrp']:
+    #         # Record all adr/adrp logic
+    #         record_adrp_logic(exe_ctx, instruction, address_target_dic, address_ldr_dic)
 
         # For testing
         # if mnemonic in ['nop']:
         #     HM.DPrint(f"{hex(instruction.GetAddress().GetLoadAddress(target))}:{instruction}")
+
+
+def is_adr_bytes(data: bytes) -> bool:
+    # little endian
+    return (data[3] & 0x9f) == 0x10
+
+
+def is_adrp_bytes(data: bytes) -> bool:
+    # little endian
+    return (data[3] & 0x9f) == 0x90
+
+
+def is_b_bytes(data: bytes) -> bool:
+    # little endian
+    return (data[3] & 0xfc) == 0x14
+
+
+def is_bl_bytes(data: bytes) -> bool:
+    # little endian
+    return (data[3] & 0xfc) == 0x94
+
+
+# resolve b/bl and return offset
+def resolve_b_bytes(data: bytes) -> int:
+    value = int.from_bytes(data, 'little')
+    imm26_mask = 0b11111111111111111111111111  # (1 << 26) - 1
+    unsigned_value = value & imm26_mask
+
+    return twos_complement_to_int(unsigned_value, 26) * 4
+
+
+# resolve adr/adrp and return (Rd, offset)
+def resolve_adr_bytes(data: bytes) -> (int, int):
+    value = int.from_bytes(data, 'little')
+    immhi = (value >> 5) & 0b1111111111111111111  # (value >> 5) & ((1 << 19) - 1)
+    immlo = (value >> 29) & 0b11
+    unsigned_value = (immhi << 2) | immlo
+    offset = twos_complement_to_int(unsigned_value, 21)
+
+    rd = value & 0b11111
+    return rd, offset
+
+
+def twos_complement_to_int(twos_complement: int, bit_width: int) -> int:
+    sign_bit_mask = 1 << (bit_width - 1)
+    if twos_complement & sign_bit_mask == 0:
+        result = twos_complement
+    else:
+        result = twos_complement - (1 << bit_width)
+    return result
 
 
 def get_description_of_section(section: lldb.SBSection) -> str:
@@ -214,20 +279,23 @@ def get_module_name(module: lldb.SBModule) -> str:
     return os.path.basename(module.GetFileSpec().GetFilename())
 
 
-def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_instruction: lldb.SBInstruction, address_target_dic: Dict[int, int], address_ldr_dic: Dict[int, int]) -> None:
+def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_data: bytes, adrp_instruction_load_address: int, address_target_dic: Dict[int, int], address_ldr_dic: Dict[int, int]) -> None:
     # Analyze the specified instructions after adrp in sequence, and analyze up to 5 instructions.
     # FIXME: x0 and w0 registers are independent and need to be merged.
     register_dic: Dict[str, int] = {}
     target = exe_ctx.GetTarget()
 
     # Calculate and save the value of adr/adrp instruction
-    can_analyze_adrp, _, adrp_result = analyze_adrp(exe_ctx, adrp_instruction, register_dic)
-    if not can_analyze_adrp:
-        return
+    adrp_rd, adrp_offset = resolve_adr_bytes(adrp_data)
+    adrp_rd_str = f"x{adrp_rd}"
+    if is_adr_bytes(adrp_data):
+        adrp_result = adrp_instruction_load_address + adrp_offset
+    else:
+        adrp_result, _ = HMCalculationHelper.calculate_adrp_result_with_immediate_and_pc_address(adrp_offset, adrp_instruction_load_address)
+    register_dic[adrp_rd_str] = adrp_result
 
     # Analyze the specified instructions after adr/adrp
     instruction_count = 5
-    adrp_instruction_load_address: int = adrp_instruction.GetAddress().GetLoadAddress(target)
     address: lldb.SBAddress = lldb.SBAddress(adrp_instruction_load_address + 4, target)
     instruction_list: lldb.SBInstructionList = target.ReadInstructions(address, instruction_count)
     for i in range(instruction_count):
