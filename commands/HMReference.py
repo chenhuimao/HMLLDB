@@ -192,26 +192,26 @@ def instruction_analysis(exe_ctx: lldb.SBExecutionContext, start_address: int, e
             offset = resolve_b_bytes(instruction_data)
             address_target_dic[start_address + i] = start_address + i + offset
 
+        # For testing
+        # if is_add_bytes_shifted_register(instruction_data):
+        #     current_address: lldb.SBAddress = lldb.SBAddress(start_address + i, target)
+        #     instruction_list: lldb.SBInstructionList = target.ReadInstructions(current_address, 1)
+        #     instruction = instruction_list.GetInstructionAtIndex(0)
+        #     rd, rn, rm, is64, shift, amount = resolve_add_bytes_shifted_register(instruction_data)
+        #     HM.DPrint(f"{hex(start_address + i)}:{instruction}  -  ({rd}, {rn}, {rm}, {is64}, {shift}, {amount})")
+
+    # For testing
     # instruction_count = int((end_address - start_address) / 4)
     # instruction_list: lldb.SBInstructionList = target.ReadInstructions(address, instruction_count)
     # for i in range(instruction_count):
     #     instruction: lldb.SBInstruction = instruction_list.GetInstructionAtIndex(i)
     #     mnemonic: str = instruction.GetMnemonic(target)
-    #     if mnemonic in ['b', 'bl']:
-    #         # Record all b/bl logic
-    #         target_address_str = instruction.GetOperands(target)
-    #         is_valid_address, target_address_int = HM.int_value_from_string(target_address_str)
-    #         if is_valid_address:
-    #             address_target_dic[instruction.GetAddress().GetLoadAddress(target)] = target_address_int
-    #         else:
-    #             HM.DPrint("Error: Unsupported format in b/bl.")
-    #     elif mnemonic in ['adr', 'adrp']:
-    #         # Record all adr/adrp logic
-    #         record_adrp_logic(exe_ctx, instruction, address_target_dic, address_ldr_dic)
-
-        # For testing
-        # if mnemonic in ['nop']:
-        #     HM.DPrint(f"{hex(instruction.GetAddress().GetLoadAddress(target))}:{instruction}")
+    #     if mnemonic == 'add':
+    #         step = i * 4
+    #         instruction_data = data[step:step+4]
+    #         if not (is_add_bytes_shifted_register(instruction_data) or is_add_bytes_extended_register(instruction_data) or is_add_bytes_immediate(instruction_data)):
+    #             load_address_int = start_address + step
+    #             HM.DPrint(f"{hex(load_address_int)}:{instruction}")
 
 
 def is_adr_bytes(data: bytes) -> bool:
@@ -234,6 +234,24 @@ def is_bl_bytes(data: bytes) -> bool:
     return (data[3] & 0xfc) == 0x94
 
 
+# ADD (extended register)
+def is_add_bytes_extended_register(data: bytes) -> bool:
+    # little endian
+    return ((data[3] & 0x7f) == 0x0b) and ((data[2] & 0xe0) == 0x20)
+
+
+# ADD (immediate). This instruction is used by the alias MOV (to/from SP).
+def is_add_bytes_immediate(data: bytes) -> bool:
+    # little endian
+    return ((data[3] & 0x7f) == 0x11) and ((data[2] & 0x80) == 0x00)
+
+
+# ADD (shifted register)
+def is_add_bytes_shifted_register(data: bytes) -> bool:
+    # little endian
+    return ((data[3] & 0x7f) == 0x0b) and ((data[2] & 0x20) == 0x00)
+
+
 # resolve b/bl and return offset
 def resolve_b_bytes(data: bytes) -> int:
     value = int.from_bytes(data, 'little')
@@ -253,6 +271,30 @@ def resolve_adr_bytes(data: bytes) -> (int, int):
 
     rd = value & 0b11111
     return rd, offset
+
+
+# resolve ADD (immediate) and return (Rd, Rn, is_64bit, immediate)
+def resolve_add_bytes_immediate(data: bytes) -> (int, int, bool, int):
+    is_64bit = (data[3] & 0x80) == 0x80
+    value = int.from_bytes(data, 'little')
+    sh = (value >> 22) & 1
+    imm12 = (value >> 10) & 0xfff
+    rd = value & 0b11111
+    rn = (value >> 5) & 0b11111
+    immediate = imm12 if sh == 0 else imm12 << 12
+    return rd, rn, is_64bit, immediate
+
+
+# resolve ADD (shifted register) and return (Rd, Rn, Rm, is_64bit, shift, amount)
+def resolve_add_bytes_shifted_register(data: bytes) -> (int, int, bool, int):
+    is_64bit = (data[3] & 0x80) == 0x80
+    value = int.from_bytes(data, 'little')
+    rd = value & 0b11111
+    rn = (value >> 5) & 0b11111
+    rm = (value >> 16) & 0b11111
+    shift = (value >> 22) & 0b11
+    imm6 = (value >> 10) & 0x3f
+    return rd, rn, rm, is_64bit, shift, imm6
 
 
 def twos_complement_to_int(twos_complement: int, bit_width: int) -> int:
