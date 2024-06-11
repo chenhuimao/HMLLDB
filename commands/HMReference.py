@@ -24,6 +24,7 @@
 
 import lldb
 from datetime import datetime
+from enum import Enum
 from typing import Dict, List, Tuple
 import optparse
 import os
@@ -35,6 +36,14 @@ import HMLLDBHelpers as HM
 
 g_image_address_target_dic: Dict[str, Dict[int, int]] = {}
 g_image_address_ldr_dic: Dict[str, Dict[int, int]] = {}
+
+
+class HMExtendOption(Enum):
+    uxtw = 0b010
+    lsl = 0b011
+    sxtw = 0b110
+    sxtx = 0b111
+    unknow = 0b1000
 
 
 def __lldb_init_module(debugger, internal_dict):
@@ -328,6 +337,69 @@ def resolve_add_bytes_shifted_register(data: bytes) -> (int, int, int, bool, int
     shift = (value >> 22) & 0b11
     imm6 = (value >> 10) & 0x3f
     return rd, rn, rm, is_64bit, shift, imm6
+
+
+# resolve LDR (immediate) Post-index and return (Rt, Rn, is_64bit, simm)
+def resolve_ldr_bytes_immediate_post_index(data: bytes) -> (int, int, bool, int):
+    is_64bit = (data[3] & 0x40) == 0x40
+    value = int.from_bytes(data, 'little')
+    rt = value & 0b11111
+    rn = (value >> 5) & 0b11111
+    imm9 = (value >> 12) & 0x1ff
+    simm = twos_complement_to_int(imm9, 9)
+    return rt, rn, is_64bit, simm
+
+
+# resolve LDR (immediate) Pre-index and return (Rt, Rn, is_64bit, simm)
+def resolve_ldr_bytes_immediate_pre_index(data: bytes) -> (int, int, bool, int):
+    is_64bit = (data[3] & 0x40) == 0x40
+    value = int.from_bytes(data, 'little')
+    rt = value & 0b11111
+    rn = (value >> 5) & 0b11111
+    imm9 = (value >> 12) & 0x1ff
+    simm = twos_complement_to_int(imm9, 9)
+    return rt, rn, is_64bit, simm
+
+
+# resolve LDR (immediate) Unsigned offset and return (Rt, Rn, is_64bit, pimm)
+def resolve_ldr_bytes_immediate_unsigned_offset(data: bytes) -> (int, int, bool, int):
+    is_64bit = (data[3] & 0x40) == 0x40
+    value = int.from_bytes(data, 'little')
+    rt = value & 0b11111
+    rn = (value >> 5) & 0b11111
+    imm12 = (value >> 10) & 0xfff
+    if is_64bit:
+        pimm = imm12 * 8
+    else:
+        pimm = imm12 * 4
+    return rt, rn, is_64bit, pimm
+
+
+# resolve LDR (register) and return (Rt, Rn, Rm, is_64bit, extend, amount)
+def resolve_ldr_bytes_register(data: bytes) -> (int, int, int, bool, HMExtendOption, int):
+    is_64bit = (data[3] & 0x40) == 0x40
+    value = int.from_bytes(data, 'little')
+    rt = value & 0b11111
+    rn = (value >> 5) & 0b11111
+    rm = (value >> 16) & 0b11111
+    option = (value >> 13) & 0b111
+    s = (value >> 12) & 0b1
+    if is_64bit:
+        amount = 0 if s == 0 else 3
+    else:
+        amount = 0 if s == 0 else 2
+
+    if option == 0b10:
+        extend = HMExtendOption.uxtw
+    elif option == 0b11:
+        extend = HMExtendOption.lsl
+    elif option == 0b110:
+        extend = HMExtendOption.sxtw
+    elif option == 0b111:
+        extend = HMExtendOption.sxtx
+    else:
+        extend = HMExtendOption.unknow
+    return rt, rn, rm, is_64bit, extend, amount
 
 
 def twos_complement_to_int(twos_complement: int, bit_width: int) -> int:
