@@ -237,6 +237,7 @@ def is_bl_bytes(data: bytes) -> bool:
 # ADD (extended register)
 def is_add_bytes_extended_register(data: bytes) -> bool:
     # little endian
+    # There are still a few cases that need to be excluded, which are omitted for efficiency.
     return ((data[3] & 0x7f) == 0x0b) and ((data[2] & 0xe0) == 0x20)
 
 
@@ -249,7 +250,39 @@ def is_add_bytes_immediate(data: bytes) -> bool:
 # ADD (shifted register)
 def is_add_bytes_shifted_register(data: bytes) -> bool:
     # little endian
+    # There are still a few cases that need to be excluded, which are omitted for efficiency.(shift = 0b11, 32bit amount > 31)
     return ((data[3] & 0x7f) == 0x0b) and ((data[2] & 0x20) == 0x00)
+
+
+# LDR (immediate) Post-index
+def is_ldr_bytes_immediate_post_index(data: bytes) -> bool:
+    # little endian
+    return ((data[3] & 0xbf) == 0xb8) and ((data[2] & 0xe0) == 0x40) and ((data[1] & 0x0c) == 0x04)
+
+
+# LDR (immediate) Pre-index
+def is_ldr_bytes_immediate_pre_index(data: bytes) -> bool:
+    # little endian
+    return ((data[3] & 0xbf) == 0xb8) and ((data[2] & 0xe0) == 0x40) and ((data[1] & 0x0c) == 0x0c)
+
+
+# LDR (immediate) Unsigned offset
+def is_ldr_bytes_immediate_unsigned_offset(data: bytes) -> bool:
+    # little endian
+    return ((data[3] & 0xbf) == 0xb9) and ((data[2] & 0xc0) == 0x40)
+
+
+# LDR (literal)
+def is_ldr_bytes_literal(data: bytes) -> bool:
+    # little endian
+    return (data[3] & 0xbf) == 0x18
+
+
+# LDR (register)
+def is_ldr_bytes_register(data: bytes) -> bool:
+    # little endian
+    # There are still a few cases that need to be excluded, which are omitted for efficiency
+    return ((data[3] & 0xbf) == 0xb8) and ((data[2] & 0xe0) == 0x60) and ((data[1] & 0x0c) == 0x08)
 
 
 # resolve b/bl and return offset
@@ -286,7 +319,7 @@ def resolve_add_bytes_immediate(data: bytes) -> (int, int, bool, int):
 
 
 # resolve ADD (shifted register) and return (Rd, Rn, Rm, is_64bit, shift, amount)
-def resolve_add_bytes_shifted_register(data: bytes) -> (int, int, bool, int):
+def resolve_add_bytes_shifted_register(data: bytes) -> (int, int, int, bool, int, int):
     is_64bit = (data[3] & 0x80) == 0x80
     value = int.from_bytes(data, 'little')
     rd = value & 0b11111
