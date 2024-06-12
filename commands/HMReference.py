@@ -198,8 +198,8 @@ def instruction_analysis(exe_ctx: lldb.SBExecutionContext, start_address: int, e
             record_adrp_logic(exe_ctx, instruction_data, start_address + i, address_target_dic, address_ldr_dic)
         elif is_b_bytes(instruction_data) or is_bl_bytes(instruction_data):
             # Record all b/bl logic
-            offset = resolve_b_bytes(instruction_data)
-            address_target_dic[start_address + i] = start_address + i + offset
+            label = resolve_b_bytes(instruction_data)
+            address_target_dic[start_address + i] = start_address + i + label
 
         # For testing
         # if is_add_bytes_shifted_register(instruction_data):
@@ -225,27 +225,33 @@ def instruction_analysis(exe_ctx: lldb.SBExecutionContext, start_address: int, e
 
 def is_adr_bytes(data: bytes) -> bool:
     # little endian
+    # ADR <Xd>, <label>
     return (data[3] & 0x9f) == 0x10
 
 
 def is_adrp_bytes(data: bytes) -> bool:
     # little endian
+    # ADRP <Xd>, <label>
     return (data[3] & 0x9f) == 0x90
 
 
 def is_b_bytes(data: bytes) -> bool:
     # little endian
+    # B <label>
     return (data[3] & 0xfc) == 0x14
 
 
 def is_bl_bytes(data: bytes) -> bool:
     # little endian
+    # BL <label>
     return (data[3] & 0xfc) == 0x94
 
 
 # ADD (extended register)
 def is_add_bytes_extended_register(data: bytes) -> bool:
     # little endian
+    # 32-bit: ADD <Wd|WSP>, <Wn|WSP>, <Wm>{, <extend> {#<amount>}}
+    # 64-bit: ADD <Xd|SP>, <Xn|SP>, <Rm>{, <extend> {#<amount>}}
     # There are still a few cases that need to be excluded, which are omitted for efficiency.
     return ((data[3] & 0x7f) == 0x0b) and ((data[2] & 0xe0) == 0x20)
 
@@ -253,12 +259,16 @@ def is_add_bytes_extended_register(data: bytes) -> bool:
 # ADD (immediate). This instruction is used by the alias MOV (to/from SP).
 def is_add_bytes_immediate(data: bytes) -> bool:
     # little endian
+    # 32-bit: ADD <Wd|WSP>, <Wn|WSP>, #<imm>{, <shift>}
+    # 64-bit: ADD <Xd|SP>, <Xn|SP>, #<imm>{, <shift>}
     return ((data[3] & 0x7f) == 0x11) and ((data[2] & 0x80) == 0x00)
 
 
 # ADD (shifted register)
 def is_add_bytes_shifted_register(data: bytes) -> bool:
     # little endian
+    # 32-bit: ADD <Wd>, <Wn>, <Wm>{, <shift> #<amount>}
+    # 64-bit: ADD <Xd>, <Xn>, <Xm>{, <shift> #<amount>}
     # There are still a few cases that need to be excluded, which are omitted for efficiency.(shift = 0b11, 32bit amount > 31)
     return ((data[3] & 0x7f) == 0x0b) and ((data[2] & 0x20) == 0x00)
 
@@ -266,69 +276,121 @@ def is_add_bytes_shifted_register(data: bytes) -> bool:
 # LDR (immediate) Post-index
 def is_ldr_bytes_immediate_post_index(data: bytes) -> bool:
     # little endian
+    # 32-bit: LDR <Wt>, [<Xn|SP>], #<simm>
+    # 64-bit: LDR <Xt>, [<Xn|SP>], #<simm>
     return ((data[3] & 0xbf) == 0xb8) and ((data[2] & 0xe0) == 0x40) and ((data[1] & 0x0c) == 0x04)
 
 
 # LDR (immediate) Pre-index
 def is_ldr_bytes_immediate_pre_index(data: bytes) -> bool:
     # little endian
+    # 32-bit: LDR <Wt>, [<Xn|SP>, #<simm>]!
+    # 64-bit: LDR <Xt>, [<Xn|SP>, #<simm>]!
     return ((data[3] & 0xbf) == 0xb8) and ((data[2] & 0xe0) == 0x40) and ((data[1] & 0x0c) == 0x0c)
 
 
 # LDR (immediate) Unsigned offset
 def is_ldr_bytes_immediate_unsigned_offset(data: bytes) -> bool:
     # little endian
+    # 32-bit: LDR <Wt>, [<Xn|SP>{, #<pimm>}]
+    # 64-bit: LDR <Xt>, [<Xn|SP>{, #<pimm>}]
     return ((data[3] & 0xbf) == 0xb9) and ((data[2] & 0xc0) == 0x40)
 
 
 # LDR (literal)
 def is_ldr_bytes_literal(data: bytes) -> bool:
     # little endian
+    # 32-bit: LDR <Wt>, <label>
+    # 64-bit: LDR <Xt>, <label>
     return (data[3] & 0xbf) == 0x18
 
 
 # LDR (register)
 def is_ldr_bytes_register(data: bytes) -> bool:
     # little endian
+    # 32-bit: LDR <Wt>, [<Xn|SP>, (<Wm>|<Xm>){, <extend> {<amount>}}]
+    # 64-bit: LDR <Xt>, [<Xn|SP>, (<Wm>|<Xm>){, <extend> {<amount>}}]
     # There are still a few cases that need to be excluded, which are omitted for efficiency
     return ((data[3] & 0xbf) == 0xb8) and ((data[2] & 0xe0) == 0x60) and ((data[1] & 0x0c) == 0x08)
 
 
-# resolve b/bl and return offset
-def resolve_b_bytes(data: bytes) -> int:
-    value = int.from_bytes(data, 'little')
-    imm26_mask = 0b11111111111111111111111111  # (1 << 26) - 1
-    unsigned_value = value & imm26_mask
+# LDRSW (immediate) Post-index
+def is_ldrsw_bytes_immediate_post_index(data: bytes) -> bool:
+    # little endian
+    # LDRSW <Xt>, [<Xn|SP>], #<simm>
+    return ((data[3] & 0xff) == 0xb8) and ((data[2] & 0xe0) == 0x80) and ((data[1] & 0x0c) == 0x04)
 
-    return twos_complement_to_int(unsigned_value, 26) * 4
+
+# LDRSW (immediate) Pre-index
+def is_ldrsw_bytes_immediate_pre_index(data: bytes) -> bool:
+    # little endian
+    # LDRSW <Xt>, [<Xn|SP>, #<simm>]!
+    return ((data[3] & 0xff) == 0xb8) and ((data[2] & 0xe0) == 0x80) and ((data[1] & 0x0c) == 0x0c)
+
+
+# LDRSW (immediate) Unsigned offset
+def is_ldrsw_bytes_immediate_unsigned_offset(data: bytes) -> bool:
+    # little endian
+    # LDRSW <Xt>, [<Xn|SP>{, #<pimm>}]
+    return ((data[3] & 0xff) == 0xb9) and ((data[2] & 0xc0) == 0x80)
+
+
+# LDRSW (literal)
+def is_ldrsw_bytes_literal(data: bytes) -> bool:
+    # little endian
+    # LDRSW <Xt>, <label>
+    return (data[3] & 0xff) == 0x98
+
+
+# LDRSW (register)
+def is_ldrsw_bytes_register(data: bytes) -> bool:
+    # little endian
+    # LDRSW <Xt>, [<Xn|SP>, (<Wm>|<Xm>){, <extend> {<amount>}}]
+    # There are still a few cases that need to be excluded, which are omitted for efficiency.
+    return ((data[3] & 0xff) == 0xb8) and ((data[2] & 0xe0) == 0xa0) and ((data[1] & 0x0c) == 0x08)
 
 
 # resolve adr/adrp and return (Rd, offset)
 def resolve_adr_bytes(data: bytes) -> (int, int):
+    # ADR <Xd>, <label>
+    # ADRP <Xd>, <label> (label = offset * 4096)
     value = int.from_bytes(data, 'little')
-    immhi = (value >> 5) & 0b1111111111111111111  # (value >> 5) & ((1 << 19) - 1)
-    immlo = (value >> 29) & 0b11
-    unsigned_value = (immhi << 2) | immlo
-    offset = twos_complement_to_int(unsigned_value, 21)
-
     rd = value & 0b11111
+    immhi = (value >> 5) & 0x7ffff
+    immlo = (value >> 29) & 0b11
+    imm21 = (immhi << 2) | immlo
+    offset = twos_complement_to_int(imm21, 21)
     return rd, offset
 
 
-# resolve ADD (immediate) and return (Rd, Rn, is_64bit, immediate)
+# resolve b/bl and return label
+def resolve_b_bytes(data: bytes) -> int:
+    # B <label>
+    # BL <label>
+    value = int.from_bytes(data, 'little')
+    imm26 = value & 0x3ffffff
+    label = twos_complement_to_int(imm26, 26) * 4
+    return label
+
+
+# resolve ADD (immediate) and return (Rd, Rn, is_64bit, final_immediate)
 def resolve_add_bytes_immediate(data: bytes) -> (int, int, bool, int):
+    # 32-bit: ADD <Wd|WSP>, <Wn|WSP>, #<imm>{, <shift>}
+    # 64-bit: ADD <Xd|SP>, <Xn|SP>, #<imm>{, <shift>}
     is_64bit = (data[3] & 0x80) == 0x80
     value = int.from_bytes(data, 'little')
     sh = (value >> 22) & 1
     imm12 = (value >> 10) & 0xfff
     rd = value & 0b11111
     rn = (value >> 5) & 0b11111
-    immediate = imm12 if sh == 0 else imm12 << 12
-    return rd, rn, is_64bit, immediate
+    final_immediate = imm12 if sh == 0 else imm12 << 12
+    return rd, rn, is_64bit, final_immediate
 
 
 # resolve ADD (shifted register) and return (Rd, Rn, Rm, is_64bit, shift, amount)
 def resolve_add_bytes_shifted_register(data: bytes) -> (int, int, int, bool, int, int):
+    # 32-bit: ADD <Wd>, <Wn>, <Wm>{, <shift> #<amount>}
+    # 64-bit: ADD <Xd>, <Xn>, <Xm>{, <shift> #<amount>}
     is_64bit = (data[3] & 0x80) == 0x80
     value = int.from_bytes(data, 'little')
     rd = value & 0b11111
@@ -341,6 +403,8 @@ def resolve_add_bytes_shifted_register(data: bytes) -> (int, int, int, bool, int
 
 # resolve LDR (immediate) Post-index and return (Rt, Rn, is_64bit, simm)
 def resolve_ldr_bytes_immediate_post_index(data: bytes) -> (int, int, bool, int):
+    # 32-bit: LDR <Wt>, [<Xn|SP>], #<simm>
+    # 64-bit: LDR <Xt>, [<Xn|SP>], #<simm>
     is_64bit = (data[3] & 0x40) == 0x40
     value = int.from_bytes(data, 'little')
     rt = value & 0b11111
@@ -352,6 +416,8 @@ def resolve_ldr_bytes_immediate_post_index(data: bytes) -> (int, int, bool, int)
 
 # resolve LDR (immediate) Pre-index and return (Rt, Rn, is_64bit, simm)
 def resolve_ldr_bytes_immediate_pre_index(data: bytes) -> (int, int, bool, int):
+    # 32-bit: LDR <Wt>, [<Xn|SP>, #<simm>]!
+    # 64-bit: LDR <Xt>, [<Xn|SP>, #<simm>]!
     is_64bit = (data[3] & 0x40) == 0x40
     value = int.from_bytes(data, 'little')
     rt = value & 0b11111
@@ -363,6 +429,8 @@ def resolve_ldr_bytes_immediate_pre_index(data: bytes) -> (int, int, bool, int):
 
 # resolve LDR (immediate) Unsigned offset and return (Rt, Rn, is_64bit, pimm)
 def resolve_ldr_bytes_immediate_unsigned_offset(data: bytes) -> (int, int, bool, int):
+    # 32-bit: LDR <Wt>, [<Xn|SP>{, #<pimm>}]
+    # 64-bit: LDR <Xt>, [<Xn|SP>{, #<pimm>}]
     is_64bit = (data[3] & 0x40) == 0x40
     value = int.from_bytes(data, 'little')
     rt = value & 0b11111
@@ -377,6 +445,8 @@ def resolve_ldr_bytes_immediate_unsigned_offset(data: bytes) -> (int, int, bool,
 
 # resolve LDR (register) and return (Rt, Rn, Rm, is_64bit, extend, amount)
 def resolve_ldr_bytes_register(data: bytes) -> (int, int, int, bool, HMExtendOption, int):
+    # 32-bit: LDR <Wt>, [<Xn|SP>, (<Wm>|<Xm>){, <extend> {<amount>}}]
+    # 64-bit: LDR <Xt>, [<Xn|SP>, (<Wm>|<Xm>){, <extend> {<amount>}}]
     is_64bit = (data[3] & 0x40) == 0x40
     value = int.from_bytes(data, 'little')
     rt = value & 0b11111
@@ -400,6 +470,72 @@ def resolve_ldr_bytes_register(data: bytes) -> (int, int, int, bool, HMExtendOpt
     else:
         extend = HMExtendOption.unknow
     return rt, rn, rm, is_64bit, extend, amount
+
+
+# resolve LDRSW (immediate) Post-index and return (Rt, Rn, simm)
+def resolve_ldrsw_bytes_immediate_post_index(data: bytes) -> (int, int, int):
+    # LDRSW <Xt>, [<Xn|SP>], #<simm>
+    value = int.from_bytes(data, 'little')
+    rt = value & 0b11111
+    rn = (value >> 5) & 0b11111
+    imm9 = (value >> 12) & 0x1ff
+    simm = twos_complement_to_int(imm9, 9)
+    return rt, rn, simm
+
+
+# resolve LDRSW (immediate) Pre-index and return (Rt, Rn, simm)
+def resolve_ldrsw_bytes_immediate_pre_index(data: bytes) -> (int, int, int):
+    # LDRSW <Xt>, [<Xn|SP>, #<simm>]!
+    value = int.from_bytes(data, 'little')
+    rt = value & 0b11111
+    rn = (value >> 5) & 0b11111
+    imm9 = (value >> 12) & 0x1ff
+    simm = twos_complement_to_int(imm9, 9)
+    return rt, rn, simm
+
+
+# resolve LDRSW (immediate) Unsigned offset and return (Rt, Rn, pimm)
+def resolve_ldrsw_bytes_immediate_unsigned_offset(data: bytes) -> (int, int, int):
+    # LDRSW <Xt>, [<Xn|SP>{, #<pimm>}]
+    value = int.from_bytes(data, 'little')
+    rt = value & 0b11111
+    rn = (value >> 5) & 0b11111
+    imm12 = (value >> 10) & 0xfff
+    pimm = imm12 * 4
+    return rt, rn, pimm
+
+
+# resolve LDRSW (literal) and return (Rt, label)
+def resolve_ldrsw_bytes_literal(data: bytes) -> (int, int):
+    # LDRSW <Xt>, <label>
+    value = int.from_bytes(data, 'little')
+    rt = value & 0b11111
+    imm19 = (value >> 5) & 0x7ffff
+    label = twos_complement_to_int(imm19, 19) * 4
+    return rt, label
+
+
+# resolve LDRSW (register) and return (Rt, Rn, Rm, extend, amount)
+def resolve_ldrsw_bytes_register(data: bytes) -> (int, int, int, HMExtendOption, int):
+    # LDRSW <Xt>, [<Xn|SP>, (<Wm>|<Xm>){, <extend> {<amount>}}]
+    value = int.from_bytes(data, 'little')
+    rt = value & 0b11111
+    rn = (value >> 5) & 0b11111
+    rm = (value >> 16) & 0b11111
+    option = (value >> 13) & 0b111
+    s = (value >> 12) & 1
+    amount = 0 if s == 0 else 2
+    if option == 0b010:
+        extend = HMExtendOption.uxtw
+    elif option == 0b011:
+        extend = HMExtendOption.lsl
+    elif option == 0b110:
+        extend = HMExtendOption.sxtw
+    elif option == 0b111:
+        extend = HMExtendOption.sxtx
+    else:
+        extend = HMExtendOption.unknow
+    return rt, rn, rm, extend, amount
 
 
 def twos_complement_to_int(twos_complement: int, bit_width: int) -> int:
