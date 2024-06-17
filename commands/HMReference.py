@@ -256,9 +256,10 @@ def is_add_bytes_extended_register(data: bytes) -> bool:
     return ((data[3] & 0x7f) == 0x0b) and ((data[2] & 0xe0) == 0x20)
 
 
-# ADD (immediate). This instruction is used by the alias MOV (to/from SP).
+# ADD (immediate)
 def is_add_bytes_immediate(data: bytes) -> bool:
     # little endian
+    # This instruction is used by the alias MOV (to/from SP).
     # 32-bit: ADD <Wd|WSP>, <Wn|WSP>, #<imm>{, <shift>}
     # 64-bit: ADD <Xd|SP>, <Xn|SP>, #<imm>{, <shift>}
     return ((data[3] & 0x7f) == 0x11) and ((data[2] & 0x80) == 0x00)
@@ -348,6 +349,54 @@ def is_ldrsw_bytes_register(data: bytes) -> bool:
     # LDRSW <Xt>, [<Xn|SP>, (<Wm>|<Xm>){, <extend> {<amount>}}]
     # There are still a few cases that need to be excluded, which are omitted for efficiency.
     return ((data[3] & 0xff) == 0xb8) and ((data[2] & 0xe0) == 0xa0) and ((data[1] & 0x0c) == 0x08)
+
+
+# MOV (bitmask immediate)
+def is_mov_bytes_bitmask_immediate(data: bytes) -> bool:
+    # little endian
+    # This is an alias of ORR (immediate)
+    # 32-bit: MOV <Wd|WSP>, #<imm>    is equivalent to ORR <Wd|WSP>, WZR, #<imm>
+    # 64-bit: MOV <Xd|SP>, #<imm>    is equivalent to ORR <Xd|SP>, XZR, #<imm>
+    # There are still a few cases that need to be excluded, which are omitted for efficiency.
+    return ((data[3] & 0x7f) == 0x32) and ((data[2] & 0x80) == 0x00) and ((data[1] & 0x03) == 0x03) and ((data[0] & 0xe0) == 0xe0)
+
+
+# MOV (inverted wide immediate)
+def is_mov_bytes_inverted_wide_immediate(data: bytes) -> bool:
+    # little endian
+    # This is an alias of MOVN
+    # 32-bit: MOV <Wd>, #<imm>    is equivalent to MOVN <Wd>, #<imm16>, LSL #<shift>
+    # 64-bit: MOV <Xd>, #<imm>    is equivalent to MOVN <Xd>, #<imm16>, LSL #<shift>
+    # There are still a few cases that need to be excluded, which are omitted for efficiency.
+    return ((data[3] & 0x7f) == 0x12) and ((data[2] & 0x80) == 0x80)
+
+
+# MOV (register)
+def is_mov_bytes_register(data: bytes) -> bool:
+    # little endian
+    # This is an alias of ORR (shifted register)
+    # 32-bit: MOV <Wd>, <Wm>    is equivalent to ORR <Wd>, WZR, <Wm>
+    # 64-bit: MOV <Xd>, <Xm>    is equivalent to ORR <Xd>, XZR, <Xm>
+    return ((data[3] & 0x7f) == 0x2a) and ((data[2] & 0xe0) == 0x00) and ((data[1] & 0xff) == 0x03) and ((data[0] & 0xe0) == 0xe0)
+
+
+# MOV (to/from SP)
+def is_mov_bytes_to_from_sp(data: bytes) -> bool:
+    # little endian
+    # This is an alias of ADD (immediate)
+    # 32-bit: MOV <Wd|WSP>, <Wn|WSP>    is equivalent to ADD <Wd|WSP>, <Wn|WSP>, #0
+    # 64-bit: MOV <Xd|SP>, <Xn|SP>    is equivalent to ADD <Xd|SP>, <Xn|SP>, #0
+    return ((data[3] & 0x7f) == 0x11) and ((data[2] & 0xff) == 0x00) and ((data[1] & 0xfc) == 0x00)
+
+
+# MOV (wide immediate)
+def is_mov_bytes_wide_immediate(data: bytes) -> bool:
+    # little endian
+    # This is an alias of MOVZ
+    # 32-bit: MOV <Wd>, #<imm>    is equivalent to MOVZ <Wd>, #<imm16>, LSL #<shift>
+    # 64-bit: MOV <Xd>, #<imm>    is equivalent to MOVZ <Xd>, #<imm16>, LSL #<shift>
+    # There are still a few cases that need to be excluded, which are omitted for efficiency.
+    return ((data[3] & 0x7f) == 0x52) and ((data[2] & 0x80) == 0x80)
 
 
 # resolve adr/adrp and return (Rd, offset)
