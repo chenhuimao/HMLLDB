@@ -587,6 +587,64 @@ def resolve_ldrsw_bytes_register(data: bytes) -> (int, int, int, HMExtendOption,
     return rt, rn, rm, extend, amount
 
 
+# decode MOV (inverted wide immediate) and return (rd, is_64bit, immediate)
+def decode_mov_bytes_inverted_wide_immediate(data: bytes) -> (int, bool, int):
+    # 32-bit: MOV <Wd>, #<imm>    is equivalent to MOVN <Wd>, #<imm16>, LSL #<shift>
+    # 64-bit: MOV <Xd>, #<imm>    is equivalent to MOVN <Xd>, #<imm16>, LSL #<shift>
+    is_64bit = (data[3] & 0x80) == 0x80
+    value = int.from_bytes(data, 'little')
+    rd = value & 0b11111
+    imm16 = (value >> 5) & 0xffff
+    hw = (value >> 21) & 0b11
+    pos = hw << 4
+    result = imm16 << pos
+    if is_64bit:
+        result = ~result & 0xffffffffffffffff
+        result = twos_complement_to_int(result, 64)
+    else:
+        result = ~result & 0xffffffff
+        result = twos_complement_to_int(result, 32)
+    return rd, is_64bit, result
+
+
+# decode MOV (register) and return (rd, rm, is_64bit)
+def decode_mov_bytes_register(data: bytes) -> (int, int, bool):
+    # 32-bit: MOV <Wd>, <Wm>    is equivalent to ORR <Wd>, WZR, <Wm>
+    # 64-bit: MOV <Xd>, <Xm>    is equivalent to ORR <Xd>, XZR, <Xm>
+    is_64bit = (data[3] & 0x80) == 0x80
+    value = int.from_bytes(data, 'little')
+    rd = value & 0b11111
+    rm = (value >> 16) & 0b11111
+    return rd, rm, is_64bit
+
+
+# decode MOV (to/from SP) and return (rd, rn, is_64bit)
+def decode_mov_bytes_to_from_sp(data: bytes) -> (int, int, bool):
+    # 32-bit: MOV <Wd|WSP>, <Wn|WSP>    is equivalent to ADD <Wd|WSP>, <Wn|WSP>, #0
+    # 64-bit: MOV <Xd|SP>, <Xn|SP>    is equivalent to ADD <Xd|SP>, <Xn|SP>, #0
+    is_64bit = (data[3] & 0x80) == 0x80
+    value = int.from_bytes(data, 'little')
+    rd = value & 0b11111
+    rn = (value >> 5) & 0b11111
+    return rd, rn, is_64bit
+
+
+# decode MOV (wide immediate) and return (rd, is_64bit, immediate)
+def decode_mov_bytes_wide_immediate(data: bytes) -> (int, bool, int):
+    # 32-bit: MOV <Wd>, #<imm>    is equivalent to MOVZ <Wd>, #<imm16>, LSL #<shift>
+    # 64-bit: MOV <Xd>, #<imm>    is equivalent to MOVZ <Xd>, #<imm16>, LSL #<shift>
+    is_64bit = (data[3] & 0x80) == 0x80
+    value = int.from_bytes(data, 'little')
+    rd = value & 0b11111
+    imm16 = (value >> 5) & 0xffff
+    hw = (value >> 21) & 0b11
+    pos = hw << 4
+    result = imm16 << pos
+    bit_width = 64 if is_64bit else 32
+    result = twos_complement_to_int(result, bit_width)
+    return rd, is_64bit, result
+
+
 def twos_complement_to_int(twos_complement: int, bit_width: int) -> int:
     sign_bit_mask = 1 << (bit_width - 1)
     if twos_complement & sign_bit_mask == 0:
