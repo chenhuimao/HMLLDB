@@ -198,7 +198,7 @@ def instruction_analysis(exe_ctx: lldb.SBExecutionContext, start_address: int, e
             record_adrp_logic(exe_ctx, instruction_data, start_address + i, address_target_dic, address_ldr_dic)
         elif is_b_bytes(instruction_data) or is_bl_bytes(instruction_data):
             # Record all b/bl logic
-            label = resolve_b_bytes(instruction_data)
+            label = decode_b_bytes(instruction_data)
             address_target_dic[start_address + i] = start_address + i + label
 
         # For testing
@@ -206,7 +206,7 @@ def instruction_analysis(exe_ctx: lldb.SBExecutionContext, start_address: int, e
         #     current_address: lldb.SBAddress = lldb.SBAddress(start_address + i, target)
         #     instruction_list: lldb.SBInstructionList = target.ReadInstructions(current_address, 1)
         #     instruction = instruction_list.GetInstructionAtIndex(0)
-        #     rd, rn, rm, is64, shift, amount = resolve_add_bytes_shifted_register(instruction_data)
+        #     rd, rn, rm, is64, shift, amount = decode_add_bytes_shifted_register(instruction_data)
         #     HM.DPrint(f"{hex(start_address + i)}:{instruction}  -  ({rd}, {rn}, {rm}, {is64}, {shift}, {amount})")
 
     # For testing
@@ -399,8 +399,8 @@ def is_mov_bytes_wide_immediate(data: bytes) -> bool:
     return ((data[3] & 0x7f) == 0x52) and ((data[2] & 0x80) == 0x80)
 
 
-# resolve adr/adrp and return (Rd, offset)
-def resolve_adr_bytes(data: bytes) -> (int, int):
+# decode adr/adrp and return (Rd, offset)
+def decode_adr_bytes(data: bytes) -> (int, int):
     # ADR <Xd>, <label>
     # ADRP <Xd>, <label> (label = offset * 4096)
     value = int.from_bytes(data, 'little')
@@ -412,8 +412,8 @@ def resolve_adr_bytes(data: bytes) -> (int, int):
     return rd, offset
 
 
-# resolve b/bl and return label
-def resolve_b_bytes(data: bytes) -> int:
+# decode b/bl and return label
+def decode_b_bytes(data: bytes) -> int:
     # B <label>
     # BL <label>
     value = int.from_bytes(data, 'little')
@@ -422,8 +422,8 @@ def resolve_b_bytes(data: bytes) -> int:
     return label
 
 
-# resolve ADD (immediate) and return (Rd, Rn, is_64bit, final_immediate)
-def resolve_add_bytes_immediate(data: bytes) -> (int, int, bool, int):
+# decode ADD (immediate) and return (Rd, Rn, is_64bit, final_immediate)
+def decode_add_bytes_immediate(data: bytes) -> (int, int, bool, int):
     # 32-bit: ADD <Wd|WSP>, <Wn|WSP>, #<imm>{, <shift>}
     # 64-bit: ADD <Xd|SP>, <Xn|SP>, #<imm>{, <shift>}
     is_64bit = (data[3] & 0x80) == 0x80
@@ -436,8 +436,8 @@ def resolve_add_bytes_immediate(data: bytes) -> (int, int, bool, int):
     return rd, rn, is_64bit, final_immediate
 
 
-# resolve ADD (shifted register) and return (Rd, Rn, Rm, is_64bit, shift, amount)
-def resolve_add_bytes_shifted_register(data: bytes) -> (int, int, int, bool, int, int):
+# decode ADD (shifted register) and return (Rd, Rn, Rm, is_64bit, shift, amount)
+def decode_add_bytes_shifted_register(data: bytes) -> (int, int, int, bool, int, int):
     # 32-bit: ADD <Wd>, <Wn>, <Wm>{, <shift> #<amount>}
     # 64-bit: ADD <Xd>, <Xn>, <Xm>{, <shift> #<amount>}
     is_64bit = (data[3] & 0x80) == 0x80
@@ -450,8 +450,8 @@ def resolve_add_bytes_shifted_register(data: bytes) -> (int, int, int, bool, int
     return rd, rn, rm, is_64bit, shift, imm6
 
 
-# resolve LDR (immediate) Post-index and return (Rt, Rn, is_64bit, simm)
-def resolve_ldr_bytes_immediate_post_index(data: bytes) -> (int, int, bool, int):
+# decode LDR (immediate) Post-index and return (Rt, Rn, is_64bit, simm)
+def decode_ldr_bytes_immediate_post_index(data: bytes) -> (int, int, bool, int):
     # 32-bit: LDR <Wt>, [<Xn|SP>], #<simm>
     # 64-bit: LDR <Xt>, [<Xn|SP>], #<simm>
     is_64bit = (data[3] & 0x40) == 0x40
@@ -463,8 +463,8 @@ def resolve_ldr_bytes_immediate_post_index(data: bytes) -> (int, int, bool, int)
     return rt, rn, is_64bit, simm
 
 
-# resolve LDR (immediate) Pre-index and return (Rt, Rn, is_64bit, simm)
-def resolve_ldr_bytes_immediate_pre_index(data: bytes) -> (int, int, bool, int):
+# decode LDR (immediate) Pre-index and return (Rt, Rn, is_64bit, simm)
+def decode_ldr_bytes_immediate_pre_index(data: bytes) -> (int, int, bool, int):
     # 32-bit: LDR <Wt>, [<Xn|SP>, #<simm>]!
     # 64-bit: LDR <Xt>, [<Xn|SP>, #<simm>]!
     is_64bit = (data[3] & 0x40) == 0x40
@@ -476,8 +476,8 @@ def resolve_ldr_bytes_immediate_pre_index(data: bytes) -> (int, int, bool, int):
     return rt, rn, is_64bit, simm
 
 
-# resolve LDR (immediate) Unsigned offset and return (Rt, Rn, is_64bit, pimm)
-def resolve_ldr_bytes_immediate_unsigned_offset(data: bytes) -> (int, int, bool, int):
+# decode LDR (immediate) Unsigned offset and return (Rt, Rn, is_64bit, pimm)
+def decode_ldr_bytes_immediate_unsigned_offset(data: bytes) -> (int, int, bool, int):
     # 32-bit: LDR <Wt>, [<Xn|SP>{, #<pimm>}]
     # 64-bit: LDR <Xt>, [<Xn|SP>{, #<pimm>}]
     is_64bit = (data[3] & 0x40) == 0x40
@@ -492,8 +492,8 @@ def resolve_ldr_bytes_immediate_unsigned_offset(data: bytes) -> (int, int, bool,
     return rt, rn, is_64bit, pimm
 
 
-# resolve LDR (register) and return (Rt, Rn, Rm, is_64bit, extend, amount)
-def resolve_ldr_bytes_register(data: bytes) -> (int, int, int, bool, HMExtendOption, int):
+# decode LDR (register) and return (Rt, Rn, Rm, is_64bit, extend, amount)
+def decode_ldr_bytes_register(data: bytes) -> (int, int, int, bool, HMExtendOption, int):
     # 32-bit: LDR <Wt>, [<Xn|SP>, (<Wm>|<Xm>){, <extend> {<amount>}}]
     # 64-bit: LDR <Xt>, [<Xn|SP>, (<Wm>|<Xm>){, <extend> {<amount>}}]
     is_64bit = (data[3] & 0x40) == 0x40
@@ -521,8 +521,8 @@ def resolve_ldr_bytes_register(data: bytes) -> (int, int, int, bool, HMExtendOpt
     return rt, rn, rm, is_64bit, extend, amount
 
 
-# resolve LDRSW (immediate) Post-index and return (Rt, Rn, simm)
-def resolve_ldrsw_bytes_immediate_post_index(data: bytes) -> (int, int, int):
+# decode LDRSW (immediate) Post-index and return (Rt, Rn, simm)
+def decode_ldrsw_bytes_immediate_post_index(data: bytes) -> (int, int, int):
     # LDRSW <Xt>, [<Xn|SP>], #<simm>
     value = int.from_bytes(data, 'little')
     rt = value & 0b11111
@@ -532,8 +532,8 @@ def resolve_ldrsw_bytes_immediate_post_index(data: bytes) -> (int, int, int):
     return rt, rn, simm
 
 
-# resolve LDRSW (immediate) Pre-index and return (Rt, Rn, simm)
-def resolve_ldrsw_bytes_immediate_pre_index(data: bytes) -> (int, int, int):
+# decode LDRSW (immediate) Pre-index and return (Rt, Rn, simm)
+def decode_ldrsw_bytes_immediate_pre_index(data: bytes) -> (int, int, int):
     # LDRSW <Xt>, [<Xn|SP>, #<simm>]!
     value = int.from_bytes(data, 'little')
     rt = value & 0b11111
@@ -543,8 +543,8 @@ def resolve_ldrsw_bytes_immediate_pre_index(data: bytes) -> (int, int, int):
     return rt, rn, simm
 
 
-# resolve LDRSW (immediate) Unsigned offset and return (Rt, Rn, pimm)
-def resolve_ldrsw_bytes_immediate_unsigned_offset(data: bytes) -> (int, int, int):
+# decode LDRSW (immediate) Unsigned offset and return (Rt, Rn, pimm)
+def decode_ldrsw_bytes_immediate_unsigned_offset(data: bytes) -> (int, int, int):
     # LDRSW <Xt>, [<Xn|SP>{, #<pimm>}]
     value = int.from_bytes(data, 'little')
     rt = value & 0b11111
@@ -554,8 +554,8 @@ def resolve_ldrsw_bytes_immediate_unsigned_offset(data: bytes) -> (int, int, int
     return rt, rn, pimm
 
 
-# resolve LDRSW (literal) and return (Rt, label)
-def resolve_ldrsw_bytes_literal(data: bytes) -> (int, int):
+# decode LDRSW (literal) and return (Rt, label)
+def decode_ldrsw_bytes_literal(data: bytes) -> (int, int):
     # LDRSW <Xt>, <label>
     value = int.from_bytes(data, 'little')
     rt = value & 0b11111
@@ -564,8 +564,8 @@ def resolve_ldrsw_bytes_literal(data: bytes) -> (int, int):
     return rt, label
 
 
-# resolve LDRSW (register) and return (Rt, Rn, Rm, extend, amount)
-def resolve_ldrsw_bytes_register(data: bytes) -> (int, int, int, HMExtendOption, int):
+# decode LDRSW (register) and return (Rt, Rn, Rm, extend, amount)
+def decode_ldrsw_bytes_register(data: bytes) -> (int, int, int, HMExtendOption, int):
     # LDRSW <Xt>, [<Xn|SP>, (<Wm>|<Xm>){, <extend> {<amount>}}]
     value = int.from_bytes(data, 'little')
     rt = value & 0b11111
@@ -676,7 +676,7 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_data: bytes, adrp_i
     target = exe_ctx.GetTarget()
 
     # Calculate and save the value of adr/adrp instruction
-    adrp_rd, adrp_offset = resolve_adr_bytes(adrp_data)
+    adrp_rd, adrp_offset = decode_adr_bytes(adrp_data)
     adrp_rd_str = f"x{adrp_rd}"
     if is_adr_bytes(adrp_data):
         adrp_result = adrp_instruction_load_address + adrp_offset
