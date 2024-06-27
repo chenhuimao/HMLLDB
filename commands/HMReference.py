@@ -399,6 +399,39 @@ def is_mov_bytes_wide_immediate(data: bytes) -> bool:
     return ((data[3] & 0x7f) == 0x52) and ((data[2] & 0x80) == 0x80)
 
 
+# STR (immediate) Post-index
+def is_str_bytes_immediate_post_index(data: bytes) -> bool:
+    # little endian
+    # 32-bit: STR <Wt>, [<Xn|SP>], #<simm>
+    # 64-bit: STR <Xt>, [<Xn|SP>], #<simm>
+    return ((data[3] & 0xbf) == 0xb8) and ((data[2] & 0xe0) == 0x00) and ((data[1] & 0x0c) == 0x04)
+
+
+# STR (immediate) Pre-index
+def is_str_bytes_immediate_pre_index(data: bytes) -> bool:
+    # little endian
+    # 32-bit: STR <Wt>, [<Xn|SP>, #<simm>]!
+    # 64-bit: STR <Xt>, [<Xn|SP>, #<simm>]!
+    return ((data[3] & 0xbf) == 0xb8) and ((data[2] & 0xe0) == 0x00) and ((data[1] & 0x0c) == 0x0c)
+
+
+# STR (immediate) Unsigned offset
+def is_str_bytes_immediate_unsigned_offset(data: bytes) -> bool:
+    # little endian
+    # 32-bit: STR <Wt>, [<Xn|SP>{, #<pimm>}]
+    # 64-bit: STR <Xt>, [<Xn|SP>{, #<pimm>}]
+    return ((data[3] & 0xbf) == 0xb9) and ((data[2] & 0xc0) == 0x00)
+
+
+# STR (register)
+def is_str_bytes_register(data: bytes) -> bool:
+    # little endian
+    # 32-bit: STR <Wt>, [<Xn|SP>, (<Wm>|<Xm>){, <extend> {<amount>}}]
+    # 64-bit: STR <Xt>, [<Xn|SP>, (<Wm>|<Xm>){, <extend> {<amount>}}]
+    # There are still a few cases that need to be excluded, which are omitted for efficiency.
+    return ((data[3] & 0xbf) == 0xb8) and ((data[2] & 0xe0) == 0x20) and ((data[1] & 0x0c) == 0x08)
+
+
 # decode adr/adrp and return (Rd, offset)
 def decode_adr_bytes(data: bytes) -> (int, int):
     # ADR <Xd>, <label>
@@ -643,6 +676,91 @@ def decode_mov_bytes_wide_immediate(data: bytes) -> (int, bool, int):
     bit_width = 64 if is_64bit else 32
     result = twos_complement_to_int(result, bit_width)
     return rd, is_64bit, result
+
+
+# decode STR (immediate) Post-index and return (rt, rn, is_64bit, simm)
+def decode_str_bytes_immediate_post_index(data: bytes) -> (int, int, bool, int):
+    # 32-bit: STR <Wt>, [<Xn|SP>], #<simm>
+    # 64-bit: STR <Xt>, [<Xn|SP>], #<simm>
+    # str x8, [x22], #0x8 - (8, 22, True, 0x8)
+    # str w0, [x21], #0x4 - (0, 21, False, 0x4)
+    # str wzr, [x22], #0x8 - (31, 22, False, 0x8)
+    # str x21, [sp], #0x10 - (21, 31, True, 0x10)
+    is_64bit = (data[3] & 0x40) == 0x40
+    value = int.from_bytes(data, 'little')
+    rt = value & 0b11111
+    rn = (value >> 5) & 0b11111
+    imm9 = (value >> 12) & 0x1ff
+    simm = twos_complement_to_int(imm9, 9)
+    return rt, rn, is_64bit, simm
+
+
+# decode STR (immediate) Pre-index and return (rt, rn, is_64bit, simm)
+def decode_str_bytes_immediate_pre_index(data: bytes) -> (int, int, bool, int):
+    # 32-bit: STR <Wt>, [<Xn|SP>, #<simm>]!
+    # 64-bit: STR <Xt>, [<Xn|SP>, #<simm>]!
+    # str wzr, [sp, #-0x10]! - (31, 31, False, -0x10)
+    # str xzr, [x23, #0x60]! - (31, 23, True, 0x60)
+    # str w8, [x1, #0x60]! - (8, 1, False, 0x60)
+    is_64bit = (data[3] & 0x40) == 0x40
+    value = int.from_bytes(data, 'little')
+    rt = value & 0b11111
+    rn = (value >> 5) & 0b11111
+    imm9 = (value >> 12) & 0x1ff
+    simm = twos_complement_to_int(imm9, 9)
+    return rt, rn, is_64bit, simm
+
+
+# decode STR (immediate) Unsigned offset and return (rt, rn, is_64bit, pimm)
+def decode_str_bytes_immediate_unsigned_offset(data: bytes) -> (int, int, bool, int):
+    # 32-bit: STR <Wt>, [<Xn|SP>{, #<pimm>}]
+    # 64-bit: STR <Xt>, [<Xn|SP>{, #<pimm>}]
+    # str xzr, [sp, #0x58] - (31, 31, True, 0x58)
+    # str x8, [sp] - (8, 31, True, 0x0)
+    # str w0, [x19, #0x560] - (0, 19, False, 0x560)
+    # str wzr, [x8, #0x50] - (31, 8, False, 0x50)
+    is_64bit = (data[3] & 0x40) == 0x40
+    value = int.from_bytes(data, 'little')
+    rt = value & 0b11111
+    rn = (value >> 5) & 0b11111
+    imm12 = (value >> 10) & 0xfff
+    if is_64bit:
+        pimm = imm12 * 8
+    else:
+        pimm = imm12 * 4
+    return rt, rn, is_64bit, pimm
+
+
+# decode STR (register) and return (Rt, Rn, Rm, is_64bit, extend, amount)
+def decode_str_bytes_register(data: bytes) -> (int, int, int, bool, HMExtendOption, int):
+    # 32-bit: STR <Wt>, [<Xn|SP>, (<Wm>|<Xm>){, <extend> {<amount>}}]
+    # 64-bit: STR <Xt>, [<Xn|SP>, (<Wm>|<Xm>){, <extend> {<amount>}}]
+    # str x0, [x20, x8] - (0, 20, 8, True, <HMExtendOption.lsl: 3>, 0)
+    # str w9, [x0, x8] - (9, 0, 8, False, <HMExtendOption.lsl: 3>, 0)
+    # str x9, [x8, w20, uxtw  #3] - (9, 8, 20, True, <HMExtendOption.uxtw: 2>, 3)
+    # str x0, [x20, w27, sxtw] - (0, 20, 27, True, <HMExtendOption.sxtw: 6>, 0)
+    is_64bit = (data[3] & 0x40) == 0x40
+    value = int.from_bytes(data, 'little')
+    rt = value & 0b11111
+    rn = (value >> 5) & 0b11111
+    rm = (value >> 16) & 0b11111
+    s = (value >> 12) & 1
+    option = (value >> 13) & 0b111
+    if is_64bit:
+        amount = 0 if s == 0 else 3
+    else:
+        amount = 0 if s == 0 else 2
+    if option == 0b10:
+        extend = HMExtendOption.uxtw
+    elif option == 0b11:
+        extend = HMExtendOption.lsl
+    elif option == 0b110:
+        extend = HMExtendOption.sxtw
+    elif option == 0b111:
+        extend = HMExtendOption.sxtx
+    else:
+        extend = HMExtendOption.unknow
+    return rt, rn, rm, is_64bit, extend, amount
 
 
 def twos_complement_to_int(twos_complement: int, bit_width: int) -> int:
