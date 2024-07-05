@@ -36,6 +36,44 @@ g_last_registers_dict: Dict[str, str] = {}
 last_disassemble: str = ""
 
 
+class HMRegisterList:
+    __general_register_dict: Dict[int, int]
+
+    def __init__(self):
+        self.__general_register_dict = {}
+
+    def has_value(self, index: int) -> bool:
+        return index in self.__general_register_dict
+
+    def remove_value(self, index: int) -> bool:
+        if self.has_value(index):
+            del self.__general_register_dict[index]
+            return True
+        return False
+
+    # FIXME: Need to limit the length to 64 bits
+    def set_value(self, index: int, value: int, is_64bit: bool) -> bool:
+        if index >= 32:
+            HM.DPrint(f"set_value error: index:{index} out of range")
+            return False
+        if is_64bit:
+            result = value
+        else:
+            result = value & 0xffff
+        self.__general_register_dict[index] = result
+        return True
+
+    def get_value(self, index: int, is_64bit: bool) -> int:
+        if not self.has_value(index):
+            HM.DPrint(f"get_value error: index:{index} not in list")
+            return 0
+        if is_64bit:
+            result = self.__general_register_dict[index]
+        else:
+            result = self.__general_register_dict[index] & 0xffff
+        return result
+
+
 def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand('command script add -f HMRegister.register_change rc -h "Show general purpose registers changes."')
     debugger.HandleCommand('command script add -f HMRegister.register_read rr -h "Alias for \'register read\' with additional -s/--sp arguments."')

@@ -32,6 +32,7 @@ import shlex
 import HMCalculationHelper
 import HMLLDBClassInfo
 import HMLLDBHelpers as HM
+from HMRegister import HMRegisterList
 
 
 g_image_address_target_dic: Dict[str, Dict[int, int]] = {}
@@ -44,6 +45,13 @@ class HMExtendOption(Enum):
     sxtw = 0b110
     sxtx = 0b111
     unknow = 0b1000
+
+
+class HMShift(Enum):
+    lsl = 0b00
+    lsr = 0b01
+    asr = 0b10
+    unknow = 0b11
 
 
 def __lldb_init_module(debugger, internal_dict):
@@ -432,6 +440,12 @@ def is_str_bytes_register(data: bytes) -> bool:
     return ((data[3] & 0xbf) == 0xb8) and ((data[2] & 0xe0) == 0x20) and ((data[1] & 0x0c) == 0x08)
 
 
+# NOP
+def is_nop_bytes(data: bytes) -> bool:
+    # little endian
+    return (data[3] == 0xd5) and (data[2] == 0x03) and (data[1] == 0x20) and (data[0] == 0x1f)
+
+
 # decode adr/adrp and return (Rd, offset)
 def decode_adr_bytes(data: bytes) -> (int, int):
     # ADR <Xd>, <label>
@@ -459,6 +473,9 @@ def decode_b_bytes(data: bytes) -> int:
 def decode_add_bytes_immediate(data: bytes) -> (int, int, bool, int):
     # 32-bit: ADD <Wd|WSP>, <Wn|WSP>, #<imm>{, <shift>}
     # 64-bit: ADD <Xd|SP>, <Xn|SP>, #<imm>{, <shift>}
+    # mov x8, sp - (8, 31, True, 0)
+    # add sp, sp, #0x70 - (31, 31, True, 0x70)
+    # add w0, w22, #0x4 - (0, 22, False, 0x4)
     is_64bit = (data[3] & 0x80) == 0x80
     value = int.from_bytes(data, 'little')
     sh = (value >> 22) & 1
@@ -470,15 +487,22 @@ def decode_add_bytes_immediate(data: bytes) -> (int, int, bool, int):
 
 
 # decode ADD (shifted register) and return (Rd, Rn, Rm, is_64bit, shift, amount)
-def decode_add_bytes_shifted_register(data: bytes) -> (int, int, int, bool, int, int):
+def decode_add_bytes_shifted_register(data: bytes) -> (int, int, int, bool, HMShift, int):
     # 32-bit: ADD <Wd>, <Wn>, <Wm>{, <shift> #<amount>}
     # 64-bit: ADD <Xd>, <Xn>, <Xm>{, <shift> #<amount>}
+    # add x0, x20, x8 - (0, 20, 8, True, <HMShift.lsl: 0>, 0)
+    # add x8, x8, x22, lsl #3 - (8, 8, 22, True, <HMShift.lsl: 0>, 3)
+    # add x8, x8, x20, asr #32 - (8, 8, 20, True, <HMShift.asr: 2>, 32)
+    # add w23, w8, w1 - (23, 8, 1, False, <HMShift.lsl: 0>, 0)
+    # add w9, w9, w9, lsl #8 - (9, 9, 9, False, <HMShift.lsl: 0>, 8)
+    # add w8, w9, w8, lsr #31 - (8, 9, 8, False, <HMShift.lsr: 1>, 31)
     is_64bit = (data[3] & 0x80) == 0x80
     value = int.from_bytes(data, 'little')
     rd = value & 0b11111
     rn = (value >> 5) & 0b11111
     rm = (value >> 16) & 0b11111
-    shift = (value >> 22) & 0b11
+    shift_value = (value >> 22) & 0b11
+    shift = HMShift(shift_value)
     imm6 = (value >> 10) & 0x3f
     return rd, rn, rm, is_64bit, shift, imm6
 
@@ -487,6 +511,10 @@ def decode_add_bytes_shifted_register(data: bytes) -> (int, int, int, bool, int,
 def decode_ldr_bytes_immediate_post_index(data: bytes) -> (int, int, bool, int):
     # 32-bit: LDR <Wt>, [<Xn|SP>], #<simm>
     # 64-bit: LDR <Xt>, [<Xn|SP>], #<simm>
+    # ldr x10, [x9], #-0x18 - (10, 9, True, -0x18)
+    # ldr w2, [x24], #0x4 - (2, 24, False, 0x4)
+    # ldr x19, [sp], #0x20 - (19, 31, True, 32)
+    # ldr xzr, [x20], #0x8 - (31, 20, True, 8)
     is_64bit = (data[3] & 0x40) == 0x40
     value = int.from_bytes(data, 'little')
     rt = value & 0b11111
@@ -772,6 +800,13 @@ def twos_complement_to_int(twos_complement: int, bit_width: int) -> int:
     return result
 
 
+def logical_shift_right(value: int, amount: int, bit_width: int) -> int:
+    value &= (1 << bit_width) - 1
+    result = value >> amount
+    result &= (1 << (bit_width - amount)) - 1
+    return result
+
+
 def get_description_of_section(section: lldb.SBSection) -> str:
     stream = lldb.SBStream()
     section.GetDescription(stream)
@@ -791,19 +826,63 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_data: bytes, adrp_i
     # Analyze the specified instructions after adrp in sequence, and analyze up to 5 instructions.
     # FIXME: x0 and w0 registers are independent and need to be merged.
     register_dic: Dict[str, int] = {}
+    register_list = HMRegisterList()
     target = exe_ctx.GetTarget()
 
     # Calculate and save the value of adr/adrp instruction
     adrp_rd, adrp_offset = decode_adr_bytes(adrp_data)
-    adrp_rd_str = f"x{adrp_rd}"
     if is_adr_bytes(adrp_data):
         adrp_result = adrp_instruction_load_address + adrp_offset
     else:
         adrp_result, _ = HMCalculationHelper.calculate_adrp_result_with_immediate_and_pc_address(adrp_offset, adrp_instruction_load_address)
-    register_dic[adrp_rd_str] = adrp_result
+    register_list.set_value(adrp_rd, adrp_result)
 
     # Analyze the specified instructions after adr/adrp
     instruction_count = 5
+
+    address: lldb.SBAddress = lldb.SBAddress(adrp_instruction_load_address + 4, target)
+    error = lldb.SBError()
+    data: bytes = target.ReadMemory(address, 4 * instruction_count, error)
+    if not error.Success():
+        HM.DPrint(error)
+        return
+    for i in range(0, len(data), 4):
+        instruction_data = data[i:i+4]
+        # add
+        if is_add_bytes_immediate(instruction_data):
+            rd, rn, is_64bit, final_immediate = decode_add_bytes_immediate(instruction_data)
+            if not register_list.has_value(rn):
+                continue
+            rd_value = register_list.get_value(rn, is_64bit) + final_immediate
+            register_list.set_value(rd, rd_value, is_64bit)
+        elif is_add_bytes_shifted_register(instruction_data):
+            rd, rn, rm, is_64bit, shift, amount = decode_add_bytes_shifted_register(instruction_data)
+            if shift == HMShift.unknow:
+                continue
+            if not (register_list.has_value(rn) and register_list.has_value(rm)):
+                continue
+            rn_value = register_list.get_value(rn, is_64bit)
+            rm_value = register_list.get_value(rm, is_64bit)
+            if amount == 0:
+                rd_value = rn_value + rm_value
+            else:
+                bit_width = 64 if is_64bit else 32
+                if shift == HMShift.lsl:
+                    rm_value_shift = (rm_value << amount) & ((1 << bit_width) - 1)
+                elif shift == HMShift.lsr:
+                    rm_value_shift = logical_shift_right(rm_value, amount, bit_width)
+                elif shift == HMShift.asr:
+                    rm_value_shift = (rm_value_shift >> amount) & ((1 << bit_width) - 1)
+                else:
+                    continue
+                rd_value = rn_value + rm_value_shift
+            register_list.set_value(rd, rd_value, is_64bit)
+
+        # ldr
+        elif is_ldr_bytes_immediate_post_index(instruction_data):
+            rt, rn, is_64bit, simm = decode_ldr_bytes_immediate_post_index(instruction_data)
+
+
     address: lldb.SBAddress = lldb.SBAddress(adrp_instruction_load_address + 4, target)
     instruction_list: lldb.SBInstructionList = target.ReadInstructions(address, instruction_count)
     for i in range(instruction_count):
