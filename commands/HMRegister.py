@@ -51,13 +51,12 @@ class HMRegisterList:
             return True
         return False
 
-    # FIXME: Need to limit the length to 64 bits
     def set_value(self, index: int, value: int, is_64bit: bool) -> bool:
         if index >= 32:
             HM.DPrint(f"set_value error: index:{index} out of range")
             return False
         if is_64bit:
-            result = value
+            result = value & 0xffffffff
         else:
             result = value & 0xffff
         self.__general_register_dict[index] = result

@@ -496,6 +496,9 @@ def decode_add_bytes_shifted_register(data: bytes) -> (int, int, int, bool, HMSh
     # add w23, w8, w1 - (23, 8, 1, False, <HMShift.lsl: 0>, 0)
     # add w9, w9, w9, lsl #8 - (9, 9, 9, False, <HMShift.lsl: 0>, 8)
     # add w8, w9, w8, lsr #31 - (8, 9, 8, False, <HMShift.lsr: 1>, 31)
+    # add xzr, x21, x8 - (31, 21, 8, True, <HMShift.lsl: 0>, 0)
+    # add x8, xzr, x8 - (8, 31, 8, True, <HMShift.lsl: 0>, 0)
+    # add x8, x21, xzr - (8, 21, 31, True, <HMShift.lsl: 0>, 0)
     is_64bit = (data[3] & 0x80) == 0x80
     value = int.from_bytes(data, 'little')
     rd = value & 0b11111
@@ -528,6 +531,10 @@ def decode_ldr_bytes_immediate_post_index(data: bytes) -> (int, int, bool, int):
 def decode_ldr_bytes_immediate_pre_index(data: bytes) -> (int, int, bool, int):
     # 32-bit: LDR <Wt>, [<Xn|SP>, #<simm>]!
     # 64-bit: LDR <Xt>, [<Xn|SP>, #<simm>]!
+    # ldr x16, [x8, #-0x8]! - (16, 8, True, -8)
+    # ldr w8, [x26, #0x38]! - (8, 26, False, 0x38)
+    # ldr x9, [sp, #0x8]! - (9, 31, True, 8)
+    # ldr wzr, [x16, #0xf6]! - (31, 16, False, 0xf6)
     is_64bit = (data[3] & 0x40) == 0x40
     value = int.from_bytes(data, 'little')
     rt = value & 0b11111
@@ -541,6 +548,10 @@ def decode_ldr_bytes_immediate_pre_index(data: bytes) -> (int, int, bool, int):
 def decode_ldr_bytes_immediate_unsigned_offset(data: bytes) -> (int, int, bool, int):
     # 32-bit: LDR <Wt>, [<Xn|SP>{, #<pimm>}]
     # 64-bit: LDR <Xt>, [<Xn|SP>{, #<pimm>}]
+    # ldr x2, [x8] - (2, 8, True, 0)
+    # ldr w8, [x19, #0x8] - (8, 19, False, 8)
+    # ldr x8, [sp, #0x98] - (8, 31, True, 0x98)
+    # ldr xzr, [x8, #0x18] - (31, 8, True, 0x18)
     is_64bit = (data[3] & 0x40) == 0x40
     value = int.from_bytes(data, 'little')
     rt = value & 0b11111
@@ -553,10 +564,31 @@ def decode_ldr_bytes_immediate_unsigned_offset(data: bytes) -> (int, int, bool, 
     return rt, rn, is_64bit, pimm
 
 
+# decode LDR (literal), return (Rt, is_64bit, label)
+def decode_ldr_bytes_literal(data: bytes) -> (int, bool, int):
+    # 32-bit: LDR <Wt>, <label>
+    # 64-bit: LDR <Xt>, <label>
+    # 0x104d3307c: ldr w16, 0x104d33084 - (16, False, 8)
+    # 0x10ec81160: ldr x20, #-0xf7c00 - (20, True, -0xf7c00)
+    # 0x107c802e8: ldr wzr, 0x107c8a528 - (31, False, 41536)
+    is_64bit = (data[3] & 0x40) == 0x40
+    value = int.from_bytes(data, 'little')
+    rt = value & 0b11111
+    imm19 = (value >> 5) & 0x7ffff
+    label = twos_complement_to_int(imm19, 19) * 4
+    return rt, is_64bit, label
+
+
 # decode LDR (register) and return (Rt, Rn, Rm, is_64bit, extend, amount)
 def decode_ldr_bytes_register(data: bytes) -> (int, int, int, bool, HMExtendOption, int):
     # 32-bit: LDR <Wt>, [<Xn|SP>, (<Wm>|<Xm>){, <extend> {<amount>}}]
     # 64-bit: LDR <Xt>, [<Xn|SP>, (<Wm>|<Xm>){, <extend> {<amount>}}]
+    # ldr x0, [x27, x8] - (0, 27, 8, True, <HMExtendOption.lsl: 3>, 0)
+    # ldr w12, [x20, x9, lsl  #2] - (12, 20, 9, False, <HMExtendOption.lsl: 3>, 2)
+    # ldr w2, [x8, w0, sxtw  #2] - (2, 8, 0, False, <HMExtendOption.sxtw: 6>, 2)
+    # ldr x2, [x21, w8, uxtw] - (2, 21, 8, True, <HMExtendOption.uxtw: 2>, 0)
+    # ldr wzr, [x19, x8] - (31, 19, 8, False, <HMExtendOption.lsl: 3>, 0)
+    # ldr xzr, [sp, xzr] - (31, 31, 31, True, <HMExtendOption.lsl: 3>, 0)
     is_64bit = (data[3] & 0x40) == 0x40
     value = int.from_bytes(data, 'little')
     rt = value & 0b11111
@@ -800,10 +832,27 @@ def twos_complement_to_int(twos_complement: int, bit_width: int) -> int:
     return result
 
 
-def logical_shift_right(value: int, amount: int, bit_width: int) -> int:
-    value &= (1 << bit_width) - 1
-    result = value >> amount
+def logical_shift_right(raw_value: int, amount: int, bit_width: int) -> int:
+    raw_value &= (1 << bit_width) - 1
+    result = raw_value >> amount
     result &= (1 << (bit_width - amount)) - 1
+    return result
+
+
+# uxtw
+def unsigned_extend_word(raw_value: int) -> int:
+    raw_value = raw_value & 0xffffffff
+    return raw_value
+
+
+# sxtw
+def signed_extend_word(raw_value: int) -> int:
+    raw_value = raw_value & 0xffffffff
+    sign_bit = (raw_value >> 31) & 1
+    if sign_bit == 1:
+        result = raw_value | 0xffffffff00000000
+    else:
+        result = raw_value
     return result
 
 
@@ -859,10 +908,14 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_data: bytes, adrp_i
             rd, rn, rm, is_64bit, shift, amount = decode_add_bytes_shifted_register(instruction_data)
             if shift == HMShift.unknow:
                 continue
-            if not (register_list.has_value(rn) and register_list.has_value(rm)):
+            if rd == 31:  # xzr
                 continue
-            rn_value = register_list.get_value(rn, is_64bit)
-            rm_value = register_list.get_value(rm, is_64bit)
+            if (not register_list.has_value(rn)) and rn != 31:
+                continue
+            if (not register_list.has_value(rm)) and rm != 31:
+                continue
+            rn_value = 0 if rn == 31 else register_list.get_value(rn, is_64bit)
+            rm_value = 0 if rm == 31 else register_list.get_value(rm, is_64bit)
             if amount == 0:
                 rd_value = rn_value + rm_value
             else:
@@ -873,7 +926,7 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_data: bytes, adrp_i
                     rm_value_shift = logical_shift_right(rm_value, amount, bit_width)
                 elif shift == HMShift.asr:
                     rm_value_shift = (rm_value_shift >> amount) & ((1 << bit_width) - 1)
-                else:
+                else:  # HMShift.unknow
                     continue
                 rd_value = rn_value + rm_value_shift
             register_list.set_value(rd, rd_value, is_64bit)
@@ -881,6 +934,73 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_data: bytes, adrp_i
         # ldr
         elif is_ldr_bytes_immediate_post_index(instruction_data):
             rt, rn, is_64bit, simm = decode_ldr_bytes_immediate_post_index(instruction_data)
+            if not register_list.has_value(rn):
+                continue
+            if rt == 31:  # xzr
+                continue
+            rn_value = register_list.get_value(rn, True)
+            ldr_result = HM.load_address_value(exe_ctx, rn_value)
+            register_list.set_value(rt, ldr_result, is_64bit)
+            rn_value = rn_value + simm
+            register_list.set_value(rn, rn_value, True)
+        elif is_ldr_bytes_immediate_pre_index(instruction_data):
+            rt, rn, is_64bit, simm = decode_ldr_bytes_immediate_pre_index(instruction_data)
+            if not register_list.has_value(rn):
+                continue
+            if rt == 31:  # xzr
+                continue
+            rn_value = register_list.get_value(rn, True)
+            rn_value += simm
+            register_list.set_value(rn, rn_value, True)
+            ldr_result = HM.load_address_value(exe_ctx, rn_value)
+            register_list.set_value(rt, ldr_result, is_64bit)
+        elif is_ldr_bytes_immediate_unsigned_offset(instruction_data):
+            rt, rn, is_64bit, pimm = decode_ldr_bytes_immediate_unsigned_offset(instruction_data)
+            if not register_list.has_value(rn):
+                continue
+            if rt == 31:  # xzr
+                continue
+            rn_value = register_list.get_value(rn, True)
+            load_address = rn_value + pimm
+            ldr_result = HM.load_address_value(exe_ctx, load_address)
+            register_list.set_value(rt, ldr_result, is_64bit)
+        elif is_ldr_bytes_literal(instruction_data):
+            rt, is_64bit, label = decode_ldr_bytes_literal(instruction_data)
+            if rt == 31:  # xzr
+                continue
+            load_address = label + adrp_instruction_load_address + 4 + i
+            ldr_result = HM.load_address_value(exe_ctx, load_address)
+            register_list.set_value(rt, ldr_result, is_64bit)
+        elif is_ldr_bytes_register(instruction_data):
+            rt, rn, rm, is_64bit, extend, amount = decode_ldr_bytes_register(instruction_data)
+            if rt == 31:  # xzr
+                continue
+            if extend == HMExtendOption.unknow or extend == HMExtendOption.sxtx:
+                continue
+            if not register_list.has_value(rn):
+                continue
+            if rm != 31 and (not register_list.has_value(rm)):
+                continue
+            rn_value = register_list.get_value(rn, True)
+            if extend == HMExtendOption.uxtw:
+                rm_value = 0 if rm == 31 else register_list.get_value(rm, False)
+                temp = unsigned_extend_word(rm_value) << amount
+                load_address = rn_value + twos_complement_to_int(temp, 64)
+                ldr_result = HM.load_address_value(exe_ctx, load_address)
+                register_list.set_value(rt, ldr_result, is_64bit)
+            elif extend == HMExtendOption.lsl:
+                rm_value = 0 if rm == 31 else register_list.get_value(rm, True)
+                load_address = twos_complement_to_int(rm_value << amount, 64)
+                ldr_result = HM.load_address_value(exe_ctx, load_address)
+                register_list.set_value(rt, ldr_result, is_64bit)
+            elif extend == HMExtendOption.sxtw:
+                rm_value = 0 if rm == 31 else register_list.get_value(rm, False)
+                temp = signed_extend_word(rm_value) << amount
+                load_address = rn_value + twos_complement_to_int(temp, 64)
+                ldr_result = HM.load_address_value(exe_ctx, load_address)
+                register_list.set_value(rt, ldr_result, is_64bit)
+            else:
+                continue
 
 
     address: lldb.SBAddress = lldb.SBAddress(adrp_instruction_load_address + 4, target)
