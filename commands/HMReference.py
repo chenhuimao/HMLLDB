@@ -32,6 +32,7 @@ import shlex
 import HMCalculationHelper
 import HMLLDBClassInfo
 import HMLLDBHelpers as HM
+import HMRegister
 from HMRegister import HMRegisterList
 
 
@@ -455,7 +456,7 @@ def decode_adr_bytes(data: bytes) -> (int, int):
     immhi = (value >> 5) & 0x7ffff
     immlo = (value >> 29) & 0b11
     imm21 = (immhi << 2) | immlo
-    offset = twos_complement_to_int(imm21, 21)
+    offset = HMRegister.twos_complement_to_int(imm21, 21)
     return rd, offset
 
 
@@ -465,7 +466,7 @@ def decode_b_bytes(data: bytes) -> int:
     # BL <label>
     value = int.from_bytes(data, 'little')
     imm26 = value & 0x3ffffff
-    label = twos_complement_to_int(imm26, 26) * 4
+    label = HMRegister.twos_complement_to_int(imm26, 26) * 4
     return label
 
 
@@ -523,7 +524,7 @@ def decode_ldr_bytes_immediate_post_index(data: bytes) -> (int, int, bool, int):
     rt = value & 0b11111
     rn = (value >> 5) & 0b11111
     imm9 = (value >> 12) & 0x1ff
-    simm = twos_complement_to_int(imm9, 9)
+    simm = HMRegister.twos_complement_to_int(imm9, 9)
     return rt, rn, is_64bit, simm
 
 
@@ -540,7 +541,7 @@ def decode_ldr_bytes_immediate_pre_index(data: bytes) -> (int, int, bool, int):
     rt = value & 0b11111
     rn = (value >> 5) & 0b11111
     imm9 = (value >> 12) & 0x1ff
-    simm = twos_complement_to_int(imm9, 9)
+    simm = HMRegister.twos_complement_to_int(imm9, 9)
     return rt, rn, is_64bit, simm
 
 
@@ -575,7 +576,7 @@ def decode_ldr_bytes_literal(data: bytes) -> (int, bool, int):
     value = int.from_bytes(data, 'little')
     rt = value & 0b11111
     imm19 = (value >> 5) & 0x7ffff
-    label = twos_complement_to_int(imm19, 19) * 4
+    label = HMRegister.twos_complement_to_int(imm19, 19) * 4
     return rt, is_64bit, label
 
 
@@ -621,7 +622,7 @@ def decode_ldrsw_bytes_immediate_post_index(data: bytes) -> (int, int, int):
     rt = value & 0b11111
     rn = (value >> 5) & 0b11111
     imm9 = (value >> 12) & 0x1ff
-    simm = twos_complement_to_int(imm9, 9)
+    simm = HMRegister.twos_complement_to_int(imm9, 9)
     return rt, rn, simm
 
 
@@ -632,7 +633,7 @@ def decode_ldrsw_bytes_immediate_pre_index(data: bytes) -> (int, int, int):
     rt = value & 0b11111
     rn = (value >> 5) & 0b11111
     imm9 = (value >> 12) & 0x1ff
-    simm = twos_complement_to_int(imm9, 9)
+    simm = HMRegister.twos_complement_to_int(imm9, 9)
     return rt, rn, simm
 
 
@@ -653,7 +654,7 @@ def decode_ldrsw_bytes_literal(data: bytes) -> (int, int):
     value = int.from_bytes(data, 'little')
     rt = value & 0b11111
     imm19 = (value >> 5) & 0x7ffff
-    label = twos_complement_to_int(imm19, 19) * 4
+    label = HMRegister.twos_complement_to_int(imm19, 19) * 4
     return rt, label
 
 
@@ -693,10 +694,10 @@ def decode_mov_bytes_inverted_wide_immediate(data: bytes) -> (int, bool, int):
     result = imm16 << pos
     if is_64bit:
         result = ~result & 0xffffffffffffffff
-        result = twos_complement_to_int(result, 64)
+        result = HMRegister.twos_complement_to_int(result, 64)
     else:
         result = ~result & 0xffffffff
-        result = twos_complement_to_int(result, 32)
+        result = HMRegister.twos_complement_to_int(result, 32)
     return rd, is_64bit, result
 
 
@@ -734,7 +735,7 @@ def decode_mov_bytes_wide_immediate(data: bytes) -> (int, bool, int):
     pos = hw << 4
     result = imm16 << pos
     bit_width = 64 if is_64bit else 32
-    result = twos_complement_to_int(result, bit_width)
+    result = HMRegister.twos_complement_to_int(result, bit_width)
     return rd, is_64bit, result
 
 
@@ -751,7 +752,7 @@ def decode_str_bytes_immediate_post_index(data: bytes) -> (int, int, bool, int):
     rt = value & 0b11111
     rn = (value >> 5) & 0b11111
     imm9 = (value >> 12) & 0x1ff
-    simm = twos_complement_to_int(imm9, 9)
+    simm = HMRegister.twos_complement_to_int(imm9, 9)
     return rt, rn, is_64bit, simm
 
 
@@ -767,7 +768,7 @@ def decode_str_bytes_immediate_pre_index(data: bytes) -> (int, int, bool, int):
     rt = value & 0b11111
     rn = (value >> 5) & 0b11111
     imm9 = (value >> 12) & 0x1ff
-    simm = twos_complement_to_int(imm9, 9)
+    simm = HMRegister.twos_complement_to_int(imm9, 9)
     return rt, rn, is_64bit, simm
 
 
@@ -821,15 +822,6 @@ def decode_str_bytes_register(data: bytes) -> (int, int, int, bool, HMExtendOpti
     else:
         extend = HMExtendOption.unknow
     return rt, rn, rm, is_64bit, extend, amount
-
-
-def twos_complement_to_int(twos_complement: int, bit_width: int) -> int:
-    sign_bit_mask = 1 << (bit_width - 1)
-    if twos_complement & sign_bit_mask == 0:
-        result = twos_complement
-    else:
-        result = twos_complement - (1 << bit_width)
-    return result
 
 
 def logical_shift_right(raw_value: int, amount: int, bit_width: int) -> int:
@@ -985,18 +977,18 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_data: bytes, adrp_i
             if extend == HMExtendOption.uxtw:
                 rm_value = 0 if rm == 31 else register_list.get_value(rm, False)
                 temp = unsigned_extend_word(rm_value) << amount
-                load_address = rn_value + twos_complement_to_int(temp, 64)
+                load_address = rn_value + HMRegister.twos_complement_to_int(temp, 64)
                 ldr_result = HM.load_address_value(exe_ctx, load_address)
                 register_list.set_value(rt, ldr_result, is_64bit)
             elif extend == HMExtendOption.lsl:
                 rm_value = 0 if rm == 31 else register_list.get_value(rm, True)
-                load_address = twos_complement_to_int(rm_value << amount, 64)
+                load_address = HMRegister.twos_complement_to_int(rm_value << amount, 64)
                 ldr_result = HM.load_address_value(exe_ctx, load_address)
                 register_list.set_value(rt, ldr_result, is_64bit)
             elif extend == HMExtendOption.sxtw:
                 rm_value = 0 if rm == 31 else register_list.get_value(rm, False)
                 temp = signed_extend_word(rm_value) << amount
-                load_address = rn_value + twos_complement_to_int(temp, 64)
+                load_address = rn_value + HMRegister.twos_complement_to_int(temp, 64)
                 ldr_result = HM.load_address_value(exe_ctx, load_address)
                 register_list.set_value(rt, ldr_result, is_64bit)
             else:

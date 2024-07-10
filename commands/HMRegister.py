@@ -76,6 +76,45 @@ class HMRegisterList:
 def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand('command script add -f HMRegister.register_change rc -h "Show general purpose registers changes."')
     debugger.HandleCommand('command script add -f HMRegister.register_read rr -h "Alias for \'register read\' with additional -s/--sp arguments."')
+    debugger.HandleCommand('command script add -f HMRegister.convert_twos_complement twos_complement_to_int -h "Convert two\'s complement to a signed value"')
+
+
+def convert_twos_complement(debugger, command, exe_ctx, result, internal_dict):
+    """
+    Syntax:
+        twos_complement_to_int <twos_complement_value> <bit_width>
+
+    Examples:
+        (lldb) twos_complement_to_int 0xffffffff800000cc 64
+        [HMLLDB] -2147483444
+
+
+    This command is implemented in HMRegister.py
+    """
+    command_args: List[str] = command.split()
+    if len(command_args) != 2:
+        HM.DPrint("Two parameters must be entered, Please enter \"help twos_complement_to_int\" for help.")
+        return
+    valid1, arg1 = HM.int_value_from_string(command_args[0])
+    if not valid1:
+        HM.DPrint(f"The input parameter \"{command_args[0]}\" is not a number")
+        return
+    valid2, arg2 = HM.int_value_from_string(command_args[1])
+    if not valid2:
+        HM.DPrint(f"The input parameter \"{command_args[1]}\" is not a number")
+        return
+    HM.DPrint(twos_complement_to_int(arg1, arg2))
+
+
+def twos_complement_to_int(twos_complement: int, bit_width: int) -> int:
+    mask = (1 << bit_width) - 1
+    twos_complement = twos_complement & mask
+    sign_bit_mask = 1 << (bit_width - 1)
+    if twos_complement & sign_bit_mask == 0:
+        result = twos_complement
+    else:
+        result = twos_complement - (1 << bit_width)
+    return result
 
 
 def register_change(debugger, command, exe_ctx, result, internal_dict):
