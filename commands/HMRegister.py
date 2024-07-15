@@ -56,16 +56,16 @@ class HMRegisterList:
             HM.DPrint(f"set_value error: index:{index} out of range")
             return False
         if is_64bit:
-            result = value & 0xffffffff
+            result = value & 0xffffffffffffffff
         else:
-            result = value & 0xffff
+            result = value & 0xffffffff
         self.__general_register_dict[index] = result
         return True
 
     def set_value(self, index: int, value: int, is_64bit: bool) -> bool:
         bit_width = 64 if is_64bit else 32
         raw_value = int_to_twos_complement(value, bit_width)
-        return self.set_raw_value(index, value, is_64bit)
+        return self.set_raw_value(index, raw_value, is_64bit)
 
     def get_raw_value(self, index: int, is_64bit: bool) -> int:
         if not self.has_value(index):
@@ -74,7 +74,7 @@ class HMRegisterList:
         if is_64bit:
             result = self.__general_register_dict[index]
         else:
-            result = self.__general_register_dict[index] & 0xffff
+            result = self.__general_register_dict[index] & 0xffffffff
         return result
 
     def get_value(self, index: int, is_64bit: bool) -> int:

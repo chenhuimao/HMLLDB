@@ -707,6 +707,7 @@ def decode_mov_bytes_inverted_wide_immediate(data: bytes) -> (int, bool, int):
     # mov x8, #0x7fffffffffffffff - (8, True, 0x7fffffffffffffff)
     # mov x9, #-0x1 - (9, True, -1)
     # mov w8, #0x7f7fffff - (8, False, 0x7f7fffff)
+    # mov xzr, #0x7fffffffffffffff - (31, True, 0x7fffffffffffffff)
     is_64bit = (data[3] & 0x80) == 0x80
     value = int.from_bytes(data, 'little')
     rd = value & 0b11111
@@ -727,6 +728,10 @@ def decode_mov_bytes_inverted_wide_immediate(data: bytes) -> (int, bool, int):
 def decode_mov_bytes_register(data: bytes) -> (int, int, bool):
     # 32-bit: MOV <Wd>, <Wm>    is equivalent to ORR <Wd>, WZR, <Wm>
     # 64-bit: MOV <Xd>, <Xm>    is equivalent to ORR <Xd>, XZR, <Xm>
+    # mov x20, x0 - (20, 0, True)
+    # mov w2, w8 - (2, 8, False)
+    # mov x0, xzr - (0, 31, True)
+    # mov xzr, xzr - (31, 31, True)
     is_64bit = (data[3] & 0x80) == 0x80
     value = int.from_bytes(data, 'little')
     rd = value & 0b11111
@@ -738,6 +743,9 @@ def decode_mov_bytes_register(data: bytes) -> (int, int, bool):
 def decode_mov_bytes_to_from_sp(data: bytes) -> (int, int, bool):
     # 32-bit: MOV <Wd|WSP>, <Wn|WSP>    is equivalent to ADD <Wd|WSP>, <Wn|WSP>, #0
     # 64-bit: MOV <Xd|SP>, <Xn|SP>    is equivalent to ADD <Xd|SP>, <Xn|SP>, #0
+    # mov x9, sp - (9, 31, True)
+    # mov sp, x20 - (31, 20, True)
+    # add w17, w1, #0x0 - (17, 1, False)
     is_64bit = (data[3] & 0x80) == 0x80
     value = int.from_bytes(data, 'little')
     rd = value & 0b11111
@@ -749,6 +757,11 @@ def decode_mov_bytes_to_from_sp(data: bytes) -> (int, int, bool):
 def decode_mov_bytes_wide_immediate(data: bytes) -> (int, bool, int):
     # 32-bit: MOV <Wd>, #<imm>    is equivalent to MOVZ <Wd>, #<imm16>, LSL #<shift>
     # 64-bit: MOV <Xd>, #<imm>    is equivalent to MOVZ <Xd>, #<imm16>, LSL #<shift>
+    # mov w8, #0x1 - (8, False, 1)
+    # mov x0, #0x2 - (0, True, 2)
+    # mov w10, #-0x80000000 - (10, False, -0x80000000)
+    # mov x9, #-0x8000000000000000 - (9, True, -0x8000000000000000)
+    # mov xzr, #0x1 - (31, True, 1)
     is_64bit = (data[3] & 0x80) == 0x80
     value = int.from_bytes(data, 'little')
     rd = value & 0b11111
@@ -767,6 +780,7 @@ def decode_str_bytes_immediate_post_index(data: bytes) -> (int, int, bool, int):
     # 64-bit: STR <Xt>, [<Xn|SP>], #<simm>
     # str x8, [x22], #0x8 - (8, 22, True, 0x8)
     # str w0, [x21], #0x4 - (0, 21, False, 0x4)
+    # str x11, [x10], #-0x8 - (11, 10, True, -8)
     # str wzr, [x22], #0x8 - (31, 22, False, 0x8)
     # str x21, [sp], #0x10 - (21, 31, True, 0x10)
     is_64bit = (data[3] & 0x40) == 0x40
@@ -888,7 +902,7 @@ def get_module_name(module: lldb.SBModule) -> str:
 def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_data: bytes, adrp_instruction_load_address: int, address_target_dic: Dict[int, int], address_ldr_dic: Dict[int, int]) -> None:
     # Analyze the specified instructions after adrp in sequence, and analyze up to 5 instructions.
     # FIXME: x0 and w0 registers are independent and need to be merged.
-    register_dic: Dict[str, int] = {}
+    # register_dic: Dict[str, int] = {}
     register_list = HMRegisterList()
     target = exe_ctx.GetTarget()
 
@@ -898,7 +912,7 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_data: bytes, adrp_i
         adrp_result = adrp_instruction_load_address + adrp_offset
     else:
         adrp_result, _ = HMCalculationHelper.calculate_adrp_result_with_immediate_and_pc_address(adrp_offset, adrp_instruction_load_address)
-    register_list.set_value(adrp_rd, adrp_result)
+    register_list.set_value(adrp_rd, adrp_result, True)
 
     # Analyze the specified instructions after adr/adrp
     instruction_count = 5
@@ -911,6 +925,7 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_data: bytes, adrp_i
         return
     for i in range(0, len(data), 4):
         instruction_data = data[i:i+4]
+        instruction_load_address = adrp_instruction_load_address + 4 + i
         # add
         if is_add_bytes_immediate(instruction_data):
             rd, rn, is_64bit, final_immediate = decode_add_bytes_immediate(instruction_data)
@@ -918,6 +933,7 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_data: bytes, adrp_i
                 continue
             rd_value = register_list.get_value(rn, is_64bit) + final_immediate
             register_list.set_value(rd, rd_value, is_64bit)
+            address_target_dic[instruction_load_address] = register_list.get_value(rd, is_64bit)
         elif is_add_bytes_shifted_register(instruction_data):
             rd, rn, rm, is_64bit, shift, amount = decode_add_bytes_shifted_register(instruction_data)
             if shift == HMShift.unknow:
@@ -945,6 +961,7 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_data: bytes, adrp_i
                 rd_raw_value = rn_raw_value + rm_value_shift
 
             register_list.set_raw_value(rd, rd_raw_value, is_64bit)
+            address_target_dic[instruction_load_address] = HMRegister.twos_complement_to_int(rd_raw_value, bit_width)
 
         # ldr
         elif is_ldr_bytes_immediate_post_index(instruction_data):
@@ -1079,54 +1096,110 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_data: bytes, adrp_i
             else:
                 continue
 
-    address: lldb.SBAddress = lldb.SBAddress(adrp_instruction_load_address + 4, target)
-    instruction_list: lldb.SBInstructionList = target.ReadInstructions(address, instruction_count)
-    for i in range(instruction_count):
-        instruction: lldb.SBInstruction = instruction_list.GetInstructionAtIndex(i)
-        mnemonic: str = instruction.GetMnemonic(target)
-        if mnemonic == 'add':
-            can_analyze_add, _, value = analyze_add(exe_ctx, instruction, register_dic)
-            if not can_analyze_add:
-                break
-            address_target_dic[instruction.GetAddress().GetLoadAddress(target)] = value
-        elif mnemonic == 'ldr':
-            ldr_instruction_load_address_int: int = instruction.GetAddress().GetLoadAddress(target)
-            can_analyze_ldr, can_get_load_address, _, load_address_int, load_result_int = analyze_ldr(exe_ctx, instruction, register_dic)
-            if can_get_load_address:
-                # The ldr instruction records the loading address
-                address_target_dic[ldr_instruction_load_address_int] = load_address_int
-            if not can_analyze_ldr:
-                break
-            # The ldr instruction records the result address in memory
-            address_ldr_dic[ldr_instruction_load_address_int] = load_result_int
-        elif mnemonic == 'ldrsw':
-            ldr_instruction_load_address_int: int = instruction.GetAddress().GetLoadAddress(target)
-            can_analyze_ldrsw, can_get_load_address, _, load_address_int, load_result_int = analyze_ldr(exe_ctx, instruction, register_dic)
-            if can_get_load_address:
-                # The ldrsw instruction records the loading address
-                address_target_dic[ldr_instruction_load_address_int] = load_address_int
-            if not can_analyze_ldrsw:
-                break
-            # The ldrsw instruction records the result address in memory
-            address_ldr_dic[ldr_instruction_load_address_int] = load_result_int
-        elif mnemonic == 'mov':
-            can_analyze_mov, _, mov_value = analyze_mov(exe_ctx, instruction, register_dic)
-            if not can_analyze_mov:
-                break
-            address_target_dic[instruction.GetAddress().GetLoadAddress(target)] = mov_value
+        # mov
+        elif is_mov_bytes_inverted_wide_immediate(instruction_data):
+            rd, is_64bit, immediate = decode_mov_bytes_inverted_wide_immediate(instruction_data)
+            if rd == 31:  # xzr
+                continue
+            register_list.set_value(rd, immediate, is_64bit)
+        elif is_mov_bytes_register(instruction_data):
+            rd, rm, is_64bit = decode_mov_bytes_register(instruction_data)
+            if rd == 31:  # xzr
+                continue
+            if rm != 31 and (not register_list.has_value(rm)):
+                continue
+            rm_raw_value = 0 if rm == 31 else register_list.get_raw_value(rm, is_64bit)
+            register_list.set_raw_value(rd, rm_raw_value, is_64bit)
+        elif is_mov_bytes_to_from_sp(instruction_data):
+            rd, rn, is_64bit = decode_mov_bytes_to_from_sp(instruction_data)
+            if not register_list.has_value(rn):
+                continue
+            rn_raw_value = register_list.get_raw_value(rn, is_64bit)
+            register_list.set_raw_value(rd, rn_raw_value, is_64bit)
+        elif is_mov_bytes_wide_immediate(instruction_data):
+            rd, is_64bit, immediate = decode_mov_bytes_wide_immediate(instruction_data)
+            if rd == 31:  # xzr
+                continue
+            register_list.set_value(rd, immediate, is_64bit)
 
-        elif mnemonic == 'str':
-            if not analyze_str(exe_ctx, instruction, register_dic, address_target_dic):
-                break
-        elif mnemonic == 'nop':
+        # str
+        elif is_str_bytes_immediate_post_index(instruction_data):
+            rt, rn, is_64bit, simm = decode_str_bytes_immediate_post_index(instruction_data)
+            if not register_list.has_value(rn):
+                continue
+            rn_value = register_list.get_value(rn, is_64bit)
+            rn_value += simm
+            register_list.set_value(rn, rn_value, is_64bit)
+        elif is_str_bytes_immediate_pre_index(instruction_data):
+            rt, rn, is_64bit, simm = decode_str_bytes_immediate_pre_index(instruction_data)
+            if not register_list.has_value(rn):
+                continue
+            rn_value = register_list.get_value(rn, is_64bit)
+            rn_value += simm
+            register_list.set_value(rn, rn_value, is_64bit)
+        elif is_str_bytes_immediate_unsigned_offset(instruction_data):
+            continue
+        elif is_str_bytes_register(instruction_data):
+            continue
+
+        # nop
+        elif is_nop_bytes(instruction_data):
             continue
         else:
             break
 
+    # address: lldb.SBAddress = lldb.SBAddress(adrp_instruction_load_address + 4, target)
+    # instruction_list: lldb.SBInstructionList = target.ReadInstructions(address, instruction_count)
+    # for i in range(instruction_count):
+    #     instruction: lldb.SBInstruction = instruction_list.GetInstructionAtIndex(i)
+    #     mnemonic: str = instruction.GetMnemonic(target)
+    #     if mnemonic == 'add':
+    #         can_analyze_add, _, value = analyze_add(exe_ctx, instruction, register_dic)
+    #         if not can_analyze_add:
+    #             break
+    #         address_target_dic[instruction.GetAddress().GetLoadAddress(target)] = value
+    #     elif mnemonic == 'ldr':
+    #         ldr_instruction_load_address_int: int = instruction.GetAddress().GetLoadAddress(target)
+    #         can_analyze_ldr, can_get_load_address, _, load_address_int, load_result_int = analyze_ldr(exe_ctx, instruction, register_dic)
+    #         if can_get_load_address:
+    #             # The ldr instruction records the loading address
+    #             address_target_dic[ldr_instruction_load_address_int] = load_address_int
+    #         if not can_analyze_ldr:
+    #             break
+    #         # The ldr instruction records the result address in memory
+    #         address_ldr_dic[ldr_instruction_load_address_int] = load_result_int
+    #     elif mnemonic == 'ldrsw':
+    #         ldr_instruction_load_address_int: int = instruction.GetAddress().GetLoadAddress(target)
+    #         can_analyze_ldrsw, can_get_load_address, _, load_address_int, load_result_int = analyze_ldr(exe_ctx, instruction, register_dic)
+    #         if can_get_load_address:
+    #             # The ldrsw instruction records the loading address
+    #             address_target_dic[ldr_instruction_load_address_int] = load_address_int
+    #         if not can_analyze_ldrsw:
+    #             break
+    #         # The ldrsw instruction records the result address in memory
+    #         address_ldr_dic[ldr_instruction_load_address_int] = load_result_int
+    #     elif mnemonic == 'mov':
+    #         can_analyze_mov, _, mov_value = analyze_mov(exe_ctx, instruction, register_dic)
+    #         if not can_analyze_mov:
+    #             break
+    #         address_target_dic[instruction.GetAddress().GetLoadAddress(target)] = mov_value
+    #
+    #     elif mnemonic == 'str':
+    #         if not analyze_str(exe_ctx, instruction, register_dic, address_target_dic):
+    #             break
+    #     elif mnemonic == 'nop':
+    #         continue
+    #     else:
+    #         break
+
     # If the next instruction is nop, record the current adr/adrp result
-    next_instruction: lldb.SBInstruction = instruction_list.GetInstructionAtIndex(0)
-    if next_instruction.GetMnemonic(target) == 'nop':
+    next_instruction_data = data[0:4]
+    if is_nop_bytes(next_instruction_data):
         address_target_dic[adrp_instruction_load_address] = adrp_result
+
+    # next_instruction: lldb.SBInstruction = instruction_list.GetInstructionAtIndex(0)
+    # if next_instruction.GetMnemonic(target) == 'nop':
+    #     address_target_dic[adrp_instruction_load_address] = adrp_result
 
 
 def analyze_adrp(exe_ctx: lldb.SBExecutionContext, adrp_instruction: lldb.SBInstruction, register_dic: Dict[str, int]) -> Tuple[bool, str, int]:
