@@ -901,8 +901,6 @@ def get_module_name(module: lldb.SBModule) -> str:
 
 def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_data: bytes, adrp_instruction_load_address: int, address_target_dic: Dict[int, int], address_ldr_dic: Dict[int, int]) -> None:
     # Analyze the specified instructions after adrp in sequence, and analyze up to 5 instructions.
-    # FIXME: x0 and w0 registers are independent and need to be merged.
-    # register_dic: Dict[str, int] = {}
     register_list = HMRegisterList()
     target = exe_ctx.GetTarget()
 
@@ -969,11 +967,16 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_data: bytes, adrp_i
             if not register_list.has_value(rn):
                 continue
             rn_value = register_list.get_value(rn, True)
+            load_address = rn_value
+            ldr_result = HM.load_address_value(exe_ctx, load_address)
             if rt != 31:  # xzr
-                ldr_result = HM.load_address_value(exe_ctx, rn_value)
                 register_list.set_raw_value(rt, ldr_result, is_64bit)
             rn_value += simm
             register_list.set_value(rn, rn_value, True)
+            # The ldr instruction records the loading address, and records the result address in memory
+            bit_width = 64 if is_64bit else 32
+            address_target_dic[instruction_load_address] = load_address
+            address_ldr_dic[instruction_load_address] = HMRegister.twos_complement_to_int(ldr_result, bit_width)
         elif is_ldr_bytes_immediate_pre_index(instruction_data):
             rt, rn, is_64bit, simm = decode_ldr_bytes_immediate_pre_index(instruction_data)
             if not register_list.has_value(rn):
@@ -981,26 +984,36 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_data: bytes, adrp_i
             rn_value = register_list.get_value(rn, True)
             rn_value += simm
             register_list.set_value(rn, rn_value, True)
+            ldr_result = HM.load_address_value(exe_ctx, rn_value)
             if rt != 31:  # xzr
-                ldr_result = HM.load_address_value(exe_ctx, rn_value)
                 register_list.set_raw_value(rt, ldr_result, is_64bit)
+
+            bit_width = 64 if is_64bit else 32
+            address_target_dic[instruction_load_address] = rn_value
+            address_ldr_dic[instruction_load_address] = HMRegister.twos_complement_to_int(ldr_result, bit_width)
         elif is_ldr_bytes_immediate_unsigned_offset(instruction_data):
             rt, rn, is_64bit, pimm = decode_ldr_bytes_immediate_unsigned_offset(instruction_data)
             if not register_list.has_value(rn):
                 continue
-            if rt == 31:  # xzr
-                continue
             rn_value = register_list.get_value(rn, True)
             load_address = rn_value + pimm
             ldr_result = HM.load_address_value(exe_ctx, load_address)
-            register_list.set_raw_value(rt, ldr_result, is_64bit)
+            if rt != 31:  # xzr
+                register_list.set_raw_value(rt, ldr_result, is_64bit)
+
+            bit_width = 64 if is_64bit else 32
+            address_target_dic[instruction_load_address] = load_address
+            address_ldr_dic[instruction_load_address] = HMRegister.twos_complement_to_int(ldr_result, bit_width)
         elif is_ldr_bytes_literal(instruction_data):
             rt, is_64bit, label = decode_ldr_bytes_literal(instruction_data)
-            if rt == 31:  # xzr
-                continue
-            load_address = label + adrp_instruction_load_address + 4 + i
+            load_address = label + instruction_load_address
             ldr_result = HM.load_address_value(exe_ctx, load_address)
-            register_list.set_raw_value(rt, ldr_result, is_64bit)
+            if rt != 31:  # xzr
+                register_list.set_raw_value(rt, ldr_result, is_64bit)
+
+            bit_width = 64 if is_64bit else 32
+            address_target_dic[instruction_load_address] = load_address
+            address_ldr_dic[instruction_load_address] = HMRegister.twos_complement_to_int(ldr_result, bit_width)
         elif is_ldr_bytes_register(instruction_data):
             rt, rn, rm, is_64bit, extend, amount = decode_ldr_bytes_register(instruction_data)
             if rt == 31:  # xzr
@@ -1015,23 +1028,21 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_data: bytes, adrp_i
             if extend == HMExtendOption.uxtw:
                 rm_raw_value = 0 if rm == 31 else register_list.get_raw_value(rm, False)
                 temp = unsigned_extend_word(rm_raw_value) << amount
-                load_address = HMRegister.twos_complement_to_int(rn_raw_value + temp, 64)
-                ldr_result = HM.load_address_value(exe_ctx, load_address)
-                register_list.set_raw_value(rt, ldr_result, is_64bit)
             elif extend == HMExtendOption.lsl:
                 rm_raw_value = 0 if rm == 31 else register_list.get_raw_value(rm, True)
                 temp = rm_raw_value << amount
-                load_address = HMRegister.twos_complement_to_int(rn_raw_value + temp, 64)
-                ldr_result = HM.load_address_value(exe_ctx, load_address)
-                register_list.set_raw_value(rt, ldr_result, is_64bit)
             elif extend == HMExtendOption.sxtw:
                 rm_raw_value = 0 if rm == 31 else register_list.get_value(rm, False)
                 temp = signed_extend_word(rm_raw_value) << amount
-                load_address = HMRegister.twos_complement_to_int(rn_raw_value + temp, 64)
-                ldr_result = HM.load_address_value(exe_ctx, load_address)
-                register_list.set_raw_value(rt, ldr_result, is_64bit)
             else:
                 continue
+            load_address = HMRegister.twos_complement_to_int(rn_raw_value + temp, 64)
+            ldr_result = HM.load_address_value(exe_ctx, load_address)
+            register_list.set_raw_value(rt, ldr_result, is_64bit)
+
+            bit_width = 64 if is_64bit else 32
+            address_target_dic[instruction_load_address] = load_address
+            address_ldr_dic[instruction_load_address] = HMRegister.twos_complement_to_int(ldr_result, bit_width)
 
         # ldrsw
         elif is_ldrsw_bytes_immediate_post_index(instruction_data):
@@ -1039,11 +1050,16 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_data: bytes, adrp_i
             if not register_list.has_value(rn):
                 continue
             rn_value = register_list.get_value(rn, True)
+            load_address = rn_value
+            ldrsw_result = HM.load_address_value_signed_word(exe_ctx, load_address)
             if rt != 31:  # xzr
-                ldrsw_result = HM.load_address_value_signed_word(exe_ctx, rn_value)
                 register_list.set_raw_value(rt, ldrsw_result, True)
             rn_value += simm
             register_list.set_value(rn, rn_value, True)
+
+            address_target_dic[instruction_load_address] = load_address
+            address_ldr_dic[instruction_load_address] = HMRegister.twos_complement_to_int(ldrsw_result, 64)
+
         elif is_ldrsw_bytes_immediate_pre_index(instruction_data):
             rt, rn, simm = decode_ldrsw_bytes_immediate_pre_index(instruction_data)
             if not register_list.has_value(rn):
@@ -1051,19 +1067,24 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_data: bytes, adrp_i
             rn_value = register_list.get_value(rn, True)
             rn_value += simm
             register_list.set_value(rn, rn_value, True)
+            ldrsw_result = HM.load_address_value_signed_word(exe_ctx, rn_value)
             if rt != 31:  # xzr
-                ldrsw_result = HM.load_address_value_signed_word(exe_ctx, rn_value)
                 register_list.set_raw_value(rt, ldrsw_result, True)
+
+            address_target_dic[instruction_load_address] = rn_value
+            address_ldr_dic[instruction_load_address] = HMRegister.twos_complement_to_int(ldrsw_result, 64)
         elif is_ldrsw_bytes_immediate_unsigned_offset(instruction_data):
             rt, rn, pimm = decode_ldrsw_bytes_immediate_unsigned_offset(instruction_data)
             if not register_list.has_value(rn):
                 continue
-            if rt == 31:  # zxr
-                continue
             rn_value = register_list.get_value(rn, True)
             load_address = rn_value + pimm
             ldrsw_result = HM.load_address_value_signed_word(exe_ctx, load_address)
-            register_list.set_raw_value(rt, ldrsw_result, True)
+            if rt != 31:  # xzr
+                register_list.set_raw_value(rt, ldrsw_result, True)
+
+            address_target_dic[instruction_load_address] = load_address
+            address_ldr_dic[instruction_load_address] = HMRegister.twos_complement_to_int(ldrsw_result, 64)
         elif is_ldrsw_bytes_register(instruction_data):
             rt, rn, rm, extend, amount = decode_ldrsw_bytes_register(instruction_data)
             if rt == 31:  # xzr
@@ -1078,30 +1099,29 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_data: bytes, adrp_i
             if extend == HMExtendOption.uxtw:
                 rm_raw_value = 0 if rm == 31 else register_list.get_raw_value(rm, False)
                 temp = unsigned_extend_word(rm_raw_value) << amount
-                load_address = HMRegister.twos_complement_to_int(rn_raw_value + temp, 64)
-                ldr_result = HM.load_address_value_signed_word(exe_ctx, load_address)
-                register_list.set_raw_value(rt, ldr_result, True)
             elif extend == HMExtendOption.lsl:
                 rm_raw_value = 0 if rm == 31 else register_list.get_raw_value(rm, True)
                 temp = rm_raw_value << amount
-                load_address = HMRegister.twos_complement_to_int(rn_raw_value + temp, 64)
-                ldr_result = HM.load_address_value_signed_word(exe_ctx, load_address)
-                register_list.set_raw_value(rt, ldr_result, True)
             elif extend == HMExtendOption.sxtw:
                 rm_raw_value = 0 if rm == 31 else register_list.get_value(rm, False)
                 temp = signed_extend_word(rm_raw_value) << amount
-                load_address = HMRegister.twos_complement_to_int(rn_raw_value + temp, 64)
-                ldr_result = HM.load_address_value_signed_word(exe_ctx, load_address)
-                register_list.set_raw_value(rt, ldr_result, True)
             else:
                 continue
+            load_address = HMRegister.twos_complement_to_int(rn_raw_value + temp, 64)
+            ldrsw_result = HM.load_address_value_signed_word(exe_ctx, load_address)
+            register_list.set_raw_value(rt, ldrsw_result, True)
+
+            address_target_dic[instruction_load_address] = load_address
+            address_ldr_dic[instruction_load_address] = HMRegister.twos_complement_to_int(ldrsw_result, 64)
 
         # mov
         elif is_mov_bytes_inverted_wide_immediate(instruction_data):
             rd, is_64bit, immediate = decode_mov_bytes_inverted_wide_immediate(instruction_data)
             if rd == 31:  # xzr
+                address_target_dic[instruction_load_address] = immediate
                 continue
             register_list.set_value(rd, immediate, is_64bit)
+            address_target_dic[instruction_load_address] = register_list.get_value(rd, is_64bit)
         elif is_mov_bytes_register(instruction_data):
             rd, rm, is_64bit = decode_mov_bytes_register(instruction_data)
             if rd == 31:  # xzr
@@ -1110,36 +1130,72 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_data: bytes, adrp_i
                 continue
             rm_raw_value = 0 if rm == 31 else register_list.get_raw_value(rm, is_64bit)
             register_list.set_raw_value(rd, rm_raw_value, is_64bit)
+            bit_width = 64 if is_64bit else 32
+            address_target_dic[instruction_load_address] = HMRegister.twos_complement_to_int(rm_raw_value, bit_width)
         elif is_mov_bytes_to_from_sp(instruction_data):
             rd, rn, is_64bit = decode_mov_bytes_to_from_sp(instruction_data)
             if not register_list.has_value(rn):
                 continue
             rn_raw_value = register_list.get_raw_value(rn, is_64bit)
             register_list.set_raw_value(rd, rn_raw_value, is_64bit)
+            bit_width = 64 if is_64bit else 32
+            address_target_dic[instruction_load_address] = HMRegister.twos_complement_to_int(rn_raw_value, bit_width)
         elif is_mov_bytes_wide_immediate(instruction_data):
             rd, is_64bit, immediate = decode_mov_bytes_wide_immediate(instruction_data)
             if rd == 31:  # xzr
+                address_target_dic[instruction_load_address] = immediate
                 continue
             register_list.set_value(rd, immediate, is_64bit)
+            address_target_dic[instruction_load_address] = register_list.get_value(rd, is_64bit)
 
         # str
         elif is_str_bytes_immediate_post_index(instruction_data):
             rt, rn, is_64bit, simm = decode_str_bytes_immediate_post_index(instruction_data)
             if not register_list.has_value(rn):
                 continue
-            rn_value = register_list.get_value(rn, is_64bit)
+            rn_value = register_list.get_value(rn, True)
+            load_address = rn_value
             rn_value += simm
             register_list.set_value(rn, rn_value, is_64bit)
+            address_target_dic[instruction_load_address] = load_address
         elif is_str_bytes_immediate_pre_index(instruction_data):
             rt, rn, is_64bit, simm = decode_str_bytes_immediate_pre_index(instruction_data)
             if not register_list.has_value(rn):
                 continue
-            rn_value = register_list.get_value(rn, is_64bit)
+            rn_value = register_list.get_value(rn, True)
             rn_value += simm
             register_list.set_value(rn, rn_value, is_64bit)
+            address_target_dic[instruction_load_address] = rn_value
         elif is_str_bytes_immediate_unsigned_offset(instruction_data):
-            continue
+            rt, rn, is_64bit, pimm = decode_str_bytes_immediate_unsigned_offset(instruction_data)
+            if not register_list.has_value(rn):
+                continue
+            rn_value = register_list.get_value(rn, True)
+            load_address = rn_value + pimm
+            address_target_dic[instruction_load_address] = load_address
         elif is_str_bytes_register(instruction_data):
+            rt, rn, rm, is_64bit, extend, amount = decode_str_bytes_register(instruction_data)
+            if extend == HMExtendOption.unknow or extend == HMExtendOption.sxtx:
+                continue
+            if not register_list.has_value(rn):
+                continue
+            if rm != 31 and (not register_list.has_value(rm)):
+                continue
+            rn_raw_value = register_list.get_raw_value(rn, True)
+            if extend == HMExtendOption.uxtw:
+                rm_raw_value = 0 if rm == 31 else register_list.get_raw_value(rm, False)
+                temp = unsigned_extend_word(rm_raw_value) << amount
+            elif extend == HMExtendOption.lsl:
+                rm_raw_value = 0 if rm == 31 else register_list.get_raw_value(rm, True)
+                temp = rm_raw_value << amount
+            elif extend == HMExtendOption.sxtw:
+                rm_raw_value = 0 if rm == 31 else register_list.get_value(rm, False)
+                temp = signed_extend_word(rm_raw_value) << amount
+            else:
+                continue
+            load_address = HMRegister.twos_complement_to_int(rn_raw_value + temp, 64)
+
+            address_target_dic[instruction_load_address] = load_address
             continue
 
         # nop
@@ -1148,6 +1204,7 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_data: bytes, adrp_i
         else:
             break
 
+    # register_dic: Dict[str, int] = {}
     # address: lldb.SBAddress = lldb.SBAddress(adrp_instruction_load_address + 4, target)
     # instruction_list: lldb.SBInstructionList = target.ReadInstructions(address, instruction_count)
     # for i in range(instruction_count):
