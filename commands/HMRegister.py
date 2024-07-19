@@ -36,11 +36,108 @@ g_last_registers_dict: Dict[str, str] = {}
 last_disassemble: str = ""
 
 
+class HMRegisterList:
+    __general_register_dict: Dict[int, int]
+
+    def __init__(self):
+        self.__general_register_dict = {}
+
+    def has_value(self, index: int) -> bool:
+        return index in self.__general_register_dict
+
+    def remove_value(self, index: int) -> bool:
+        if self.has_value(index):
+            del self.__general_register_dict[index]
+            return True
+        return False
+
+    def set_raw_value(self, index: int, value: int, is_64bit: bool) -> bool:
+        if index >= 32:
+            HM.DPrint(f"set_value error: index:{index} out of range")
+            return False
+        if is_64bit:
+            result = value & 0xffffffffffffffff
+        else:
+            result = value & 0xffffffff
+        self.__general_register_dict[index] = result
+        return True
+
+    def set_value(self, index: int, value: int, is_64bit: bool) -> bool:
+        bit_width = 64 if is_64bit else 32
+        raw_value = int_to_twos_complement(value, bit_width)
+        return self.set_raw_value(index, raw_value, is_64bit)
+
+    def get_raw_value(self, index: int, is_64bit: bool) -> int:
+        if not self.has_value(index):
+            HM.DPrint(f"get_value error: index:{index} not in list")
+            return 0
+        if is_64bit:
+            result = self.__general_register_dict[index]
+        else:
+            result = self.__general_register_dict[index] & 0xffffffff
+        return result
+
+    def get_value(self, index: int, is_64bit: bool) -> int:
+        result = self.get_raw_value(index, is_64bit)
+        bit_width = 64 if is_64bit else 32
+        return twos_complement_to_int(result, bit_width)
+
+
 def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand('command script add -f HMRegister.register_change rc -h "Show general purpose registers changes."')
     debugger.HandleCommand('command script add -f HMRegister.register_read rr -h "Alias for \'register read\' with additional -s/--sp arguments."')
+    debugger.HandleCommand('command script add -f HMRegister.convert_twos_complement twos_complement_to_int -h "Convert two\'s complement to a signed value"')
 
 
+def convert_twos_complement(debugger, command, exe_ctx, result, internal_dict):
+    """
+    Syntax:
+        twos_complement_to_int <twos_complement_value> <bit_width>
+
+    Examples:
+        (lldb) twos_complement_to_int 0xfffffffffffffff0 64
+        [HMLLDB] -16, -0x10
+
+    This command is implemented in HMRegister.py
+    """
+    command_args: List[str] = command.split()
+    if len(command_args) != 2:
+        HM.DPrint("Two parameters must be entered, Please enter \"help twos_complement_to_int\" for help.")
+        return
+    valid1, arg1 = HM.int_value_from_string(command_args[0])
+    if not valid1:
+        HM.DPrint(f"The input parameter \"{command_args[0]}\" is not a number")
+        return
+    valid2, arg2 = HM.int_value_from_string(command_args[1])
+    if not valid2:
+        HM.DPrint(f"The input parameter \"{command_args[1]}\" is not a number")
+        return
+    result = twos_complement_to_int(arg1, arg2)
+    HM.DPrint(f"{result}, {hex(result)}")
+
+
+def twos_complement_to_int(twos_complement: int, bit_width: int) -> int:
+    mask = (1 << bit_width) - 1
+    twos_complement = twos_complement & mask
+    sign_bit_mask = 1 << (bit_width - 1)
+    if twos_complement & sign_bit_mask == 0:
+        result = twos_complement
+    else:
+        result = twos_complement - (1 << bit_width)
+    return result
+
+
+def int_to_twos_complement(value: int, bit_width: int) -> int:
+    if value >= 0:
+        result = value
+    else:
+        result = (1 << bit_width) + value
+
+    mask = (1 << bit_width) - 1
+    return result & mask
+
+
+# Missing from the README.md
 def register_change(debugger, command, exe_ctx, result, internal_dict):
     """
     Syntax:

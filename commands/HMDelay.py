@@ -33,6 +33,7 @@ def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand('command script add -f HMDelay.delay delay -h "(deprecated)Executes specified lldb command after delay."')
 
 
+# Missing from the README.md
 # Inspired by https://github.com/facebook/chisel/blob/main/commands/FBDelay.py
 def delay(debugger, command, exe_ctx, result, internal_dict):
     """
