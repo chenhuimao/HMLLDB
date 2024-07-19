@@ -95,9 +95,8 @@ def convert_twos_complement(debugger, command, exe_ctx, result, internal_dict):
         twos_complement_to_int <twos_complement_value> <bit_width>
 
     Examples:
-        (lldb) twos_complement_to_int 0xffffffff800000cc 64
-        [HMLLDB] -2147483444
-
+        (lldb) twos_complement_to_int 0xfffffffffffffff0 64
+        [HMLLDB] -16, -0x10
 
     This command is implemented in HMRegister.py
     """
@@ -113,7 +112,8 @@ def convert_twos_complement(debugger, command, exe_ctx, result, internal_dict):
     if not valid2:
         HM.DPrint(f"The input parameter \"{command_args[1]}\" is not a number")
         return
-    HM.DPrint(twos_complement_to_int(arg1, arg2))
+    result = twos_complement_to_int(arg1, arg2)
+    HM.DPrint(f"{result}, {hex(result)}")
 
 
 def twos_complement_to_int(twos_complement: int, bit_width: int) -> int:
@@ -137,6 +137,7 @@ def int_to_twos_complement(value: int, bit_width: int) -> int:
     return result & mask
 
 
+# Missing from the README.md
 def register_change(debugger, command, exe_ctx, result, internal_dict):
     """
     Syntax:

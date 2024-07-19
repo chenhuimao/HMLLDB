@@ -205,25 +205,27 @@ def get_module_name_from_address(address_str: str) -> str:
 
 
 def load_address_value(exe_ctx: lldb.SBExecutionContext, address_int: int) -> int:
-    ldr_return_object = lldb.SBCommandReturnObject()
-    lldb.debugger.GetCommandInterpreter().HandleCommand(f"x/a {address_int}", exe_ctx, ldr_return_object)
-    load_address_output = ldr_return_object.GetOutput()
-    if len(load_address_output) == 0:
+    if address_int <= 0:
         return -1
-
-    ldr_result = load_address_output.split()[1]
-    return int(ldr_result, 16)
+    error = lldb.SBError()
+    address = lldb.SBAddress(address_int, exe_ctx.GetTarget())
+    data: bytes = exe_ctx.GetTarget().ReadMemory(address, 8, error)
+    if data is None:
+        return -1
+    value = int.from_bytes(data, 'little')
+    return value
 
 
 def load_address_value_signed_word(exe_ctx: lldb.SBExecutionContext, address_int: int) -> int:
-    ldrsw_return_object = lldb.SBCommandReturnObject()
-    lldb.debugger.GetCommandInterpreter().HandleCommand(f"x/a {address_int}", exe_ctx, ldrsw_return_object)
-    load_address_output = ldrsw_return_object.GetOutput()
-    if len(load_address_output) == 0:
+    if address_int <= 0:
         return -1
-
-    ldrsw_result_list = load_address_output.split()
-    ldrsw_result = int(ldrsw_result_list[1], 16) & 0xFFFFFFFF
+    error = lldb.SBError()
+    address = lldb.SBAddress(address_int, exe_ctx.GetTarget())
+    data: bytes = exe_ctx.GetTarget().ReadMemory(address, 8, error)
+    if data is None:
+        return -1
+    value = int.from_bytes(data, 'little')
+    ldrsw_result = value & 0xFFFFFFFF
     if ldrsw_result & 0x80000000 > 0:
         ldrsw_result += 0xFFFFFFFF00000000
     return ldrsw_result

@@ -8,7 +8,7 @@
 - Some commands provide interactive UI within the APP
 
 ## Requirements
-- Xcode 15.3
+- Xcode 15.4
 - 64-bit simulator or real device, iOS 13.0+
 - Some commands require debug configuration (or ***Optimization Level*** set [-O0]/[-Onone])
 
@@ -43,8 +43,8 @@ For example, this is the command in my computer:
 | bpmessage      | Set a breakpoint for a selector on a class, even if the class itself doesn't override that selector |
 | bpmethod       | Set a breakpoint that stops when the next OC method is called(via objc_msgSend) in the current thread |
 | cbt            | Completely displays the current thread\'s call stack based on the fp/lr register |
-| rc             | Show general purpose registers changes |
 | rr             | Alias for 'register read' with additional -s/--sp arguments |
+| twos_complement_to_int | Convert two's complement to a signed value |
 | reference    | Scan the image section to obtain all reference addresses of a certain address |
 | adrp           | Get the execution result of the adrp instruction |
 | edisassemble | Enhanced disassemble |
@@ -372,19 +372,6 @@ Notice:
 - If the `-fomit-frame-pointer` parameter is added when compiling, the `cbt` command cannot find the hidden frame. Therefore, it is recommended to use `cbt` and `bt` commands together.
 
 
-### rc
-Show general purpose registers changes after stepping over instruction.    
-```
-(lldb) rc
-[HMLLDB] Get registers for the first time.
-
-// After you step over instruction, then execute the 'rc' command 
-(lldb) rc
-0x10431a3cc <+16>:  mov    x1, x2
-        x1:0x000000010431aa94 -> 0x000000010490be50
-        pc:0x000000010431a3cc -> 0x000000010431a3d0  Demo`-[ViewController clickBtn:] + 20 at ViewController.m:24
-```
-
 ### rr
 Alias for `register read` with additional -s/--sp arguments. Dump the contents of one or more register values from the current frame.     
 ```
@@ -454,6 +441,18 @@ General Purpose Registers:
 ```
 
 
+### twos_complement_to_int
+Convert two's complement to a signed value.   
+```
+Syntax:
+    twos_complement_to_int <twos_complement_value> <bit_width>
+
+Examples:
+    (lldb) twos_complement_to_int 0xfffffffffffffff0 64
+	[HMLLDB] -16, -0x10
+```
+
+
 ### reference
 Scan the image section to obtain all reference addresses of a certain address. You can query addresses stored in memory, which means you can query addresses outside the image range.      
 
@@ -475,7 +474,7 @@ UIKitCore`-[UIControl sendAction:to:forEvent:]:
     0x19a7eb730 <+108>: bl     0x19bd627a0               ; objc_msgSend$sendAction:toTarget:fromSender:forEvent:
     ...
 
-# Want to query which addresses will jump to the "objc_msgSend$sendAction:toTarget:fromSender:forEvent:" function in UIKitCore
+# Want to query which addresses will call the "objc_msgSend$sendAction:toTarget:fromSender:forEvent:" function in UIKitCore
 (lldb) reference 0x19bd627a0 UIKitCore
 [HMLLDB] These are the scan results:
 0x19a7eb730: UIKitCore`-[UIControl sendAction:to:forEvent:] + 108
@@ -532,7 +531,8 @@ libsystem_c.dylib`setenv:
 [HMLLDB] Scan result count in memory:0
 ```
 Notice:
-- This command is **expensive** to scan large modules. For example, it takes 130 seconds to scan UIKitCore.
+- This command is **expensive** to scan large modules. For example, it takes 40 seconds to scan UIKitCore, and 6 minutes to scan an App belonging to my company.
+- This command will consume a lot of memory. Clearing the memory before scanning can speed up the process.
 - This command will query the targets of **all b/bl instructions** and analyze **most of the adr/adrp instructions** and subsequent instructions.
 - You should consider the **"stub" function** and **"island" function** when using it.
 

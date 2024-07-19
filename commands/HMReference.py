@@ -69,9 +69,10 @@ def reference(debugger, command, exe_ctx, result, internal_dict):
         (lldb) reference 0x12345678 UIKitCore
 
     Notice:
-        1.This command is expensive to scan large modules. For example, it takes 130 seconds to scan UIKitCore.
-        2.This command will query the targets of all b/bl instructions and analyze most of the adr/adrp instructions and subsequent instructions.
-        3.You should consider the "stub" function and "island" function when using it.
+        1.This command is expensive to scan large modules. For example, it takes 40 seconds to scan UIKitCore, and 6 minutes to scan an App belonging to my company.
+        2.This command will consume a lot of memory. Clearing the memory before scanning can speed up the process.
+        3.This command will query the targets of all b/bl instructions and analyze most of the adr/adrp instructions and subsequent instructions.
+        4.You should consider the "stub" function and "island" function when using it.
 
     This command is implemented in HMReference.py
     """
@@ -676,9 +677,9 @@ def decode_ldrsw_bytes_register(data: bytes) -> (int, int, int, HMExtendOption, 
     # ldrsw x8, [x28, x8] - (8, 28, 8, <HMExtendOption.lsl: 3>, 0)
     # ldrsw x16, [x17, x16, lsl  #2] - (16, 17, 16, <HMExtendOption.lsl: 3>, 2)
     # ldrsw x8, [x8, w9, uxtw  #2] - (8, 8, 9, <HMExtendOption.uxtw: 2>, 2)
-    # ldrsw  x19, [x26, w19, uxtw] - (19, 26, 19, <HMExtendOption.uxtw: 2>, 0)
+    # ldrsw x19, [x26, w19, uxtw] - (19, 26, 19, <HMExtendOption.uxtw: 2>, 0)
     # ldrsw x28, [x24, w1, sxtw  #2] - (28, 24, 1, <HMExtendOption.sxtw: 6>, 2)
-    # ldrsw  x28, [x24, w1, sxtw] - (28, 24, 1, <HMExtendOption.sxtw: 6>, 0)
+    # ldrsw x28, [x24, w1, sxtw] - (28, 24, 1, <HMExtendOption.sxtw: 6>, 0)
     # ldrsw xzr, [sp, xzr, lsl  #2] - (31, 31, 31, <HMExtendOption.lsl: 3>, 2)
     value = int.from_bytes(data, 'little')
     rt = value & 0b11111
@@ -900,7 +901,7 @@ def get_module_name(module: lldb.SBModule) -> str:
 
 
 def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_data: bytes, adrp_instruction_load_address: int, address_target_dic: Dict[int, int], address_ldr_dic: Dict[int, int]) -> None:
-    # Analyze the specified instructions after adrp in sequence, and analyze up to 5 instructions.
+    # Analyze the specified instructions after adrp in sequence, and analyze up to 10 instructions.
     register_list = HMRegisterList()
     target = exe_ctx.GetTarget()
 
@@ -913,7 +914,7 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_data: bytes, adrp_i
     register_list.set_value(adrp_rd, adrp_result, True)
 
     # Analyze the specified instructions after adr/adrp
-    instruction_count = 5
+    instruction_count = 10
 
     address: lldb.SBAddress = lldb.SBAddress(adrp_instruction_load_address + 4, target)
     error = lldb.SBError()
@@ -969,6 +970,8 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_data: bytes, adrp_i
             rn_value = register_list.get_value(rn, True)
             load_address = rn_value
             ldr_result = HM.load_address_value(exe_ctx, load_address)
+            if ldr_result == -1:
+                break
             if rt != 31:  # xzr
                 register_list.set_raw_value(rt, ldr_result, is_64bit)
             rn_value += simm
@@ -985,6 +988,8 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_data: bytes, adrp_i
             rn_value += simm
             register_list.set_value(rn, rn_value, True)
             ldr_result = HM.load_address_value(exe_ctx, rn_value)
+            if ldr_result == -1:
+                break
             if rt != 31:  # xzr
                 register_list.set_raw_value(rt, ldr_result, is_64bit)
 
@@ -998,6 +1003,8 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_data: bytes, adrp_i
             rn_value = register_list.get_value(rn, True)
             load_address = rn_value + pimm
             ldr_result = HM.load_address_value(exe_ctx, load_address)
+            if ldr_result == -1:
+                break
             if rt != 31:  # xzr
                 register_list.set_raw_value(rt, ldr_result, is_64bit)
 
@@ -1008,6 +1015,8 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_data: bytes, adrp_i
             rt, is_64bit, label = decode_ldr_bytes_literal(instruction_data)
             load_address = label + instruction_load_address
             ldr_result = HM.load_address_value(exe_ctx, load_address)
+            if ldr_result == -1:
+                break
             if rt != 31:  # xzr
                 register_list.set_raw_value(rt, ldr_result, is_64bit)
 
@@ -1038,6 +1047,8 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_data: bytes, adrp_i
                 break
             load_address = HMRegister.twos_complement_to_int(rn_raw_value + temp, 64)
             ldr_result = HM.load_address_value(exe_ctx, load_address)
+            if ldr_result == -1:
+                break
             register_list.set_raw_value(rt, ldr_result, is_64bit)
 
             bit_width = 64 if is_64bit else 32
@@ -1052,6 +1063,8 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_data: bytes, adrp_i
             rn_value = register_list.get_value(rn, True)
             load_address = rn_value
             ldrsw_result = HM.load_address_value_signed_word(exe_ctx, load_address)
+            if ldrsw_result == -1:
+                break
             if rt != 31:  # xzr
                 register_list.set_raw_value(rt, ldrsw_result, True)
             rn_value += simm
@@ -1068,6 +1081,8 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_data: bytes, adrp_i
             rn_value += simm
             register_list.set_value(rn, rn_value, True)
             ldrsw_result = HM.load_address_value_signed_word(exe_ctx, rn_value)
+            if ldrsw_result == -1:
+                break
             if rt != 31:  # xzr
                 register_list.set_raw_value(rt, ldrsw_result, True)
 
@@ -1080,6 +1095,8 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_data: bytes, adrp_i
             rn_value = register_list.get_value(rn, True)
             load_address = rn_value + pimm
             ldrsw_result = HM.load_address_value_signed_word(exe_ctx, load_address)
+            if ldrsw_result == -1:
+                break
             if rt != 31:  # xzr
                 register_list.set_raw_value(rt, ldrsw_result, True)
 
@@ -1109,6 +1126,8 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_data: bytes, adrp_i
                 break
             load_address = HMRegister.twos_complement_to_int(rn_raw_value + temp, 64)
             ldrsw_result = HM.load_address_value_signed_word(exe_ctx, load_address)
+            if ldrsw_result == -1:
+                break
             register_list.set_raw_value(rt, ldrsw_result, True)
 
             address_target_dic[instruction_load_address] = load_address
@@ -1209,150 +1228,4 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_data: bytes, adrp_i
     next_instruction_data = data[0:4]
     if is_nop_bytes(next_instruction_data):
         address_target_dic[adrp_instruction_load_address] = adrp_result
-
-
-
-def analyze_adrp(exe_ctx: lldb.SBExecutionContext, adrp_instruction: lldb.SBInstruction, register_dic: Dict[str, int]) -> Tuple[bool, str, int]:
-    # return (analyze_result, target_register_str, adrp_value)
-    target = exe_ctx.GetTarget()
-    adrp_instruction_load_address: int = adrp_instruction.GetAddress().GetLoadAddress(target)
-    adrp_instruction_mnemonic = adrp_instruction.GetMnemonic(target)
-    adrp_target_register = ""
-    adrp_result = -1
-    if adrp_instruction_mnemonic == 'adr':
-        # adr x17, #-0x8000
-        operands = adrp_instruction.GetOperands(target).split(', ')
-        if not (operands[1].startswith('#0x') or operands[1].startswith('#-0x')):
-            # HM.DPrint(f"Error: Unsupported format in adr. Load address:{hex(adrp_instruction_load_address)}")
-            return False, "", 0
-        adrp_result = adrp_instruction_load_address + int(operands[1].lstrip('#'), 16)
-        adrp_target_register = operands[0]
-    elif adrp_instruction_mnemonic == 'adrp':
-        # adrp x8, -24587
-        operands = adrp_instruction.GetOperands(target).split(', ')
-        adrp_result_tuple: Tuple[int, str] = HMCalculationHelper.calculate_adrp_result_with_immediate_and_pc_address(int(operands[1]), adrp_instruction_load_address)
-        adrp_result = adrp_result_tuple[0]
-        adrp_target_register = operands[0]
-    else:
-        return False, "", 0
-    register_dic[adrp_target_register] = adrp_result
-    return True, adrp_target_register, adrp_result
-
-
-def analyze_add(exe_ctx: lldb.SBExecutionContext, add_instruction: lldb.SBInstruction, register_dic: Dict[str, int]) -> Tuple[bool, str, int]:
-    # return (analyze_result, target_register_str, add_value)
-    target = exe_ctx.GetTarget()
-    operands = add_instruction.GetOperands(target).split(', ')
-    if operands[1] in register_dic:
-        op1_value = register_dic[operands[1]]
-    else:
-        is_valid_value, immediate_operand_value = HM.int_value_from_string(operands[1].lstrip("#"))
-        if not is_valid_value:
-            return False, "", 0
-        op1_value = immediate_operand_value
-
-    if operands[2] in register_dic:
-        op2_value = register_dic[operands[2]]
-    else:
-        is_valid_value, immediate_operand_value = HM.int_value_from_string(operands[2].lstrip("#"))
-        if not is_valid_value:
-            return False, "", 0
-        op2_value = immediate_operand_value
-
-    register_dic[operands[0]] = op1_value + op2_value
-    return True, operands[0], op1_value + op2_value
-
-
-def analyze_ldr(exe_ctx: lldb.SBExecutionContext, ldr_instruction: lldb.SBInstruction, register_dic: Dict[str, int]) -> Tuple[bool, bool, str, int, int]:
-    # return (analyze_result, can_get_load_address, target_register_str, load_address_int, load_result_int)
-    target = exe_ctx.GetTarget()
-    operand_tuple: Tuple[bool, str, str, str] = resolve_ldr_operands(ldr_instruction.GetOperands(target))
-    if not operand_tuple[0]:
-        return False, False, "", 0, 0
-    if operand_tuple[2] not in register_dic:
-        return False, False, "", 0, 0
-
-    if operand_tuple[3] in register_dic:
-        op3_value = register_dic[operand_tuple[3]]
-    else:
-        is_valid_value, immediate_operand_value = HM.int_value_from_string(operand_tuple[3].lstrip("#"))
-        if not is_valid_value:
-            return False, False, "", 0, 0
-        op3_value = immediate_operand_value
-
-    load_address: int = register_dic[operand_tuple[2]] + op3_value
-
-    mnemonic = ldr_instruction.GetMnemonic(target)
-    if mnemonic == 'ldr':
-        ldr_result = HM.load_address_value(exe_ctx, load_address)
-    elif mnemonic == 'ldrsw':
-        ldr_result = HM.load_address_value_signed_word(exe_ctx, load_address)
-    else:
-        ldr_result = -1
-        raise Exception("Parameter error, unsupported instruction type")
-
-    if ldr_result == -1:
-        # ldr_instruction_load_address_int: int = ldr_instruction.GetAddress().GetLoadAddress(target)
-        # HM.DPrint(f"Invalid load address, instruction:{ldr_instruction}, instruction load address: {hex(ldr_instruction_load_address_int)}")
-        return False, True, "", load_address, 0
-
-    register_dic[operand_tuple[1]] = ldr_result
-    return True, True, operand_tuple[1], load_address, ldr_result
-
-
-def analyze_mov(exe_ctx: lldb.SBExecutionContext, mov_instruction: lldb.SBInstruction, register_dic: Dict[str, int]) -> Tuple[bool, str, int]:
-    # return (analyze_result, target_register_str, mov_value)
-    target = exe_ctx.GetTarget()
-    operands = mov_instruction.GetOperands(target).split(', ')
-    if operands[1] in register_dic:
-        op1_value = register_dic[operands[1]]
-    else:
-        is_valid_value, immediate_operand_value = HM.int_value_from_string(operands[1].lstrip("#"))
-        if not is_valid_value:
-            return False, "", 0
-        op1_value = immediate_operand_value
-
-    register_dic[operands[0]] = op1_value
-    return True, operands[0], op1_value
-
-
-def analyze_str(exe_ctx: lldb.SBExecutionContext, str_instruction: lldb.SBInstruction, register_dic: Dict[str, int], address_target_dic: Dict[int, int]) -> None:
-    # It always returns true if the register is not modified.
-    target = exe_ctx.GetTarget()
-    operand_tuple: Tuple[bool, str, str, str] = resolve_ldr_operands(str_instruction.GetOperands(target))
-    if not operand_tuple[0]:
-        return True
-    if operand_tuple[2] not in register_dic:
-        return True
-
-    if operand_tuple[3] in register_dic:
-        op3_value = register_dic[operand_tuple[3]]
-    else:
-        is_valid_value, immediate_operand_value = HM.int_value_from_string(operand_tuple[3].lstrip("#"))
-        if not is_valid_value:
-            return True
-        op3_value = immediate_operand_value
-
-    save_address: int = register_dic[operand_tuple[2]] + op3_value
-    # The str instruction records the saving address
-    address_target_dic[str_instruction.GetAddress().GetLoadAddress(target)] = save_address
-    return True
-
-
-# resolve ldr/ldrsw/str
-def resolve_ldr_operands(operands: str) -> Tuple[bool, str, str, str]:
-    # ldr x1, [x2, #0x9c8] -> (True, x1, x2, 0x9c8)
-    # ldr x1, [x2] -> (True, x1, x2, 0)
-    # ldr x8, [x0, x20] -> (True, x8, x0, x20)
-    operand_list = operands.split(', ')
-    if len(operand_list) == 2:
-        return True, operand_list[0], operand_list[1].lstrip('[').rstrip(']'), "0"
-    elif len(operand_list) == 3:
-        operand_list[1] = operand_list[1].lstrip('[')
-        operand_list[2] = operand_list[2].rstrip(']')
-        return True, operand_list[0], operand_list[1], operand_list[2]
-
-    # return False
-    # ldr x21, [x8, x23, lsl #3] -> (False, "", "", "0")
-    return False, "", "", "0"
 

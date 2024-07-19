@@ -181,7 +181,7 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_instruction: lldb.S
     target = exe_ctx.GetTarget()
 
     # Calculate and save the value of adr/adrp instruction
-    can_analyze_adrp, adrp_target_register, adrp_result = HMReference.analyze_adrp(exe_ctx, adrp_instruction, register_dic)
+    can_analyze_adrp, adrp_target_register, adrp_result = analyze_adrp(exe_ctx, adrp_instruction, register_dic)
     if not can_analyze_adrp:
         return
 
@@ -201,7 +201,7 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_instruction: lldb.S
         mnemonic: str = instruction.GetMnemonic(target)
         instruction_load_address_int: int = instruction.GetAddress().GetLoadAddress(target)
         if mnemonic == 'add':
-            can_analyze_add, target_register_str, add_value = HMReference.analyze_add(exe_ctx, instruction, register_dic)
+            can_analyze_add, target_register_str, add_value = analyze_add(exe_ctx, instruction, register_dic)
             if not can_analyze_add:
                 break
             if len(comment) == 0:
@@ -209,7 +209,7 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_instruction: lldb.S
                 add_comment = f"{target_register_str} = {hex(add_value)} {lookup_summary}"
                 address_comment_dict[instruction_load_address_int] = add_comment
         elif mnemonic == 'ldr':
-            can_analyze_ldr, can_get_load_address, target_register_str, load_address_int, load_result_int = HMReference.analyze_ldr(exe_ctx, instruction, register_dic)
+            can_analyze_ldr, can_get_load_address, target_register_str, load_address_int, load_result_int = analyze_ldr(exe_ctx, instruction, register_dic)
             if not can_get_load_address:
                 break
             if len(comment) == 0:
@@ -229,7 +229,7 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_instruction: lldb.S
                     address_comment_dict[instruction_load_address_int] = ldr_comment
 
         elif mnemonic == 'ldrsw':
-            can_analyze_ldrsw, _, target_register_str, _, load_result_int = HMReference.analyze_ldr(exe_ctx, instruction, register_dic)
+            can_analyze_ldrsw, _, target_register_str, _, load_result_int = analyze_ldr(exe_ctx, instruction, register_dic)
             if not can_analyze_ldrsw:
                 break
             # The ldrsw instruction records the result address in memory
@@ -238,7 +238,7 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_instruction: lldb.S
                 ldr_comment = f"{target_register_str} = {hex(load_result_int)} {lookup_summary}"
                 address_comment_dict[instruction_load_address_int] = ldr_comment
         elif mnemonic == 'mov':
-            can_analyze_mov, target_register_str, mov_value = HMReference.analyze_mov(exe_ctx, instruction, register_dic)
+            can_analyze_mov, target_register_str, mov_value = analyze_mov(exe_ctx, instruction, register_dic)
             if not can_analyze_mov:
                 break
             if len(comment) == 0:
@@ -298,19 +298,19 @@ def comment_for_branch(exe_ctx: lldb.SBExecutionContext, branch_instruction: lld
                     my_comment = f"{my_comment}, sel = {x1_str_result}"
             return my_comment
         elif mnemonic in ['adr', 'adrp']:
-            can_analyze_adrp, _, _ = HMReference.analyze_adrp(exe_ctx, instruction, register_dic)
+            can_analyze_adrp, _, _ = analyze_adrp(exe_ctx, instruction, register_dic)
             if not can_analyze_adrp:
                 return ""
         elif mnemonic == 'add':
-            can_analyze_add, _, _ = HMReference.analyze_add(exe_ctx, instruction, register_dic)
+            can_analyze_add, _, _ = analyze_add(exe_ctx, instruction, register_dic)
             if not can_analyze_add:
                 return ""
         elif mnemonic in ['ldr', 'ldrsw']:
-            can_analyze_ldr, _, _, _, _ = HMReference.analyze_ldr(exe_ctx, instruction, register_dic)
+            can_analyze_ldr, _, _, _, _ = analyze_ldr(exe_ctx, instruction, register_dic)
             if not can_analyze_ldr:
                 return ""
         elif mnemonic == 'mov':
-            can_analyze_mov, _, _ = HMReference.analyze_mov(exe_ctx, instruction, register_dic)
+            can_analyze_mov, _, _ = analyze_mov(exe_ctx, instruction, register_dic)
             if not can_analyze_mov:
                 return ""
         elif mnemonic in ['str', 'nop']:
@@ -320,3 +320,124 @@ def comment_for_branch(exe_ctx: lldb.SBExecutionContext, branch_instruction: lld
 
     return ""
 
+
+def analyze_adrp(exe_ctx: lldb.SBExecutionContext, adrp_instruction: lldb.SBInstruction, register_dic: Dict[str, int]) -> Tuple[bool, str, int]:
+    # return (analyze_result, target_register_str, adrp_value)
+    target = exe_ctx.GetTarget()
+    adrp_instruction_load_address: int = adrp_instruction.GetAddress().GetLoadAddress(target)
+    adrp_instruction_mnemonic = adrp_instruction.GetMnemonic(target)
+    adrp_target_register = ""
+    adrp_result = -1
+    if adrp_instruction_mnemonic == 'adr':
+        # adr x17, #-0x8000
+        operands = adrp_instruction.GetOperands(target).split(', ')
+        if not (operands[1].startswith('#0x') or operands[1].startswith('#-0x')):
+            # HM.DPrint(f"Error: Unsupported format in adr. Load address:{hex(adrp_instruction_load_address)}")
+            return False, "", 0
+        adrp_result = adrp_instruction_load_address + int(operands[1].lstrip('#'), 16)
+        adrp_target_register = operands[0]
+    elif adrp_instruction_mnemonic == 'adrp':
+        # adrp x8, -24587
+        operands = adrp_instruction.GetOperands(target).split(', ')
+        adrp_result_tuple: Tuple[int, str] = HMCalculationHelper.calculate_adrp_result_with_immediate_and_pc_address(int(operands[1]), adrp_instruction_load_address)
+        adrp_result = adrp_result_tuple[0]
+        adrp_target_register = operands[0]
+    else:
+        return False, "", 0
+    register_dic[adrp_target_register] = adrp_result
+    return True, adrp_target_register, adrp_result
+
+
+def analyze_add(exe_ctx: lldb.SBExecutionContext, add_instruction: lldb.SBInstruction, register_dic: Dict[str, int]) -> Tuple[bool, str, int]:
+    # return (analyze_result, target_register_str, add_value)
+    target = exe_ctx.GetTarget()
+    operands = add_instruction.GetOperands(target).split(', ')
+    if operands[1] in register_dic:
+        op1_value = register_dic[operands[1]]
+    else:
+        is_valid_value, immediate_operand_value = HM.int_value_from_string(operands[1].lstrip("#"))
+        if not is_valid_value:
+            return False, "", 0
+        op1_value = immediate_operand_value
+
+    if operands[2] in register_dic:
+        op2_value = register_dic[operands[2]]
+    else:
+        is_valid_value, immediate_operand_value = HM.int_value_from_string(operands[2].lstrip("#"))
+        if not is_valid_value:
+            return False, "", 0
+        op2_value = immediate_operand_value
+
+    register_dic[operands[0]] = op1_value + op2_value
+    return True, operands[0], op1_value + op2_value
+
+
+def analyze_ldr(exe_ctx: lldb.SBExecutionContext, ldr_instruction: lldb.SBInstruction, register_dic: Dict[str, int]) -> Tuple[bool, bool, str, int, int]:
+    # return (analyze_result, can_get_load_address, target_register_str, load_address_int, load_result_int)
+    target = exe_ctx.GetTarget()
+    operand_tuple: Tuple[bool, str, str, str] = resolve_ldr_operands(ldr_instruction.GetOperands(target))
+    if not operand_tuple[0]:
+        return False, False, "", 0, 0
+    if operand_tuple[2] not in register_dic:
+        return False, False, "", 0, 0
+
+    if operand_tuple[3] in register_dic:
+        op3_value = register_dic[operand_tuple[3]]
+    else:
+        is_valid_value, immediate_operand_value = HM.int_value_from_string(operand_tuple[3].lstrip("#"))
+        if not is_valid_value:
+            return False, False, "", 0, 0
+        op3_value = immediate_operand_value
+
+    load_address: int = register_dic[operand_tuple[2]] + op3_value
+
+    mnemonic = ldr_instruction.GetMnemonic(target)
+    if mnemonic == 'ldr':
+        ldr_result = HM.load_address_value(exe_ctx, load_address)
+    elif mnemonic == 'ldrsw':
+        ldr_result = HM.load_address_value_signed_word(exe_ctx, load_address)
+    else:
+        ldr_result = -1
+        raise Exception("Parameter error, unsupported instruction type")
+
+    if ldr_result == -1:
+        # ldr_instruction_load_address_int: int = ldr_instruction.GetAddress().GetLoadAddress(target)
+        # HM.DPrint(f"Invalid load address, instruction:{ldr_instruction}, instruction load address: {hex(ldr_instruction_load_address_int)}")
+        return False, True, "", load_address, 0
+
+    register_dic[operand_tuple[1]] = ldr_result
+    return True, True, operand_tuple[1], load_address, ldr_result
+
+
+def analyze_mov(exe_ctx: lldb.SBExecutionContext, mov_instruction: lldb.SBInstruction, register_dic: Dict[str, int]) -> Tuple[bool, str, int]:
+    # return (analyze_result, target_register_str, mov_value)
+    target = exe_ctx.GetTarget()
+    operands = mov_instruction.GetOperands(target).split(', ')
+    if operands[1] in register_dic:
+        op1_value = register_dic[operands[1]]
+    else:
+        is_valid_value, immediate_operand_value = HM.int_value_from_string(operands[1].lstrip("#"))
+        if not is_valid_value:
+            return False, "", 0
+        op1_value = immediate_operand_value
+
+    register_dic[operands[0]] = op1_value
+    return True, operands[0], op1_value
+
+
+# resolve ldr/ldrsw/str
+def resolve_ldr_operands(operands: str) -> Tuple[bool, str, str, str]:
+    # ldr x1, [x2, #0x9c8] -> (True, x1, x2, 0x9c8)
+    # ldr x1, [x2] -> (True, x1, x2, 0)
+    # ldr x8, [x0, x20] -> (True, x8, x0, x20)
+    operand_list = operands.split(', ')
+    if len(operand_list) == 2:
+        return True, operand_list[0], operand_list[1].lstrip('[').rstrip(']'), "0"
+    elif len(operand_list) == 3:
+        operand_list[1] = operand_list[1].lstrip('[')
+        operand_list[2] = operand_list[2].rstrip(']')
+        return True, operand_list[0], operand_list[1], operand_list[2]
+
+    # return False
+    # ldr x21, [x8, x23, lsl #3] -> (False, "", "", "0")
+    return False, "", "", "0"
