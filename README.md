@@ -23,6 +23,8 @@ For example, this is the command in my computer:
 
 3. Restart Xcode, run your own iOS project, click `Pause program execution` to enter the LLDB debugging mode, enter the command `help`, if you see the commands described below, the installation is successful.
 
+Note: If you configured a **LLDB Init File** based on your project **Scheme**, you may need to add imports to that file.
+
 ## Commands
 
 | Command        | Description            |
@@ -366,8 +368,9 @@ When debugging the assembly instruction, it is very troublesome to see the `objc
 ### cbt
 `cbt` command: Completely displays the current thread\'s call stack based on the fp/lr register.     
 Xcode's "Debug Navigator" & `bt` command: Displays the current thread\'s call stack based on DWARF information.   
-In some cases, the traceback based on libunwind.dylib may lose the call frame, and the actual execution process of the arm64 architecture application is based on the fp/lr register. Therefore, the `cbt` command was developed.    
-Notice:
+In some cases, the traceback based on DWARF may lose the call frame, and the actual execution process of the arm64 architecture application is based on the fp/lr register. Therefore, the `cbt` command was developed.    
+Notice:    
+
 - The `cbt` command only supports arm64 architecture devices.
 - If the `-fomit-frame-pointer` parameter is added when compiling, the `cbt` command cannot find the hidden frame. Therefore, it is recommended to use `cbt` and `bt` commands together.
 
@@ -449,32 +452,32 @@ Syntax:
 
 Examples:
     (lldb) twos_complement_to_int 0xfffffffffffffff0 64
-	[HMLLDB] -16, -0x10
+    [HMLLDB] -16, -0x10
 ```
 
 
 ### reference
-Scan the image section to obtain all reference addresses of a certain address. You can query addresses stored in memory, which means you can query addresses outside the image range.      
+Scan the image section to obtain all reference addresses of a certain address.       
 
 The "reference" command is similar to the "References to" function of "Hopper Disassembler". The difference is:    
 
-- "reference" is faster than "Hopper Disassembler".
+- "reference" is much faster than "Hopper Disassembler".
+- "reference" supports runtime scanning, that is, it supports scanning the initialized data in **__DATA Segment**, which means you can query addresses outside the image range. It supports scanning more addresses than "Hopper Disassembler".
 - In a few cases, search results of "reference" are not as complete as those found by "Hopper Disassembler".
-- "reference" supports querying the address loaded into memory, which means you can query addresses outside the image range.
 
 
 ```
 Syntax:
     reference <address> <image_name>
 
-# Example 1: Query the address in the image(UIKitCore)
+# Example A: Query the address in the image(UIKitCore)
 (lldb) dis -n "-[UIControl sendAction:to:forEvent:]"
 UIKitCore`-[UIControl sendAction:to:forEvent:]:
     ...
     0x19a7eb730 <+108>: bl     0x19bd627a0               ; objc_msgSend$sendAction:toTarget:fromSender:forEvent:
     ...
 
-# Want to query which addresses will call the "objc_msgSend$sendAction:toTarget:fromSender:forEvent:" function in UIKitCore
+# Want to query which addresses will call the "objc_msgSend$sendAction:toTarget:fromSender:forEvent:" function(0x19bd627a0) in UIKitCore
 (lldb) reference 0x19bd627a0 UIKitCore
 [HMLLDB] These are the scan results:
 0x19a7eb730: UIKitCore`-[UIControl sendAction:to:forEvent:] + 108
@@ -486,27 +489,27 @@ UIKitCore`-[UIControl sendAction:to:forEvent:]:
 [HMLLDB] Scan result count in memory:0
 
 
-# Example 2: Query the address of using UIPasteboard class in DemoApp. This address is outside the image(DemoApp) range.
+# Example B: Query the address of using UIPasteboard class in DemoApp. This address is outside the image(DemoApp) range.
 # 1.lookup OBJC_CLASS_$_UIPasteboard load address
 (lldb) image lookup -vs UIPasteboard
         ...
         Symbol: id = {0x00036667}, range = [0x00000001eef79138-0x00000001eef79160), name="UIPasteboard", mangled="OBJC_CLASS_$_UIPasteboard"
 
-# You can also find its loading address using the "fclass" command.
+# It is recommended to use the "fclass" command to find the loading address of the class.
 (lldb) fclass UIPasteboard
 ...
 UIPasteboard (0x1eef79138, UIKitCore)
 ...
 
 # 2.Query the address of using UIPasteboard class in DemoApp
-(lldb) reference 0x00000001eef79138 DemoApp
+(lldb) reference 0x1eef79138 DemoApp
 [HMLLDB] Scan result count:0
 [HMLLDB] These are the scan results in memory:
 0x100a2ae9c: DemoApp`-[ViewController viewDidLoad] + 68 at ViewController.mm:27:6
 [HMLLDB] Scan result count in memory:1
 
 
-# Example 3 :Query the address of the setenv function used in the DemoApp. This address is outside the image(DemoApp) range.
+# Example C: Query the address of the setenv function used in the DemoApp. This address is outside the image(DemoApp) range.
 # 1.Get the loading address of the setenv function
 (lldb) dis -n setenv
 libsystem_c.dylib`setenv:
