@@ -441,6 +441,14 @@ def is_str_bytes_register(data: bytes) -> bool:
     return ((data[3] & 0xbf) == 0xb8) and ((data[2] & 0xe0) == 0x20) and ((data[1] & 0x0c) == 0x08)
 
 
+# STP (Signed offset)
+def is_stp_bytes_signed_offset(data: bytes) -> bool:
+    # little endian
+    # 32-bit: STP <Wt1>, <Wt2>, [<Xn|SP>{, #<imm>}]
+    # 64-bit: STP <Xt1>, <Xt2>, [<Xn|SP>{, #<imm>}]
+    return ((data[3] & 0x7f) == 0x29) and ((data[2] & 0xc0) == 0x0)
+
+
 # NOP
 def is_nop_bytes(data: bytes) -> bool:
     # little endian
@@ -861,6 +869,27 @@ def decode_str_bytes_register(data: bytes) -> (int, int, int, bool, HMExtendOpti
     return rt, rn, rm, is_64bit, extend, amount
 
 
+# decode STP (Signed offset), return (rt, rt2, rn, is_64bit, imm)
+def decode_stp_bytes_signed_offset(data: bytes) -> (int, int, int, bool, int):
+    # 32-bit: STP <Wt1>, <Wt2>, [<Xn|SP>{, #<imm>}]
+    # 64-bit: STP <Xt1>, <Xt2>, [<Xn|SP>{, #<imm>}]
+    # stp x20, x8, [sp] - (20, 8, 31, True, 0)
+    # stp x8, x9, [x29, #-0x70] - (8, 9, 29, True, -0x70)
+    # stp w25, w24, [sp, #0x4] - (25, 24, 31, False, 4)
+    # stp xzr, xzr, [x8] - (31, 31, 8, True, 0)
+    is_64bit = (data[3] & 0x80) == 0x80
+    value = int.from_bytes(data, 'little')
+    rt = value & 0b11111
+    rt2 = (value >> 10) & 0b11111
+    rn = (value >> 5) & 0b11111
+    imm7 = (value >> 15) & 0x7f
+    if is_64bit:
+        imm = HMRegister.twos_complement_to_int(imm7, 7) * 8
+    else:
+        imm = HMRegister.twos_complement_to_int(imm7, 7) * 4
+    return rt, rt2, rn, is_64bit, imm
+
+
 def logical_shift_right(raw_value: int, amount: int, bit_width: int) -> int:
     raw_value &= (1 << bit_width) - 1
     result = raw_value >> amount
@@ -925,8 +954,17 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_data: bytes, adrp_i
     for i in range(0, len(data), 4):
         instruction_data = data[i:i+4]
         instruction_load_address = adrp_instruction_load_address + 4 + i
+        # adr/adrp
+        if is_adr_bytes(instruction_data):
+            rd, offset = decode_adr_bytes(instruction_data)
+            rd_value = instruction_load_address + offset
+            register_list.set_value(rd, rd_value, True)
+        elif is_adrp_bytes(instruction_data):
+            rd, offset = decode_adr_bytes(instruction_data)
+            rd_value, _ = HMCalculationHelper.calculate_adrp_result_with_immediate_and_pc_address(offset, instruction_load_address)
+            register_list.set_value(rd, rd_value, True)
         # add
-        if is_add_bytes_immediate(instruction_data):
+        elif is_add_bytes_immediate(instruction_data):
             rd, rn, is_64bit, final_immediate = decode_add_bytes_immediate(instruction_data)
             if not register_list.has_value(rn):
                 break
@@ -1216,6 +1254,15 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_data: bytes, adrp_i
 
             address_target_dic[instruction_load_address] = load_address
             continue
+
+        # stp
+        elif is_stp_bytes_signed_offset(instruction_data):
+            rt, rt2, rn, is_64bit, imm = decode_stp_bytes_signed_offset(instruction_data)
+            if not register_list.has_value(rn):
+                continue
+            rn_value = register_list.get_value(rn, True)
+            load_address = rn_value + imm
+            address_target_dic[instruction_load_address] = load_address
 
         # nop
         elif is_nop_bytes(instruction_data):
