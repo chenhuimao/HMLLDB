@@ -82,6 +82,20 @@ class HMRegisterList:
         bit_width = 64 if is_64bit else 32
         return twos_complement_to_int(result, bit_width)
 
+    @staticmethod
+    def get_register_name(index: int, is_64bit: bool) -> str:
+        # ignore xzr/wzr
+        if index < 0 or index > 31:
+            return "get_register_name: invalid register"
+        if is_64bit:
+            if index == 31:
+                name = 'sp'
+            else:
+                name = f"x{index}"
+        else:
+            name = f"w{index}"
+        return name
+
 
 def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand('command script add -f HMRegister.register_change rc -h "Show general purpose registers changes."')

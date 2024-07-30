@@ -135,7 +135,7 @@ def reference(debugger, command, exe_ctx, result, internal_dict):
             result_address: str = hex(key)
             if result_count == 1:
                 HM.DPrint("These are the scan results:")
-            print(f"{result_address}: {HM.get_image_lookup_summary_from_address(result_address)}")
+            print(f"{result_address}: {HM.get_image_lookup_summary_from_address(key)}")
 
     HM.DPrint(f"Scan result count:{result_count}")
 
@@ -147,7 +147,7 @@ def reference(debugger, command, exe_ctx, result, internal_dict):
             result_address: str = hex(key)
             if result_count == 1:
                 HM.DPrint("These are the scan results in memory:")
-            print(f"{result_address}: {HM.get_image_lookup_summary_from_address(result_address)}")
+            print(f"{result_address}: {HM.get_image_lookup_summary_from_address(key)}")
 
     HM.DPrint(f"Scan result count in memory:{result_count}")
 

@@ -56,6 +56,7 @@ def enhanced_disassemble(debugger, command, exe_ctx, result, internal_dict):
     original_output = return_object.GetOutput()
     if not HM.is_arm64(exe_ctx.GetTarget()):
         if return_object.GetOutputSize() > 0:
+            HM.DPrint("edisassemble only supports arm64 architecture.")
             print(original_output)
         else:
             debugger.HandleCommand(f"disassemble {command}")
@@ -205,7 +206,7 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_instruction: lldb.S
             if not can_analyze_add:
                 break
             if len(comment) == 0:
-                lookup_summary = HM.get_image_lookup_summary_from_address(hex(add_value))
+                lookup_summary = HM.get_image_lookup_summary_from_address(add_value)
                 add_comment = f"{target_register_str} = {hex(add_value)} {lookup_summary}"
                 address_comment_dict[instruction_load_address_int] = add_comment
         elif mnemonic == 'ldr':
@@ -216,9 +217,9 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_instruction: lldb.S
                 lookup_summary = ""
                 # lookup <load_result_int> first, if there is no result, lookup <load_address_int>
                 if can_analyze_ldr:
-                    lookup_summary = HM.get_image_lookup_summary_from_address(hex(load_result_int))
+                    lookup_summary = HM.get_image_lookup_summary_from_address(load_result_int)
                 if len(lookup_summary) == 0:
-                    lookup_summary = HM.get_image_lookup_summary_from_address(hex(load_address_int))
+                    lookup_summary = HM.get_image_lookup_summary_from_address(load_address_int)
 
                 if can_analyze_ldr:
                     ldr_comment = f"{target_register_str} = {hex(load_result_int)} {lookup_summary}"
@@ -234,7 +235,7 @@ def record_adrp_logic(exe_ctx: lldb.SBExecutionContext, adrp_instruction: lldb.S
                 break
             # The ldrsw instruction records the result address in memory
             if len(comment) == 0:
-                lookup_summary = HM.get_image_lookup_summary_from_address(hex(load_result_int))
+                lookup_summary = HM.get_image_lookup_summary_from_address(load_result_int)
                 ldr_comment = f"{target_register_str} = {hex(load_result_int)} {lookup_summary}"
                 address_comment_dict[instruction_load_address_int] = ldr_comment
         elif mnemonic == 'mov':
@@ -283,7 +284,7 @@ def comment_for_branch(exe_ctx: lldb.SBExecutionContext, branch_instruction: lld
             if operands not in register_dic:
                 return ""
             target_result = register_dic[operands]
-            lookup_summary = HM.get_image_lookup_summary_from_address(hex(target_result))
+            lookup_summary = HM.get_image_lookup_summary_from_address(target_result)
             my_comment = f"{mnemonic} {operands}, {operands} = {hex(target_result)} {lookup_summary}"
 
             # resolve "x1" register when target is objc_msgSend
