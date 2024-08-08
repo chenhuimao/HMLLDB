@@ -135,7 +135,7 @@ def reference(debugger, command, exe_ctx, result, internal_dict):
             result_address: str = hex(key)
             if result_count == 1:
                 HM.DPrint("These are the scan results:")
-            print(f"{result_address}: {HM.get_image_lookup_summary_from_address(result_address)}")
+            print(f"{result_address}: {HM.get_image_lookup_summary_from_address(key)}")
 
     HM.DPrint(f"Scan result count:{result_count}")
 
@@ -147,7 +147,7 @@ def reference(debugger, command, exe_ctx, result, internal_dict):
             result_address: str = hex(key)
             if result_count == 1:
                 HM.DPrint("These are the scan results in memory:")
-            print(f"{result_address}: {HM.get_image_lookup_summary_from_address(result_address)}")
+            print(f"{result_address}: {HM.get_image_lookup_summary_from_address(key)}")
 
     HM.DPrint(f"Scan result count in memory:{result_count}")
 
@@ -254,6 +254,16 @@ def is_bl_bytes(data: bytes) -> bool:
     # little endian
     # BL <label>
     return (data[3] & 0xfc) == 0x94
+
+
+def is_br_bytes(data: bytes) -> bool:
+    # BR <Xn>
+    return ((data[3] & 0xff) == 0xd6) and ((data[2] & 0xff) == 0x1f) and ((data[1] & 0xfc) == 0x00) and ((data[0] & 0x1f) == 0x00)
+
+
+def is_blr_bytes(data: bytes) -> bool:
+    # BLR <Xn>
+    return ((data[3] & 0xff) == 0xd6) and ((data[2] & 0xff) == 0x3f) and ((data[1] & 0xfc) == 0x00) and ((data[0] & 0x1f) == 0x00)
 
 
 # ADD (extended register)
@@ -476,6 +486,17 @@ def decode_b_bytes(data: bytes) -> int:
     imm26 = value & 0x3ffffff
     label = HMRegister.twos_complement_to_int(imm26, 26) * 4
     return label
+
+
+# decode br/blr, return rn
+def decode_br_bytes(data: bytes) -> int:
+    # BR <Xn>
+    # BLR <Xn>
+    # br x16
+    # br xzr
+    value = int.from_bytes(data, 'little')
+    rn = (value >> 5) & 0b11111
+    return rn
 
 
 # decode ADD (immediate) and return (Rd, Rn, is_64bit, final_immediate)

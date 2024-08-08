@@ -242,12 +242,9 @@ def strip_pac_sign_address(address_int: int, process: lldb.SBProcess = None) -> 
     return address_int & mask
 
 
-def get_image_lookup_summary_from_address(address_str: str) -> str:
-    is_valid, address_int = int_value_from_string(address_str)
-    if not is_valid:
-        return "get_image_lookup_summary_from_address: Invalid address"
+def get_image_lookup_summary_from_address(address_int: int) -> str:
     return_object = lldb.SBCommandReturnObject()
-    lldb.debugger.GetCommandInterpreter().HandleCommand(f"image lookup -a {address_str}", return_object)
+    lldb.debugger.GetCommandInterpreter().HandleCommand(f"image lookup -a {address_int}", return_object)
     if return_object.GetErrorSize() > 0:
         return ""
     return_object_lines = return_object.GetOutput().splitlines()

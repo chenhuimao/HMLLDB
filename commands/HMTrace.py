@@ -383,7 +383,7 @@ def complete_backtrace(debugger, command, exe_ctx, result, internal_dict):
 
     # print pc register information
     pc_value_int = general_purpose_registers.GetChildMemberWithName('pc').GetValueAsUnsigned()
-    first_lr_desc = HM.get_image_lookup_summary_from_address(str(pc_value_int))
+    first_lr_desc = HM.get_image_lookup_summary_from_address(pc_value_int)
     frame_count = 0
     print(f"\tframe #{frame_count}:\t{hex(pc_value_int)}\t{first_lr_desc}")
     frame_count += 1
@@ -392,7 +392,7 @@ def complete_backtrace(debugger, command, exe_ctx, result, internal_dict):
     process = exe_ctx.GetProcess()
     lr_value_int = general_purpose_registers.GetChildMemberWithName('lr').GetValueAsUnsigned()
     lr_value_int = HM.strip_pac_sign_address(lr_value_int, process)
-    first_lr_desc = HM.get_image_lookup_summary_from_address(str(lr_value_int))
+    first_lr_desc = HM.get_image_lookup_summary_from_address(lr_value_int)
     print(f"\tframe #{frame_count}:\t{hex(lr_value_int)}\t{first_lr_desc}")
     frame_count += 1
 
@@ -405,7 +405,7 @@ def complete_backtrace(debugger, command, exe_ctx, result, internal_dict):
             HM.DPrint(f"load address value: Invalid result: {hex(current_fp_value_int + 8)}")
             break
         current_lr_value_int = HM.strip_pac_sign_address(current_lr_value_int, process)
-        current_lr_desc = HM.get_image_lookup_summary_from_address(str(current_lr_value_int))
+        current_lr_desc = HM.get_image_lookup_summary_from_address(current_lr_value_int)
         print(f"\tframe #{frame_count}:\t{hex(current_lr_value_int)}\t{current_lr_desc}")
         frame_count += 1
         current_fp_value_int = previous_fp_value_int

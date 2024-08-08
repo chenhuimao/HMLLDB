@@ -331,3 +331,16 @@ def generate_rr_option_parser() -> optparse.OptionParser:
                       help="Show [sp, (sp + offset)] address value")
     return parser
 
+
+def get_register_name(index: int, is_64bit: bool) -> str:
+    # ignore xzr/wzr
+    if index < 0 or index > 31:
+        return "get_register_name: invalid register"
+    if is_64bit:
+        if index == 31:
+            name = 'sp'
+        else:
+            name = f"x{index}"
+    else:
+        name = f"w{index}"
+    return name
