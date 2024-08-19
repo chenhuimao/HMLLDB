@@ -29,6 +29,7 @@ import shlex
 import time
 import HMLLDBClassInfo
 import HMLLDBHelpers as HM
+import HMReference
 
 
 def __lldb_init_module(debugger, internal_dict):
@@ -221,11 +222,11 @@ def print_instruction(frame: lldb.SBFrame, target: lldb.SBTarget):
                 instruction_str = f"{instruction.GetMnemonic(target)}\t{instruction.GetOperands(target)}"
             break
 
-    stream = lldb.SBStream()
-    frame.GetPCAddress().GetDescription(stream)
     if len(instruction_str) == 0:
         print(hex(pc_address_value))
     else:
+        stream = lldb.SBStream()
+        frame.GetPCAddress().GetDescription(stream)
         print(f"{stream.GetData()}\t\t{instruction_str}\t({hex(pc_address_value)})")
 
 
@@ -236,10 +237,11 @@ class TraceInstructionStep:
         self.start_time = datetime.now().strftime("%H:%M:%S")
         self.thread_plan = thread_plan
         self.instruction_count = 1
+        target = self.thread_plan.GetThread().GetProcess().GetTarget()
+        self.is_arm64 = HM.is_arm64(target)
 
         # first instruction
         frame = self.thread_plan.GetThread().GetFrameAtIndex(0)
-        target = self.thread_plan.GetThread().GetProcess().GetTarget()
         print_instruction(frame, target)
 
     def explains_stop(self, event: lldb.SBEvent) -> bool:
@@ -258,8 +260,37 @@ class TraceInstructionStep:
         if self.thread_plan.GetThread().GetStopReason() != lldb.eStopReasonTrace:
             self.print_before_stop()
             return True
-        else:
-            return False
+
+        # Skip stlxr/stxr
+        if self.is_arm64:
+            frame = self.thread_plan.GetThread().GetFrameAtIndex(0)
+            target = self.thread_plan.GetThread().GetProcess().GetTarget()
+            pc_address_value: int = frame.GetPCAddress().GetLoadAddress(target)
+            error = lldb.SBError()
+            data: bytes = target.ReadMemory(frame.GetPCAddress(), 4 * 2, error)
+            if not error.Success():
+                HM.DPrint(error)
+            else:
+                current_instruction_data = data[0:4]
+                next_instruction_data = data[4:8]
+                if HMReference.is_stlxr_bytes(current_instruction_data) or HMReference.is_stxr_bytes(current_instruction_data):
+                    if HMReference.is_ret_bytes(next_instruction_data):
+                        return False
+                    elif HMReference.is_cbnz_bytes(next_instruction_data):
+                        HM.DPrint("Skipping special atomic sequences!")
+                        self.print_before_stop()
+                        bp = target.BreakpointCreateByAddress(pc_address_value + 8)
+                        bp.AddName("HMLLDB_trace_instruction")
+                        bp.SetScriptCallbackFunction("HMTrace.trace_instruction_skip_atomic_sequence_handler")
+                        g_instruction_limit -= self.instruction_count
+                        return False
+                    else:
+                        HM.DPrint("There is a special atomic sequence, please manually set the breakpoint and contine to skip!")
+                        self.print_before_stop()
+                        return True
+
+
+        return False
 
     def should_step(self) -> bool:
         return True
@@ -271,6 +302,17 @@ class TraceInstructionStep:
         HM.DPrint(f"Start time: {self.start_time}")
         stop_time = datetime.now().strftime("%H:%M:%S")
         HM.DPrint(f"Stop time: {stop_time}")
+
+
+def trace_instruction_skip_atomic_sequence_handler(frame, bp_loc, extra_args, internal_dict) -> bool:
+    target = frame.GetThread().GetProcess().GetTarget()
+    # Delete current breakpoint
+    bp = bp_loc.GetBreakpoint()
+    target.BreakpointDelete(bp.GetID())
+
+    # Execute the trace command again
+    target.GetDebugger().HandleCommand('thread step-scripted -C HMTrace.TraceInstructionStep')
+    return False
 
 
 def trace_step_over_instruction(debugger, command, exe_ctx, result, internal_dict):
