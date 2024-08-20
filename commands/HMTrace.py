@@ -237,6 +237,7 @@ class TraceInstructionStep:
         self.start_time = datetime.now().strftime("%H:%M:%S")
         self.thread_plan = thread_plan
         self.instruction_count = 1
+        self.will_stop = False
         target = self.thread_plan.GetThread().GetProcess().GetTarget()
         self.is_arm64 = HM.is_arm64(target)
 
@@ -278,7 +279,7 @@ class TraceInstructionStep:
                         return False
                     elif HMReference.is_cbnz_bytes(next_instruction_data):
                         HM.DPrint("Skipping special atomic sequences!")
-                        self.print_before_stop()
+                        self.will_stop = True
                         bp = target.BreakpointCreateByAddress(pc_address_value + 8)
                         bp.AddName("HMLLDB_trace_instruction")
                         bp.SetScriptCallbackFunction("HMTrace.trace_instruction_skip_atomic_sequence_handler")
@@ -293,6 +294,8 @@ class TraceInstructionStep:
         return False
 
     def should_step(self) -> bool:
+        if self.will_stop:
+            return False
         return True
 
     def print_before_stop(self) -> None:
