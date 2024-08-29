@@ -787,9 +787,11 @@ Target 0: (Demo) stopped.
 ```
 
 ### trace-step-over-instruction
-There are two problems with the lldb command `thread step-inst-over --count 100`.
+There are 3 problems with the lldb command `thread step-inst-over --count 100`.
 - I only know the result and cannot see the process of command execution. I have to see the current pc register address after each "step over instruction".    
 - When encountering certain instructions such as "bl", "ret", the behavior is not as expected.    
+- Some special atomic sequences will cause the **step logic** to loop infinitely, such as ldaxr/stlxr instructions.    
+
 
 The `trace-step-over-instruction` command solves these problems.    
 ```

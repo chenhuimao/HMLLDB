@@ -55,6 +55,9 @@ def trace_function(debugger, command, exe_ctx, result, internal_dict):
         (lldb) tracefunction
         (lldb) tracefunction -m 500
 
+    Notice:
+        Some special atomic sequences will cause the step logic to loop infinitely, and you need to skip them manually!
+
     This command is implemented in HMTrace.py
     """
 
@@ -100,6 +103,11 @@ def trace_function_skip_atomic_sequence_handler(frame, bp_loc, extra_args, inter
     # Execute the trace command again
     target.GetDebugger().HandleCommand('thread step-scripted -C HMTrace.TraceFunctionStep')
     return False
+
+
+def print_atomic_sequence_remind() -> None:
+    HM.DPrint("There are special atomic sequences that will cause step logic loops and require you to skip them manually!")
+    HM.DPrint("For example: Set a breakpoint at the first address after the end of the atomic sequence, and then continue.")
 
 
 class TraceFunctionStep:
@@ -177,7 +185,7 @@ class TraceFunctionStep:
                         g_function_limit -= self.function_count
                         return False
                     else:
-                        HM.DPrint("There is a special atomic sequence, please manually set the breakpoint and contine to skip!")
+                        print_atomic_sequence_remind()
                         self.print_before_stop()
                         return True
 
@@ -216,6 +224,9 @@ def trace_instruction(debugger, command, exe_ctx, result, internal_dict):
     Examples:
         (lldb) traceinstruction
         (lldb) traceinstruction -m 6000
+
+    Notice:
+        Some special atomic sequences will cause the step logic to loop infinitely, and you need to skip them manually!
 
     This command is implemented in HMTrace.py
     """
@@ -340,7 +351,7 @@ class TraceInstructionStep:
                         g_instruction_limit -= self.instruction_count
                         return False
                     else:
-                        HM.DPrint("There is a special atomic sequence, please manually set the breakpoint and contine to skip!")
+                        print_atomic_sequence_remind()
                         self.print_before_stop()
                         return True
 
@@ -368,6 +379,9 @@ def trace_step_over_instruction(debugger, command, exe_ctx, result, internal_dic
     Examples:
         (lldb) trace-step-over-instruction 20
 
+    Notice:
+        Some special atomic sequences will cause the step logic to loop infinitely, and you need to skip them manually!
+
     This command is implemented in HMTrace.py
     """
 
@@ -388,6 +402,8 @@ def trace_step_over_instruction(debugger, command, exe_ctx, result, internal_dic
     breakpoint_name = "HMLLDB_trace_step_over_instruction"
     thread = exe_ctx.GetThread()
     target = exe_ctx.GetTarget()
+    is_arm64 = HM.is_arm64(target)
+    has_atomic_sequences = False
 
     print_instruction(thread.GetSelectedFrame(), target)
     last_bp_id: int = set_breakpoint_at_next_pc_address(target, thread.GetSelectedFrame(), breakpoint_name)
@@ -400,6 +416,21 @@ def trace_step_over_instruction(debugger, command, exe_ctx, result, internal_dic
         print_instruction(frame, target)
         last_bp_id = set_breakpoint_at_next_pc_address(target, frame, breakpoint_name)
 
+        # Stop at a special atomic sequences
+        if is_arm64:
+            pc_address_value: int = frame.GetPCAddress().GetLoadAddress(target)
+            error = lldb.SBError()
+            data: bytes = target.ReadMemory(frame.GetPCAddress(), 4 * 2, error)
+            if not error.Success():
+                HM.DPrint(error)
+            else:
+                current_instruction_data = data[0:4]
+                next_instruction_data = data[4:8]
+                if HMReference.is_stlxr_bytes(current_instruction_data) or HMReference.is_stxr_bytes(current_instruction_data):
+                    if not HMReference.is_ret_bytes(next_instruction_data):
+                        has_atomic_sequences = True
+                        break
+
     is_step_over = should_step_over(target, thread.GetSelectedFrame())
     async_state = debugger.GetAsync()
     debugger.SetAsync(True)
@@ -409,6 +440,9 @@ def trace_step_over_instruction(debugger, command, exe_ctx, result, internal_dic
     time.sleep(1)
     print_instruction(thread.GetSelectedFrame(), target)
     delete_breakpoint_with_id(target, last_bp_id)
+
+    if has_atomic_sequences:
+        print_atomic_sequence_remind()
 
 
 def set_breakpoint_at_next_pc_address(target: lldb.SBTarget, frame: lldb.SBFrame, name: str) -> int:
