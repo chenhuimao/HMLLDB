@@ -266,6 +266,19 @@ def is_blr_bytes(data: bytes) -> bool:
     return ((data[3] & 0xff) == 0xd6) and ((data[2] & 0xff) == 0x3f) and ((data[1] & 0xfc) == 0x00) and ((data[0] & 0x1f) == 0x00)
 
 
+# CBNZ
+def is_cbnz_bytes(data: bytes) -> bool:
+    # 32-bit: CBNZ <Wt>, <label>
+    # 64-bit: CBNZ <Xt>, <label>
+    return (data[3] & 0x7f) == 0x35
+
+
+# RET
+def is_ret_bytes(data: bytes) -> bool:
+    # RET {<Xn>}
+    return ((data[3] & 0xff) == 0xd6) and ((data[2] & 0xff) == 0x5f) and ((data[1] & 0xfc) == 0x0) and ((data[0] & 0x1f) == 0x0)
+
+
 # ADD (extended register)
 def is_add_bytes_extended_register(data: bytes) -> bool:
     # little endian
@@ -370,6 +383,13 @@ def is_ldrsw_bytes_register(data: bytes) -> bool:
     return ((data[3] & 0xff) == 0xb8) and ((data[2] & 0xe0) == 0xa0) and ((data[1] & 0x0c) == 0x08)
 
 
+# LDAXR
+def is_ldaxr_bytes(data: bytes) -> bool:
+    # 32-bit: LDAXR <Wt>, [<Xn|SP>{, #0}]
+    # 64-bit: LDAXR <Xt>, [<Xn|SP>{, #0}]
+    return ((data[3] & 0xbf) == 0x88) and ((data[2] & 0xff) == 0x5f) and ((data[1] & 0xfc) == 0xfc)
+
+
 # MOV (bitmask immediate)
 def is_mov_bytes_bitmask_immediate(data: bytes) -> bool:
     # little endian
@@ -457,6 +477,21 @@ def is_stp_bytes_signed_offset(data: bytes) -> bool:
     # 32-bit: STP <Wt1>, <Wt2>, [<Xn|SP>{, #<imm>}]
     # 64-bit: STP <Xt1>, <Xt2>, [<Xn|SP>{, #<imm>}]
     return ((data[3] & 0x7f) == 0x29) and ((data[2] & 0xc0) == 0x0)
+
+
+# STLXR
+def is_stlxr_bytes(data: bytes) -> bool:
+    # little endian
+    # 32-bit: STLXR <Ws>, <Wt>, [<Xn|SP>{, #0}]
+    # 64-bit: STLXR <Ws>, <Xt>, [<Xn|SP>{, #0}]
+    return ((data[3] & 0xbf) == 0x88) and ((data[2] & 0xe0) == 0x0) and ((data[1] & 0xfc) == 0xfc)
+
+
+# STXR
+def is_stxr_bytes(data: bytes) -> bool:
+    # 32-bit: STXR <Ws>, <Wt>, [<Xn|SP>{, #0}]
+    # 64-bit: STXR <Ws>, <Xt>, [<Xn|SP>{, #0}]
+    return ((data[3] & 0xbf) == 0x88) and ((data[2] & 0xe0) == 0x0) and ((data[1] & 0xfc) == 0x7c)
 
 
 # NOP
