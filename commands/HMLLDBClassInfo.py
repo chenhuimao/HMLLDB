@@ -450,7 +450,9 @@ def get_string_from_section_type(section_type: int) -> str:
         lldb.eSectionTypeDWARFDebugRngListsDwo: "eSectionTypeDWARFDebugRngListsDwo",
         lldb.eSectionTypeDWARFDebugLocDwo: "eSectionTypeDWARFDebugLocDwo",
         lldb.eSectionTypeDWARFDebugLocListsDwo: "eSectionTypeDWARFDebugLocListsDwo",
-        lldb.eSectionTypeDWARFDebugTuIndex: "eSectionTypeDWARFDebugTuIndex"
+        lldb.eSectionTypeDWARFDebugTuIndex: "eSectionTypeDWARFDebugTuIndex",
+        lldb.eSectionTypeCTF: "eSectionTypeCTF",
+        lldb.eSectionTypeLLDBTypeSummaries: "eSectionTypeLLDBTypeSummaries"
     }
 
     return section_type_dic.get(section_type, "unknown")
@@ -475,6 +477,7 @@ def pSBHostOS(obj: Optional[lldb.SBHostOS]) -> None:
     print_format("GetProgramFileSpec", hostOS.GetProgramFileSpec())  # SBFileSpec
     print_format("GetLLDBPythonPath", hostOS.GetLLDBPythonPath())  # SBFileSpec
     print_format("GetUserHomeDirectory", hostOS.GetUserHomeDirectory())  # SBFileSpec
+    print_format("IsAppleInternal", hostOS.IsAppleInternal())
 
     print_format("GetLLDBPath(ePathTypeLLDBShlibDir)", hostOS.GetLLDBPath(lldb.ePathTypeLLDBShlibDir))  # SBFileSpec
     print_format("GetLLDBPath(ePathTypeSupportExecutableDir)", hostOS.GetLLDBPath(lldb.ePathTypeSupportExecutableDir))  # SBFileSpec
@@ -517,7 +520,8 @@ def pSBDebugger(obj: Optional[lldb.SBDebugger]) -> None:
     print_format("GetUseExternalEditor", debugger.GetUseExternalEditor())
     print_format("GetUseColor", debugger.GetUseColor())
     print_format("GetUseSourceCache", debugger.GetUseSourceCache())
-    print_format("GetVersionString", debugger.GetVersionString())
+    print_format("GetScriptDirectory", debugger.GetScriptDirectory())  # SBFileSpec
+    print_format("GetVersionString", lldb.SBDebugger.GetVersionString())
     print_format("GetBuildConfiguration", debugger.GetBuildConfiguration())  # SBStructuredData
     print_format("GetInstanceName", debugger.GetInstanceName())
     print_format("GetTerminalWidth", debugger.GetTerminalWidth())
@@ -626,6 +630,10 @@ def pSBProcess(obj: Optional[lldb.SBProcess]) -> None:
     print_format("GetNumExtendedBacktraceTypes", process.GetNumExtendedBacktraceTypes())
     print_format("GetMemoryRegions", process.GetMemoryRegions())  # SBMemoryRegionInfoList
     print_format("GetProcessInfo", process.GetProcessInfo())  # SBProcessInfo
+    print_format("GetCoreFile", process.GetCoreFile())  # SBFileSpec
+    print_format("GetAddressMask(eAddressMaskTypeAny)", process.GetAddressMask(lldb.eAddressMaskTypeAny))
+    print_format("GetAddressMask(eAddressMaskTypeCode)", process.GetAddressMask(lldb.eAddressMaskTypeCode))
+    print_format("GetAddressMask(eAddressMaskTypeData)", process.GetAddressMask(lldb.eAddressMaskTypeData))
     print_format("__get_is_alive__", process.__get_is_alive__())
     print_format("__get_is_running__", process.__get_is_running__())
     print_format("__get_is_stopped__", process.__get_is_stopped__())
@@ -749,6 +757,7 @@ def pSBFrame(obj: Optional[lldb.SBFrame]) -> None:
     print_format("GetFunctionName", frame.GetFunctionName())
     print_format("GuessLanguage", frame.GuessLanguage())  # LanguageType int
     print_format("IsSwiftThunk", frame.IsSwiftThunk())
+    print_format("GetLanguageSpecificData", frame.GetLanguageSpecificData())  # SBStructuredData
     print_format("IsInlined", frame.IsInlined())
     print_format("IsArtificial", frame.IsArtificial())
     print_format("GetFrameBlock", frame.GetFrameBlock())  # SBBlock
@@ -764,7 +773,8 @@ def pSBFrame(obj: Optional[lldb.SBFrame]) -> None:
     print_format("GetRegisters", frame.GetRegisters())  # SBValueList
     print_format("FindVariable", frame.FindVariable("self"))  # SBValue
     print_format("GetValueForVariablePath", frame.GetValueForVariablePath("self.customVariable"))  # SBValue
-    print_format("GetLanguageSpecificData", frame.GetLanguageSpecificData())  # SBStructuredData
+    error = lldb.SBError()
+    print_format("GetHistory", frame.GetHistory(error))  # SBHistoricalFrame
     print_format("get_parent_frame", frame.get_parent_frame())  # SBFrame
 
 
@@ -823,6 +833,7 @@ def pSBValue(obj: Optional[lldb.SBValue]) -> None:
     print_format("GetLoadAddress", value.GetLoadAddress())
     print_format("GetAddress", value.GetAddress())  # SBAddress
     print_format("Persist", value.Persist())  # SBValue
+    print_format("GetVTable", value.GetVTable())  # SBValue
     print_format("__get_dynamic__", value.__get_dynamic__())  # SBValue
     print_format("get_expr_path", value.get_expr_path())
 
@@ -1379,6 +1390,10 @@ def pSBEvent(obj: Optional[lldb.SBEvent]) -> None:
             event_type_string = 'eBroadcastBitWatchpointChanged'
         elif event_type == lldb.SBTarget.eBroadcastBitSymbolsLoaded:
             event_type_string = 'eBroadcastBitSymbolsLoaded'
+        elif event_type == lldb.SBTarget.eBroadcastBitSymbolsChanged:
+            event_type_string = 'eBroadcastBitSymbolsChanged'
+        elif event_type == lldb.SBTarget.eBroadcastBitTraceAnalyzed:
+            event_type_string = 'eBroadcastBitTraceAnalyzed'
         print_format("GetType(resolved)", event_type_string)
 
 
@@ -1536,8 +1551,6 @@ def pSBPlatform(obj: Optional[lldb.SBPlatform]) -> None:
     print_format("GetOSMajorVersion", platform.GetOSMajorVersion())
     print_format("GetOSMinorVersion", platform.GetOSMinorVersion())
     print_format("GetOSUpdateVersion", platform.GetOSUpdateVersion())
-    error = lldb.SBError()
-    print_format("GetAllProcesses", platform.GetAllProcesses(error))  # SBProcessInfoList
     print_format("GetUnixSignals", platform.GetUnixSignals())  # SBUnixSignals
     print_format("GetEnvironment", platform.GetEnvironment())  # SBEnvironment
 
@@ -1816,6 +1829,7 @@ def pSBExpressionOptions(obj: Optional[lldb.SBExpressionOptions]) -> None:
     print_format("GetStopOthers", options.GetStopOthers())
     print_format("GetTrapExceptions", options.GetTrapExceptions())
     print_format("GetPlaygroundTransformEnabled", options.GetPlaygroundTransformEnabled())
+    print_format("GetInsertPlaygroundTransformPreambleEnabled", options.GetInsertPlaygroundTransformPreambleEnabled())
     print_format("GetPlaygroundTransformHighPerformance", options.GetPlaygroundTransformHighPerformance())
     print_format("GetREPLMode", options.GetREPLMode())
     print_format("GetGenerateDebugInfo", options.GetGenerateDebugInfo())

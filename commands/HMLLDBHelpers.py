@@ -93,6 +93,7 @@ def evaluate_expression_value(expression: str, prefix='', print_errors=True) -> 
 
     options.SetTrapExceptions(False)  # default: True
     # options.SetPlaygroundTransformEnabled(False)
+    # options.SetInsertPlaygroundTransformPreambleEnabled(True)
     # options.SetPlaygroundTransformHighPerformance(True)
     # options.SetREPLMode(False)
     options.SetLanguage(lldb.eLanguageTypeObjC_plus_plus)
