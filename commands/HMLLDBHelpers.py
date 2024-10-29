@@ -25,6 +25,7 @@
 import lldb
 from typing import Any, List, Tuple, Optional
 import inspect
+import time
 import HMExpressionPrefix
 import HMLLDBClassInfo
 
@@ -93,6 +94,7 @@ def evaluate_expression_value(expression: str, prefix='', print_errors=True) -> 
 
     options.SetTrapExceptions(False)  # default: True
     # options.SetPlaygroundTransformEnabled(False)
+    # options.SetInsertPlaygroundTransformPreambleEnabled(True)
     # options.SetPlaygroundTransformHighPerformance(True)
     # options.SetREPLMode(False)
     options.SetLanguage(lldb.eLanguageTypeObjC_plus_plus)
@@ -140,6 +142,7 @@ def add_one_shot_breakpoint_in_imp(imp: lldb.SBValue, callback_func: str, name: 
     bp = target.BreakpointCreateByAddress(imp.GetValueAsUnsigned())
     bp.AddName(name)
     bp.SetOneShot(True)
+    time.sleep(0.1)
     bp.SetScriptCallbackFunction(callback_func)
 
 

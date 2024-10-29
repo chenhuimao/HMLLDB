@@ -594,7 +594,7 @@ def makeAttachToEdgeIMP() -> lldb.SBValue:
     return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
-def tapSelfBreakPointHandler(frame, bp_loc, internal_dict) -> bool:
+def tapSelfBreakPointHandler(frame, bp_loc, extra_args, internal_dict) -> bool:
     HMDebugMainViewController.register()
     HM.process_continue()
     return True
