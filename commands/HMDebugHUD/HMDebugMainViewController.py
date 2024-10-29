@@ -315,19 +315,19 @@ def makeSelectedInspectViewIMP() -> lldb.SBValue:
     return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
-def selectedAPPInfoBreakPointHandler(frame, bp_loc, internal_dict) -> bool:
+def selectedAPPInfoBreakPointHandler(frame, bp_loc, extra_args, internal_dict) -> bool:
     HMDebugInfoViewController.register()
     HM.process_continue()
     return True
 
 
-def selectedSandboxBreakPointHandler(frame, bp_loc, internal_dict) -> bool:
+def selectedSandboxBreakPointHandler(frame, bp_loc, extra_args, internal_dict) -> bool:
     HMSandboxViewController.register()
     HM.process_continue()
     return True
 
 
-def selectedInspectViewBreakPointHandler(frame, bp_loc, internal_dict) -> bool:
+def selectedInspectViewBreakPointHandler(frame, bp_loc, extra_args, internal_dict) -> bool:
     HMInspectViewController.register()
     HM.process_continue()
     return True

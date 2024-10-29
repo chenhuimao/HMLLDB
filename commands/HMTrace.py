@@ -181,6 +181,7 @@ class TraceFunctionStep:
                         self.will_stop = True
                         bp = target.BreakpointCreateByAddress(pc_address_value + 8)
                         bp.AddName("HMLLDB_trace_function")
+                        time.sleep(0.1)
                         bp.SetScriptCallbackFunction("HMTrace.trace_function_skip_atomic_sequence_handler")
                         g_function_limit -= self.function_count
                         return False
@@ -347,6 +348,7 @@ class TraceInstructionStep:
                         self.will_stop = True
                         bp = target.BreakpointCreateByAddress(pc_address_value + 8)
                         bp.AddName("HMLLDB_trace_instruction")
+                        time.sleep(0.1)
                         bp.SetScriptCallbackFunction("HMTrace.trace_instruction_skip_atomic_sequence_handler")
                         g_instruction_limit -= self.instruction_count
                         return False

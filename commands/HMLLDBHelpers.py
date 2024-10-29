@@ -25,6 +25,7 @@
 import lldb
 from typing import Any, List, Tuple, Optional
 import inspect
+import time
 import HMExpressionPrefix
 import HMLLDBClassInfo
 
@@ -141,6 +142,7 @@ def add_one_shot_breakpoint_in_imp(imp: lldb.SBValue, callback_func: str, name: 
     bp = target.BreakpointCreateByAddress(imp.GetValueAsUnsigned())
     bp.AddName(name)
     bp.SetOneShot(True)
+    time.sleep(0.1)
     bp.SetScriptCallbackFunction(callback_func)
 
 

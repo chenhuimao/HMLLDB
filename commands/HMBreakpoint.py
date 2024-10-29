@@ -27,6 +27,7 @@ from typing import List
 import shlex
 import optparse
 import re
+import time
 import HMExpressionPrefix
 import HMLLDBHelpers as HM
 import HMLLDBClassInfo
@@ -111,6 +112,7 @@ def breakpoint_frame(debugger, command, exe_ctx, result, internal_dict):
     extra_args.SetFromJSON(stream)
 
     # set callback with extra_args
+    time.sleep(0.1)
     error: lldb.SBError = bp.SetScriptCallbackFunction("HMBreakpoint.breakpoint_frame_handler", extra_args)
     if error.Success():
         HM.DPrint("Set breakpoint successfully")
@@ -224,6 +226,7 @@ def breakpoint_next_oc_method(debugger, command, exe_ctx, result, internal_dict)
     bp = target.BreakpointCreateByName("objc_msgSend", "libobjc.A.dylib")
     bp.AddName("HMLLDB_bpmethod_objc_msgSend")
     bp.SetThreadID(thread_id)
+    time.sleep(0.1)
     bp.SetScriptCallbackFunction("HMBreakpoint.breakpoint_next_oc_method_handler")
 
     HM.DPrint(f"Target thread index:{thread.GetIndexID()}, thread id:{thread_id}.")
@@ -266,16 +269,12 @@ def breakpoint_next_oc_method_handler(frame, bp_loc, extra_args, internal_dict) 
                     selector_value = reg_value
 
     # Set breakpoint with object and selector.
-    set_breakpoint_with_object_and_selector(object_value, selector_value)
+    set_breakpoint_with_object_and_selector(target, object_value, selector_value)
 
-    # If you use Xcode 15, an error will be reported here, and "return False" will be invalid.
-    # I switched to another way to skip stop, but the error still exists.
-    # return False
-    HM.process_continue()
-    return True
+    return False
 
 
-def set_breakpoint_with_object_and_selector(object_value: lldb.SBValue, selector_value: lldb.SBValue):
+def set_breakpoint_with_object_and_selector(target: lldb.SBTarget, object_value: lldb.SBValue, selector_value: lldb.SBValue):
     command_script = f'''
         id object = (id){object_value.GetValue()};
         char *selName = (char *){selector_value.GetValue()};
@@ -291,11 +290,9 @@ def set_breakpoint_with_object_and_selector(object_value: lldb.SBValue, selector
         return
 
     HM.DPrint(f"Set a breakpoint on the implemented address:{imp_value.GetValue()}")
-    HM.add_one_shot_breakpoint_in_imp(imp_value, "HMBreakpoint.breakpoint_next_oc_method_implementation_handler", "HMLLDB_bpmethod_implementation")
-
-
-def breakpoint_next_oc_method_implementation_handler(frame, bp_loc, extra_args, internal_dict) -> bool:
-    return True
+    bp = target.BreakpointCreateByAddress(imp_value.GetValueAsUnsigned())
+    bp.AddName("HMLLDB_bpmethod_implementation")
+    bp.SetOneShot(True)
 
 
 # Inspired by "bmessage" command in chisel: https://github.com/facebook/chisel/blob/main/commands/FBDebugCommands.py.
@@ -455,6 +452,7 @@ def breakpoint_message(debugger, command, exe_ctx, result, internal_dict):
     stream = lldb.SBStream()
     stream.Print(f"\"{command}\"")
     extra_args.SetFromJSON(stream)
+    time.sleep(0.1)
     bp.SetScriptCallbackFunction("HMBreakpoint.bpmessage_breakpoint_handler", extra_args)
 
     bp_id = bp.GetID()

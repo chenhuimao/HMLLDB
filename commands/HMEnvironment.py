@@ -76,7 +76,7 @@ def environment(debugger, command, exe_ctx, result, internal_dict):
     HM.DPrint('[Model identifier] ' + get_model_identifier())
 
     system_version_value = HM.evaluate_expression_value('(NSString *)[[NSString alloc] initWithFormat:@"%@ %@", [[UIDevice currentDevice] systemName], [[UIDevice currentDevice] systemVersion]]')
-    HM.DPrint('[System version] ' + system_version_value.GetObjectDescription())
+    HM.DPrint('[iOS version] ' + system_version_value.GetObjectDescription())
 
 
 def get_git_commit_hash() -> str:
