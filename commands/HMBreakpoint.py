@@ -378,6 +378,7 @@ def breakpoint_message(debugger, command, exe_ctx, result, internal_dict):
                     break;
                 }}
             }}
+            extern void free(void *f_address);
             free(instanceMethodList);
             
             if (originalIMP) {{

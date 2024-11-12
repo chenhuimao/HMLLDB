@@ -302,6 +302,7 @@ def find_class(debugger, command, exe_ctx, result, internal_dict):
             NSString *name = [[NSString alloc] initWithUTF8String:class_getName(classList[i])];
             {add_object_script}
         }}
+        extern void free(void *f_address);
         free(classList);
 
         if (findCount == 0) {{
@@ -419,7 +420,7 @@ def find_subclass(debugger, command, exe_ctx, result, internal_dict):
             }} else {{
                 [result insertString:[[NSString alloc] initWithFormat:@"Subclass count: %u \\n", findCount] atIndex:0];
             }}
-            
+            extern void free(void *f_address);
             free(classList);
         }}
 
@@ -556,6 +557,7 @@ def find_method(debugger, command, exe_ctx, result, internal_dict):
                     void (*impl_hm)() = (void (*)())method_getImplementation(method);
                     [result appendFormat:@"(-) %@ (%p)\\n\\tType encoding:%s\\n", selName, impl_hm, method_getTypeEncoding(method)];
                 }}
+                extern void free(void *f_address);
                 free(instanceMethodList);
                 
                 unsigned int classMethodCount = 0;
@@ -568,6 +570,7 @@ def find_method(debugger, command, exe_ctx, result, internal_dict):
                         void (*impl_hm)() = (void (*)())method_getImplementation(method);
                         [result appendFormat:@"(+) %@ (%p)\\n\\tType encoding:%s\\n", selName, impl_hm, method_getTypeEncoding(method)];
                     }}
+                    extern void free(void *f_address);
                     free(classMethodList);
                 }}
                 
@@ -610,6 +613,7 @@ def find_method(debugger, command, exe_ctx, result, internal_dict):
                         findCount += 1;
                     }}
                 }}
+                extern void free(void *f_address);
                 free(instanceMethodList);
                 
                 // Class Methods
@@ -630,6 +634,7 @@ def find_method(debugger, command, exe_ctx, result, internal_dict):
                         findCount += 1;
                     }}
                 }}
+                extern void free(void *f_address);
                 free(classMethodList);
             }}
             if (findCount == 0) {{
@@ -637,7 +642,7 @@ def find_method(debugger, command, exe_ctx, result, internal_dict):
             }} else {{
                 [result insertString:[[NSString alloc] initWithFormat:@"Methods count: %u \\n", findCount] atIndex:0];
             }}
-
+            extern void free(void *f_address);
             free(classList);
             (NSMutableString *)result;
         '''
@@ -711,6 +716,7 @@ def print_ivars_info(debugger, command, exe_ctx, result, internal_dict):
             if (ivarsCount == 0) {{
                 [result appendString:@"\\n[HMLLDB] No ivar found."];
             }}
+            extern void free(void *f_address);
             free(ivarList);
         }}
         

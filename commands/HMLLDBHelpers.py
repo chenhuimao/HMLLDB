@@ -280,6 +280,7 @@ def get_class_prefixes() -> Tuple[List[str], str]:
                 }
             }
         }
+        extern void free(void *f_address);
         free(hm_classList);
         (NSMutableArray *)hm_clsPrefixes;
     '''
