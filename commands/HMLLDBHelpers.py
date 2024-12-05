@@ -23,11 +23,12 @@
 # https://github.com/chenhuimao/HMLLDB
 
 import lldb
-from typing import Any, List, Tuple, Optional
+from typing import Any, Callable, List, Tuple, Optional
 import inspect
 import time
 import HMExpressionPrefix
 import HMLLDBClassInfo
+import HMStopHook
 
 g_is_first_call = True
 
@@ -137,13 +138,21 @@ def bool_of_SBValue(val: lldb.SBValue) -> bool:
     return False
 
 
-def add_one_shot_breakpoint_in_imp(imp: lldb.SBValue, callback_func: str, name: str) -> None:
+def add_one_shot_breakpoint_at_address(address: int, name: str, callback_func: str) -> None:
     target = lldb.debugger.GetSelectedTarget()
-    bp = target.BreakpointCreateByAddress(imp.GetValueAsUnsigned())
+    bp = target.BreakpointCreateByAddress(address)
     bp.AddName(name)
     bp.SetOneShot(True)
     time.sleep(0.1)
     bp.SetScriptCallbackFunction(callback_func)
+
+
+def add_one_shot_breakpoint_at_address_via_stop_hook(address: int, name: str, callback: Callable[[lldb.SBFrame, lldb.SBBreakpointLocation, lldb.SBStructuredData, dict], bool]) -> None:
+    target = lldb.debugger.GetSelectedTarget()
+    bp = target.BreakpointCreateByAddress(address)
+    bp.AddName(name)
+    bp.SetOneShot(True)
+    HMStopHook.HMAddressCallbackStopHook.add_address_callback_stop_hook(target, address, bp.GetID(), callback)
 
 
 def get_function_address(name: str, module_name='') -> int:

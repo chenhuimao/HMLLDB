@@ -263,10 +263,9 @@ def addFeatureMethods() -> bool:
     HM.add_instance_method(gClassName, "selectedInspectView", selectedInspectViewIMPValue.GetValue(), "v@:")
 
     HM.DPrint("Add breakpoints to hook method...")
-    HM.add_one_shot_breakpoint_in_imp(selectedAPPInfoIMPValue, "HMDebugMainViewController.selectedAPPInfoBreakPointHandler", "HMDebugMainViewController_selectedAPPInfo_Breakpoint")
-    HM.add_one_shot_breakpoint_in_imp(selectedSandboxIMPValue, "HMDebugMainViewController.selectedSandboxBreakPointHandler", "HMDebugMainViewController_selectedSandbox_Breakpoint")
-    HM.add_one_shot_breakpoint_in_imp(selectedInspectViewIMPValue, "HMDebugMainViewController.selectedInspectViewBreakPointHandler", "HMDebugMainViewController_selectedInspectView_Breakpoint")
-
+    HM.add_one_shot_breakpoint_at_address_via_stop_hook(selectedAPPInfoIMPValue.GetValueAsUnsigned(), "HMDebugMainViewController_selectedAPPInfo_Breakpoint", selected_app_info_breakpoint_handler)
+    HM.add_one_shot_breakpoint_at_address_via_stop_hook(selectedSandboxIMPValue.GetValueAsUnsigned(), "HMDebugMainViewController_selectedSandbox_Breakpoint", selected_sandbox_breakpoint_handler)
+    HM.add_one_shot_breakpoint_at_address_via_stop_hook(selectedInspectViewIMPValue.GetValueAsUnsigned(), "HMDebugMainViewController_selectedInspectView_Breakpoint", selected_inspect_view_breakpoint_handler)
     return True
 
 
@@ -315,19 +314,37 @@ def makeSelectedInspectViewIMP() -> lldb.SBValue:
     return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
-def selectedAPPInfoBreakPointHandler(frame, bp_loc, extra_args, internal_dict) -> bool:
+def selected_app_info_breakpoint_handler(frame, bp_loc, extra_args, internal_dict) -> bool:
+    # Delete current breakpoint
+    if bp_loc is not None:
+        bp = bp_loc.GetBreakpoint()
+        target = frame.GetThread().GetProcess().GetTarget()
+        target.BreakpointDelete(bp.GetID())
+
+    # register
     HMDebugInfoViewController.register()
-    HM.process_continue()
-    return True
+    return False
 
 
-def selectedSandboxBreakPointHandler(frame, bp_loc, extra_args, internal_dict) -> bool:
+def selected_sandbox_breakpoint_handler(frame, bp_loc, extra_args, internal_dict) -> bool:
+    # Delete current breakpoint
+    if bp_loc is not None:
+        bp = bp_loc.GetBreakpoint()
+        target = frame.GetThread().GetProcess().GetTarget()
+        target.BreakpointDelete(bp.GetID())
+
+    # register
     HMSandboxViewController.register()
-    HM.process_continue()
-    return True
+    return False
 
 
-def selectedInspectViewBreakPointHandler(frame, bp_loc, extra_args, internal_dict) -> bool:
+def selected_inspect_view_breakpoint_handler(frame, bp_loc, extra_args, internal_dict) -> bool:
+    # Delete current breakpoint
+    if bp_loc is not None:
+        bp = bp_loc.GetBreakpoint()
+        target = frame.GetThread().GetProcess().GetTarget()
+        target.BreakpointDelete(bp.GetID())
+
+    # register
     HMInspectViewController.register()
-    HM.process_continue()
-    return True
+    return False

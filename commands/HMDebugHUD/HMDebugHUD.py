@@ -109,7 +109,7 @@ def showDebugHUD(debugger, command, exe_ctx, result, internal_dict):
 
     # Add breakpoint in tapSelf
     HM.DPrint("Add breakpoint to hook method...")
-    HM.add_one_shot_breakpoint_in_imp(tapSelfIMPValue, "HMDebugHUD.tapSelfBreakPointHandler", "HMDebugHUD_TapSelf_Breakpoint")
+    HM.add_one_shot_breakpoint_at_address(tapSelfIMPValue.GetValueAsUnsigned(), "HMDebugHUD_TapSelf_Breakpoint", "HMDebugHUD.tap_self_breakpoint_handler")
 
     HM.DPrint(f"Register {gClassName} done!")
 
@@ -594,7 +594,12 @@ def makeAttachToEdgeIMP() -> lldb.SBValue:
     return HM.evaluate_expression_value(expression=command_script, prefix=HMExpressionPrefix.gPrefix)
 
 
-def tapSelfBreakPointHandler(frame, bp_loc, extra_args, internal_dict) -> bool:
+def tap_self_breakpoint_handler(frame, bp_loc, extra_args, internal_dict) -> bool:
+    # Delete current breakpoint
+    bp = bp_loc.GetBreakpoint()
+    target = frame.GetThread().GetProcess().GetTarget()
+    target.BreakpointDelete(bp.GetID())
+
+    # register
     HMDebugMainViewController.register()
-    HM.process_continue()
-    return True
+    return False
