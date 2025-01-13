@@ -62,7 +62,7 @@ def __lldb_init_module(debugger, internal_dict):
 def reference(debugger, command, exe_ctx, result, internal_dict):
     """
     Syntax:
-        reference <address> <image_name>
+        reference <address> <image name 1> <image name 2> ... <image name n>
 
     Examples:
         (lldb) reference 0x12345678 MyApp
@@ -82,23 +82,33 @@ def reference(debugger, command, exe_ctx, result, internal_dict):
         return
 
     command_args: List[str] = command.split()
-    if len(command_args) != 2:
+    if len(command_args) < 2:
         HM.DPrint("Error input. Please enter \"help reference\" for help.")
         return
-    address_or_name = command_args[0]
-    is_valid_address, target_address_int = HM.int_value_from_string(address_or_name)
+    input_address_str = command_args[0]
+    is_valid_address, target_address_int = HM.int_value_from_string(input_address_str)
     if not is_valid_address:
-        HM.DPrint(f"Invalid address:{address_or_name}")
+        HM.DPrint(f"Invalid address:{input_address_str}")
         return
+    start_time = datetime.now()
 
-    image_name = command_args[1]
+    for i in range(1, len(command_args)):
+        image_name = command_args[i]
+        scan_image(exe_ctx, target_address_int, image_name)
+
+    # Print time when it takes more than 10 seconds
+    stop_time = datetime.now()
+    cost_time = stop_time - start_time
+    if cost_time.total_seconds() > 10:
+        HM.DPrint(f"Start time: {start_time.strftime('%H:%M:%S')}")
+        HM.DPrint(f"Stop time: {stop_time.strftime('%H:%M:%S')}")
+
+
+def scan_image(exe_ctx: lldb.SBExecutionContext, target_address_int: int, image_name: str) -> None:
     global g_image_address_target_dic, g_image_address_ldr_dic
 
-    start_time = datetime.now().strftime("%H:%M:%S")
-    is_first_scan_target_image = False
     # Find and scan module
     if image_name not in g_image_address_target_dic:
-        is_first_scan_target_image = True
         # Find module
         target = exe_ctx.GetTarget()
         target_module: lldb.SBModule = None
@@ -134,10 +144,10 @@ def reference(debugger, command, exe_ctx, result, internal_dict):
             result_count += 1
             result_address: str = hex(key)
             if result_count == 1:
-                HM.DPrint("These are the scan results:")
+                HM.DPrint(f"[{image_name}]These are the scan results:")
             print(f"{result_address}: {HM.get_image_lookup_summary_from_address(key)}")
 
-    HM.DPrint(f"Scan result count:{result_count}")
+    HM.DPrint(f"[{image_name}]Scan result count:{result_count}")
 
     # Traverse memory records and print matching results
     result_count = 0
@@ -146,16 +156,10 @@ def reference(debugger, command, exe_ctx, result, internal_dict):
             result_count += 1
             result_address: str = hex(key)
             if result_count == 1:
-                HM.DPrint("These are the scan results in memory:")
+                HM.DPrint(f"[{image_name}]These are the scan results in memory:")
             print(f"{result_address}: {HM.get_image_lookup_summary_from_address(key)}")
 
-    HM.DPrint(f"Scan result count in memory:{result_count}")
-
-    # Print time when scanning moudle for the first time
-    if is_first_scan_target_image:
-        stop_time = datetime.now().strftime("%H:%M:%S")
-        HM.DPrint(f"Start time: {start_time}")
-        HM.DPrint(f"Stop time: {stop_time}")
+    HM.DPrint(f"[{image_name}]Scan result count in memory:{result_count}")
 
 
 def scan_section_code(exe_ctx: lldb.SBExecutionContext, section: lldb.SBSection, address_target_dic: Dict[int, int], address_ldr_dic: Dict[int, int]) -> None:

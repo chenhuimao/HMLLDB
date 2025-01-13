@@ -8,7 +8,7 @@
 - Some commands provide interactive UI within the APP
 
 ## Requirements
-- Xcode 16.1
+- Xcode 16.2
 - 64-bit simulator or real device, iOS 13.0+
 - Some commands require debug configuration (or ***Optimization Level*** set [-O0]/[-Onone])
 
@@ -463,14 +463,15 @@ The "reference" command is similar to the "References to" function of "Hopper Di
 
 - "reference" is much faster than "Hopper Disassembler".
 - "reference" supports runtime scanning, that is, it supports scanning the initialized data in **__DATA Segment**, which means you can query addresses outside the image range. It supports scanning more addresses than "Hopper Disassembler".
-- In a few cases, search results of "reference" are not as complete as those found by "Hopper Disassembler".
 
 
 ```
 Syntax:
-    reference <address> <image_name>
+    reference <address> <image name 1> <image name 2> ... <image name n>
+```
 
-# Example A: Query the address in the image(UIKitCore)
+Example A: Query the address in the image(UIKitCore)
+```
 (lldb) dis -n "-[UIControl sendAction:to:forEvent:]"
 UIKitCore`-[UIControl sendAction:to:forEvent:]:
     ...
@@ -479,17 +480,18 @@ UIKitCore`-[UIControl sendAction:to:forEvent:]:
 
 # Want to query which addresses will call the "objc_msgSend$sendAction:toTarget:fromSender:forEvent:" function(0x19bd627a0) in UIKitCore
 (lldb) reference 0x19bd627a0 UIKitCore
-[HMLLDB] These are the scan results:
+[HMLLDB] [UIKitCore]These are the scan results:
 0x19a7eb730: UIKitCore`-[UIControl sendAction:to:forEvent:] + 108
 0x19ac25624: UIKitCore`-[UITabBar _sendAction:withEvent:] + 388
 0x19ac2ed14: UIKitCore`-[UIToolbar _sendAction:withEvent:] + 328
 0x19b2fe8f0: UIKitCore`-[UIApplication _performKeyCommandInvocation:allowsRepeat:] + 280
 0x19b437250: UIKitCore`-[UITableView _updateCell:withValue:] + 224
-[HMLLDB] Scan result count:5
-[HMLLDB] Scan result count in memory:0
+[HMLLDB] [UIKitCore]Scan result count:5
+[HMLLDB] [UIKitCore]Scan result count in memory:0
+```
 
-
-# Example B: Query the address of using UIPasteboard class in DemoApp. This address is outside the image(DemoApp) range.
+Example B: Query the address of using `UIPasteboard` class in DemoApp. This address is outside the image(DemoApp) range.
+```
 # 1.lookup OBJC_CLASS_$_UIPasteboard load address
 (lldb) image lookup -vs UIPasteboard
         ...
@@ -503,13 +505,14 @@ UIPasteboard (0x1eef79138, UIKitCore)
 
 # 2.Query the address of using UIPasteboard class in DemoApp
 (lldb) reference 0x1eef79138 DemoApp
-[HMLLDB] Scan result count:0
-[HMLLDB] These are the scan results in memory:
+[HMLLDB] [DemoApp]Scan result count:0
+[HMLLDB] [DemoApp]These are the scan results in memory:
 0x100a2ae9c: DemoApp`-[ViewController viewDidLoad] + 68 at ViewController.mm:27:6
-[HMLLDB] Scan result count in memory:1
+[HMLLDB] [DemoApp]Scan result count in memory:1
+```
 
-
-# Example C: Query the address of the setenv function used in the DemoApp. This address is outside the image(DemoApp) range.
+Example C: Query the address of the setenv function used in the DemoApp. This address is outside the image(DemoApp) range.
+```
 # 1.Get the loading address of the setenv function
 (lldb) dis -n setenv
 libsystem_c.dylib`setenv:
@@ -519,25 +522,26 @@ libsystem_c.dylib`setenv:
 
 # 2.Get the setenv stub function address in the DemoApp
 (lldb) reference 0x19fa6c6d0 DemoApp
-[HMLLDB] Scan result count:0
-[HMLLDB] These are the scan results in memory:
+[HMLLDB] [DemoApp]Scan result count:0
+[HMLLDB] [DemoApp]These are the scan results in memory:
 0x104a50768: DemoApp`symbol stub for: setenv + 4
-[HMLLDB] Scan result count in memory:1
+[HMLLDB] [DemoApp]Scan result count in memory:1
 
 # 3.Get the address of the setenv stub function used in the DemoApp
 # 0x104a50764 = 0x104a50768 - 4
 (lldb) reference 0x104a50764 DemoApp
-[HMLLDB] These are the scan results:
+[HMLLDB] [DemoApp]These are the scan results:
 0x104a470ec: DemoApp`-[ViewController viewDidLoad] + 660 at ViewController.mm:46:5
 0x104a47388: DemoApp`-[ViewController clickBtn1:] + 36 at ViewController.mm:72:5
-[HMLLDB] Scan result count:2
-[HMLLDB] Scan result count in memory:0
+[HMLLDB] [DemoApp]Scan result count:2
+[HMLLDB] [DemoApp]Scan result count in memory:0
 ```
+
 Notice:
 - This command is **expensive** to scan large modules. For example, it takes 40 seconds to scan UIKitCore, and 6 minutes to scan an App belonging to my company.
-- This command will consume a lot of memory. Clearing the memory before scanning can speed up the process.
+- This command will consume a lot of memory. Clearing your computer's memory before scanning can speed up the process.
 - This command will query the targets of **all b/bl instructions** and analyze **most of the adr/adrp instructions** and subsequent instructions.
-- You should consider the **"stub" function** and **"island" function** when using it.
+- When the result contains a **stub function** or an **island function**, you need to continue looking for references to the **stub function** or the **island function**.
 
 ### adrp
 Get the execution result of the `adrp` instruction.    
